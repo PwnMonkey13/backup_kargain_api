@@ -6,6 +6,8 @@ router.post('/login', authController.login)
 
 router.post('/register', authController.register)
 
+router.post('/register-pro', authController.registerPro)
+
 router.get('/authorize', passportAuth.authenticate('jwt', { session: false }), authController.authorize)
 
 router.get('/logout', passportAuth.authenticate('jwt', { session: false }), authController.deleteSession)

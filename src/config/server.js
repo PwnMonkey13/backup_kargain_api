@@ -34,7 +34,6 @@ app.get('/', function (req, res, next) {
 
 app.get('/endpoints', function(req, res, next){
   tableRoutes(app);
-
 });
 
 app.get('*', function (req, res, next) {
@@ -46,8 +45,8 @@ app.get('*', function (req, res, next) {
 app.use(function (err, req, res, next) {
   const statusCode = err.statusCode || 500
   let msg = err.message || err
-  // msg = config.isDev ? msg : 'Something failed on server'
-  res.status(statusCode).send(msg)
+  msg = config.isDev ? msg : 'Something failed on server'
+  res.status(statusCode).json({ success: false, msg});
 })
 
 module.exports = app

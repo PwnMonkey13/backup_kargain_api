@@ -36,17 +36,17 @@ const getUsers = async (req, res, next) => {
 
 const getUser = async (req, res, next) => {
   try {
-    const uid = req.params.id_user;
-    const user = await User.findOne({ _id: uid })
-    if (!user) return next('Unable to fetch profile');
-    else res.json({ success: true, data : user});
+    const username = req.params.username;
+    const user = await User.findOne({ username })
+    if (!user) return next('No user found');
+    else res.json({ success: true, data : user });
   } catch (err) {
     next(err)
   }
 }
 
 const updateUser = (req, res, next) => {
-  const uid = req.params.id_user;
+  const uid = req.params.uid;
   User.findByIdAndUpdate(uid, req.body)
     .then(data => {
       return res.status(200).json({ success: true, data: data });
@@ -55,7 +55,7 @@ const updateUser = (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   try {
-    const uid = req.params.id_user;
+    const uid = req.params.uid;
     User.deleteOne({ _id: uid }).then(document => {
       return res.json({ success: true, data: document })
     }).catch(err => next(err))

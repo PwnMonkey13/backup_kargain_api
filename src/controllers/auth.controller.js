@@ -19,7 +19,6 @@ const login = (req, res, next)=>{
       // generate a signed son web token with the contents of user object and return it in the response
       const token = jwt.sign({
           exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
-          // exp: 10,
           user: user
         },
         config.jwt.encryption
@@ -39,14 +38,28 @@ const register = async (req, res, next) => {
   user.clear_password = user.password;
 
   user.save(user).then(document => {
+    return res.json({ success: true, msg: 'User signed up successfully', document })
+  }).catch(err => {
+    return next(err)
+  })
+}
+
+const registerPro = async (req, res, next) => {
+  const { email, password } = req.body
+  if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
+  if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
+  if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
+
+  let user = new User({ ...req.body });
+  user.clear_password = user.password;
+
+  user.save().then(document => {
     return res.json({ success: true, message: 'User signed up successfully', data: document })
   }).catch(err => next(err))
 }
 
 function authorize (req, res, next) {
-  if (req.user != null) {
     return res.json({ success: true, data: { user: req.user } })
-  } else return res.status(403).json({ success: false, msg: 'user not found' })
 }
 
 function deleteSession (req, res, next) {
@@ -57,4 +70,4 @@ function deleteSession (req, res, next) {
   })
 }
 
-module.exports = { login, register, authorize, deleteSession }
+module.exports = { login, register, registerPro, authorize, deleteSession }
