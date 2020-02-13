@@ -13,15 +13,11 @@ const opts = {
 const jwtLogin = new JwtStrategy(opts, (jwt_payload, done) => {
   if (jwt_payload.user._id) {
     User.findOne({ _id: jwt_payload.user._id }, function (err, user) {
-      if (err) {
-        return done(err);
-      }
-      if (!user) {
-        return done(null, false);
-      }
+      if (err) return done(err);
+      if (!user) return done('missing user');
       return done(null, user);
     });
-  } else return done(null, false);
+  } else return done(null, 'invalid user');
 });
 
 passport.use(jwtLogin);

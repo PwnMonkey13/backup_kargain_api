@@ -1,13 +1,13 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config/config');
-const User = require('../models').User;
+const jwt = require('jsonwebtoken')
+const config = require('../config/config')
+const User = require('../models').User
 
 // Constants
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/
 
-const login = (req, res, next)=>{
-  const { email, password } = req.body;
+const login = (req, res, next) => {
+  const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
   // if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
@@ -22,20 +22,19 @@ const login = (req, res, next)=>{
           user: user
         },
         config.jwt.encryption
-      );
+      )
 
-      return res.json({ success: true, data: { user, token } });
-    }).catch(next);
+      return res.json({ success: true, data: { user, token } })
+    }).catch(next)
 }
 
 const register = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
+  if (!PASSWORD_REGEX.test(password)) return next("password invalid (must length 4 - 8 and include 1 number at least");
 
-  const user = new User({ ...req.body });
-  user.clear_password = user.password;
+  const user = new User({ ...req.body })
 
   user.save(user).then(document => {
     return res.json({ success: true, msg: 'User signed up successfully', document })
@@ -48,18 +47,17 @@ const registerPro = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
+  if (!PASSWORD_REGEX.test(password)) return next("password invalid (must length 4 - 8 and include 1 number at least");
 
-  let user = new User({ ...req.body });
-  user.clear_password = user.password;
+  let user = new User({ ...req.body })
 
   user.save().then(document => {
     return res.json({ success: true, message: 'User signed up successfully', data: document })
   }).catch(err => next(err))
 }
 
-function authorize (req, res, next) {
-    return res.json({ success: true, data: { user: req.user } })
+function authorize (req, res) {
+  return res.json({ success: true, isLoggedIn: true })
 }
 
 function deleteSession (req, res, next) {

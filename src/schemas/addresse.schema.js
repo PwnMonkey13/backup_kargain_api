@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const AdresseSchema = new mongoose.Schema({
+
   address : {
     street : {
       type: String,
@@ -19,6 +20,6 @@ const AdresseSchema = new mongoose.Schema({
       trim: true,
     },
   },
-});
+},{ _id : false });
 
 module.exports = AdresseSchema;

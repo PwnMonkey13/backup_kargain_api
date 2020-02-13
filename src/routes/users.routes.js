@@ -11,7 +11,8 @@ router.get('/',
   usersController.getUsers);
 // users?page=${page}&size=${size}
 
-router.put('/:uid',
+router.put('/:username',
+  passportAuth.authenticate('jwt', { session: false }),
   // auth.requireAdminOrSelf,
   usersController.updateUser);
 

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const utils = require('../utils/functions');
 const AdresseSchema = require('../schemas/addresse.schema');
+const { uuid, fromString } = require('uuidv4');
 
 const AnnounceSchema = new mongoose.Schema({
 	user:{
@@ -12,6 +13,11 @@ const AnnounceSchema = new mongoose.Schema({
 		type: String,
 		trim: true,
 		required: true
+	},
+
+	slug : {
+		type: String,
+		trim: true,
 	},
 
 	phone :{
@@ -26,8 +32,11 @@ const AnnounceSchema = new mongoose.Schema({
 	strict: false
 });
 
-AnnounceSchema.virtual( 'slug' ).get( function () {
-	return utils.stringToSlug(this.title);
+//hashing a password before saving it to the database
+AnnounceSchema.pre('save', function(next) {
+	const min = utils.stringToSlug(this.title);
+	this.slug = `${min}-${fromString(min).substr(0, 6)}`;
+	next();
 });
 
 // Export mongoose model

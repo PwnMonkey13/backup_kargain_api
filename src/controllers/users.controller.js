@@ -46,10 +46,11 @@ const getUser = async (req, res, next) => {
 }
 
 const updateUser = (req, res, next) => {
-  const uid = req.params.uid;
-  User.findByIdAndUpdate(uid, req.body)
-    .then(data => {
-      return res.status(200).json({ success: true, data: data });
+  const filter = { username: req.params.username };
+  const update = { firstname: "Mathieu" };
+  User.findOneAndUpdate(filter,update, { new: true })
+    .then(updated => {
+      return res.status(200).json({ success: true, data: updated });
     }).catch(next);
 }
 

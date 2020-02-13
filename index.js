@@ -1,35 +1,36 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 const app = require('./src/config/server')
 const config = require('./src/config/config')
 
-mongoose.Promise = global.Promise; //set mongo up to use promises
+mongoose.Promise = global.Promise //set mongo up to use promises
 
 mongoose.connect(config.db.mongo_location, { useCreateIndex: true, useNewUrlParser: true })
-  .catch((err) => {
-    throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location);
-});
+  .catch(err => {
+    console.log(err)
+    throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location)
+  })
 
-let db = mongoose.connection;
+let db = mongoose.connection
 
 db.once('open', () => {
-  console.log('Connected to mongo at ' + config.db.mongo_location);
+  console.log('Connected to mongo at ' + config.db.mongo_location)
   app.listen(config.port, function () {
     console.log(`There will be dragons: http://localhost:${config.port}`)
-  });
-});
+  })
+})
 
 db.on('error', (error) => {
-  console.log("error", error);
-});
+  console.log('error', error)
+})
 
 db.on('close', function () {
-  console.log('Mongoose default connection disconnected through app termination');
+  console.log('Mongoose default connection disconnected through app termination')
 })
 
 // If the Node process ends, close the Mongoose connection
 process.on('SIGINT', function () {
   mongoose.connection.close(function () {
-    console.log('Mongoose default connection disconnected through app termination');
-    return process.exit(0);
-  });
-});
+    console.log('Mongoose default connection disconnected through app termination')
+    return process.exit(0)
+  })
+})

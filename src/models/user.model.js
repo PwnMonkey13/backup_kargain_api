@@ -1,19 +1,19 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto');
+const utils = require('../utils/functions');
 const AdresseSchema = require('../schemas/addresse.schema');
+const { uuid, fromString } = require('uuidv4');
 
 const UserSchema = new mongoose.Schema({
-	name:{
-		firstname : {
-			type: String,
-			required: true
-		},
-		lastname : {
-			type: String,
-			required: true,
-			trim: true,
-		},
+	firstname: {
+		type: String,
+		required: true
+	},
+	lastname: {
+		type: String,
+		required: true,
+		trim: true,
 	},
 	username : {
 		type: String,
@@ -46,7 +46,6 @@ const UserSchema = new mongoose.Schema({
 	clear_password: {
 		type: String,
 		trim: true,
-		required: true
 	},
 	role: {
 		type: String,
@@ -58,14 +57,33 @@ const UserSchema = new mongoose.Schema({
 		facebook: String
 	}
 }, {
-	toJSON: { virtuals: true },
-	strict: false
+	strict: false,
+	toObject: {
+		virtuals: true,
+		transform: function (doc, ret) {
+			delete ret._id;
+			delete ret.password;
+			delete ret.clear_password;
+		}
+	},
+	toJSON: {
+		virtuals: true,
+		transform: function (doc, ret) {
+			delete ret._id;
+			delete ret.password;
+			delete ret.clear_password;
+		}
+	}
 });
 
 //hashing a password before saving it to the database
 UserSchema.pre('save', function(next) {
 	let user = this;
-	this.constructor.find({ identifierName: user.identifierName }, function(err, result){
+	const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`);
+	user.username = `${fullname}-${uuid().substr(0, 6)}`;
+	user.clear_password = user.password;
+
+	this.constructor.find({ username: user.username }, function(err, result){
 		if (err) return next(err);
 		if(result.length !== 0) return next('username already in use');
 
@@ -79,12 +97,14 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.virtual( 'fullname' ).get( function () {
-	return `${this.name.firstname} ${this.name.lastname}`;
+	const user = this;
+	return `${user.firstname} ${user.lastname}`;
 });
 
 UserSchema.virtual( 'fullAddress' ).get( function () {
-	const strings = Object.keys(this.address.toObject()).filter(key => this.address[key] !== "").map(key => this.address[key]);
-	return strings.join(", ");
+	if(!this.address) return null;
+	const address = this.address.toObject();
+	return Object.keys(address).reduce((carry, key) => [...carry, address[key]], []).join(", ");
 });
 
 UserSchema.virtual('userId').get(function () {

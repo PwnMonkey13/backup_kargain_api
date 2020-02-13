@@ -14,22 +14,21 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
-app.use(passport.initialize());
+app.use(passport.initialize({session : false }));
 
-if (config.isDev) {
-  app.use(logger('dev'))
-}
+// if (config.isDev) {
+//   app.use(logger('dev'))
+// }
 
 app.use('/api', routes)
 
 app.get('/', function (req, res, next) {
-  res.json(
-    {
+  res.json({
       success: true,
       msg : `API is serving from ${config.db.mongo_location}`,
       config,
       env : process.env
-    })
+    });
 })
 
 app.get('/endpoints', function(req, res, next){
@@ -46,6 +45,7 @@ app.use(function (err, req, res, next) {
   const statusCode = err.statusCode || 500
   let msg = err.message || err
   msg = config.isDev ? msg : 'Something failed on server'
+  console.log(msg);
   res.status(statusCode).json({ success: false, msg});
 })
 
