@@ -1,9 +1,10 @@
 {
-	"name": "intersud-server",
+	"name": "kargain_api",
 	"version": "1.0.0",
-	"description": "intersud-server",
+	"description": "kargain API",
 	"author": "Girauo Nicolas",
-	"repository": "https://github.com/PwnMonkey13/intersud-server",
+	"private": true,
+	"repository": "https://github.com/rayconnection/kargain_api",
 	"main": "index.js",
 	"license": "GNU",
 	"scripts": {

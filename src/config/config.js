@@ -22,7 +22,7 @@ const dev = {
 const prod = {
   db: {
     mongo_location: process.env.MONGODB_URI_PROD,
-    name: process.env.DB_NAME_PROD || 'test'
+    name: process.env.DB_NAME_PROD || 'kargain'
   }
 }
 

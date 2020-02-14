@@ -8,7 +8,8 @@ const { uuid, fromString } = require('uuidv4');
 const UserSchema = new mongoose.Schema({
 	firstname: {
 		type: String,
-		required: true
+		required: true,
+		trim: true,
 	},
 	lastname: {
 		type: String,
@@ -102,14 +103,11 @@ UserSchema.virtual( 'fullname' ).get( function () {
 });
 
 UserSchema.virtual( 'fullAddress' ).get( function () {
-	if(!this.address) return null;
-	const address = this.address.toObject();
+	const user = this;
+	if(!user.address) return null;
+	const address = user.address.toObject();
 	return Object.keys(address).reduce((carry, key) => [...carry, address[key]], []).join(", ");
 });
-
-UserSchema.virtual('userId').get(function () {
-		return this.id;
-	});
 
 UserSchema.virtual('twitter_url').get(function() {
 		if (this.socials.twitter) {
