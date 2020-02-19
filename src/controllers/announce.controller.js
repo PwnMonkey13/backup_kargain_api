@@ -1,12 +1,12 @@
 const Announce = require('../models').Announce
 
 const getAll = async (req, res, next) => {
-  const data = await Announce.find()
+  const data = await Announce.find().populate('user');
   return res.json({ success: true, data: data })
 }
 
 const getBySlug = async (req, res, next) => {
-  const announce = await Announce.findOne({ slug: req.params.slug })
+  const announce = await Announce.findOne({ slug: req.params.slug }).populate('user');
   if (announce) return res.json({ success: true, data: announce })
   else return res.status(400).json({ success: false, msg: 'no announce found' })
 }

@@ -1,4 +1,5 @@
 const User = require('../models').User;
+const functions = require('../utils/functions');
 
 const getUsers = async (req, res, next) => {
   try {
@@ -47,7 +48,7 @@ const getUser = async (req, res, next) => {
 
 const updateUser = (req, res, next) => {
   const filter = { username: req.params.username };
-  const update = { firstname: "Mathieu" };
+  const update = functions.convertToDotNotation(req.body);
   User.findOneAndUpdate(filter,update, { new: true })
     .then(updated => {
       return res.status(200).json({ success: true, data: updated });
@@ -55,14 +56,10 @@ const updateUser = (req, res, next) => {
 }
 
 const deleteUser = async (req, res, next) => {
-  try {
     const uid = req.params.uid;
     User.deleteOne({ _id: uid }).then(document => {
       return res.json({ success: true, data: document })
-    }).catch(err => next(err))
-  } catch (err) {
-    next(err)
-  }
+    }).catch(next);
 }
 
 module.exports = { getUsers, getUser, updateUser, deleteUser }

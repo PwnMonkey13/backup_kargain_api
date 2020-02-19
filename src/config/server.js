@@ -42,7 +42,7 @@ app.get('*', function (req, res, next) {
 app.use(function (err, req, res, next) {
   const statusCode = err.statusCode || 500
   let msg = err.message || err
-  msg = config.isDev ? msg : 'Something failed on server';
+  // msg = config.isDev ? msg : 'Something failed on server';
   console.log(msg);
   res.status(statusCode).json({ success: false, msg});
 })
