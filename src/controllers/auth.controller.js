@@ -23,8 +23,14 @@ const login = (req, res, next) => {
         },
         config.jwt.encryption
       )
+      res.cookie('token', token, {
+        maxAge: 60 * 60 * 1000, // 1 hour
+        httpOnly: true,
+        // secure: true,
+        // sameSite: true,
+      }) // Adds a new cookie to the response
 
-      return res.json({ success: true, data: { user, token } })
+      return res.json({ success: true, data: { user } })
     }).catch(next)
 }
 
@@ -32,11 +38,11 @@ const register = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) return next("password invalid (must length 4 - 8 and include 1 number at least");
+  if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
 
-  const user = new User({ ...req.body })
+  const user = new User(req.body)
 
-  user.save(user).then(document => {
+  user.save().then(document => {
     return res.json({ success: true, msg: 'User signed up successfully', document })
   }).catch(err => {
     return next(err)
@@ -47,7 +53,7 @@ const registerPro = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) return next("password invalid (must length 4 - 8 and include 1 number at least");
+  if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
 
   let user = new User({ ...req.body })
 

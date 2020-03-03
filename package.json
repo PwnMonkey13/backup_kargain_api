@@ -22,6 +22,8 @@
 		"body-parser": "^1.19.0",
 		"cli-table": "^0.3.1",
 		"connect-mongo": "^3.2.0",
+		"cookie-parser": "^1.4.4",
+		"cookie-session": "^1.4.0",
 		"cors": "^2.8.5",
 		"csurf": "latest",
 		"dotenv": "^8.2.0",
