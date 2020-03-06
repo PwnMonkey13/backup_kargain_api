@@ -16,10 +16,9 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
 app.use(passport.initialize({ session: false }))
 
-const whitelist = ['http://localhost:3000']
+const whitelist = ['http://localhost:3000', 'https://kargain-app.now.sh']
 const corsOptions = {
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  credentials: true,
   preflightContinue: true,
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {

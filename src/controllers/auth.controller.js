@@ -30,7 +30,7 @@ const login = (req, res, next) => {
         // sameSite: true,
       }) // Adds a new cookie to the response
 
-      return res.json({ success: true, data: { user } })
+      return res.json({ success: true, data: { user, token } })
     }).catch(next)
 }
 
