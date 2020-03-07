@@ -1,23 +1,10 @@
 const cors = require('cors')
 const router = require('express').Router()
+const corsConfig = require('../config/cors')
 const authController = require('../controllers/auth.controller')
 const passportAuth = require('../middlewares/passport');
 
-const whitelist = ['http://localhost:3000', 'https://kargain-app.now.sh']
-const corsOptions = {
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  preflightContinue: true,
-  // credentials: true,
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  }
-}
-
-router.post('/login', authController.login)
+router.post('/login', cors(), authController.login)
 
 router.post('/register', authController.register)
 

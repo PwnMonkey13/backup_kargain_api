@@ -10,27 +10,13 @@ const app = express()
 const tableRoutes = require('../routes/tableRoutes')
 
 app.use(helmet())
+app.use(cors())
 app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
 app.use(passport.initialize({ session: false }))
 
-const whitelist = ['http://localhost:3000', 'https://kargain-app.now.sh']
-const corsOptions = {
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  preflightContinue: true,
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  }
-}
-
-app.use(cors(corsOptions))
-//   res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE')
 
 app.use('/api', routes)
 
@@ -45,11 +31,11 @@ app.get('/endpoints', function (req, res, next) {
   tableRoutes(app)
 })
 
-app.get('*', function (req, res, next) {
-  const err = new Error('Page Not Found')
-  err.statusCode = 404
-  next(err)
-})
+// app.get('*', function (req, res, next) {
+//   const err = new Error('Page Not Found')
+//   err.statusCode = 404
+//   next(err)
+// })
 
 app.use(function (err, req, res, next) {
   // render the error page

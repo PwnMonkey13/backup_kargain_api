@@ -1,8 +1,16 @@
-require('dotenv').config() // instatiate environment variables
+require('dotenv').config()
 
 let env;
 let config;
 const global = {
+  CORS_WHITELIST : ['http://localhost:3000', 'https://kargain-app.now.sh'],
+  externalsAPI : {
+    car : {
+      API_URL : "https://databases.one/api",
+      API_TOKEN : '2bc401d0b2c3f47eb29ca4946',
+    }
+  },
+
   port: parseInt(process.env.PORT) || 8080,
   env: process.env.NODE_ENV || "development",
   jwt: {
