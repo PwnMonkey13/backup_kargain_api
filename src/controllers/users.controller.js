@@ -19,8 +19,6 @@ const getUsers = async (req, res, next) => {
       total: 0
     }
 
-    if (req.params.sort) response.sort = req.params.sort
-
     const users = await User
       .find()
       .skip(skip)

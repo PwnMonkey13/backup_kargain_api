@@ -1,27 +1,74 @@
-const Announce = require('../models').Announce
+const AnnounceModel = require('../models').Announce
 
-const getAll = async (req, res, next) => {
-  const data = await Announce.find().populate('user');
-  return res.json({ success: true, data: data })
+const getAnnounces = async (req, res, next) => {
+  const { filters, sorters } = req.body
+
+  try {
+    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    const sort = (req.query.sort) ? { [req.query.sort]: 1 } : {}
+    let size = 10
+
+    if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
+      size = parseInt(req.query.size)
+    }
+    const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
+
+    const query = Object.keys(filters).reduce((carry, key) => {
+      const filter = filters[key]
+      if (typeof filter === 'object') {
+        if (filter.type === 'number') {
+          if (!carry[filter.ref]) carry[filter.ref] = {}
+          if (filter.rule === 'min') carry[filter.ref] = { ...carry[filter.ref], $gte: filter.value }
+          else if (filter.rule === 'max') carry[filter.ref] = { ...carry[filter.ref], $lte: filter.value }
+        } else carry[key] = filter.rule === 'strict' ? filter.value.toLowerCase() : {
+          '$regex': filter.value,
+          '$options': 'i'
+        }
+      }
+      return carry
+    }, {})
+
+    const data = await AnnounceModel
+      .find(query)
+      .skip(skip)
+      .sort(sort)
+      .limit(size)
+      .populate('user')
+
+    const total = data.length
+
+    let response = {
+      query,
+      filters: req.body.filters,
+      total,
+      data,
+      page,
+      size,
+      sort,
+    }
+
+    return res.json({ success: true, ...response })
+
+  } catch (e) {
+    throw e
+  }
 }
 
 const getBySlug = async (req, res, next) => {
-  const announce = await Announce.findOne({ slug: req.params.slug }).populate('user');
+  const announce = await AnnounceModel.findOne({ slug: req.params.slug }).populate('user')
   if (announce) return res.json({ success: true, data: announce })
   else return res.status(400).json({ success: false, msg: 'no announce found' })
 }
 
 const create = async (req, res, next) => {
-  let announce = new Announce({
+  let announce = new AnnounceModel({
     user: req.user.id,
     ...req.body
   })
-
-  console.log(announce);
 
   announce.save().then(document => {
     return res.json({ success: true, message: 'Ad created successfully', data: document })
   }).catch(err => next(err))
 }
 
-module.exports = { getAll, getBySlug, create }
+module.exports = { getAnnounces, getBySlug, create }

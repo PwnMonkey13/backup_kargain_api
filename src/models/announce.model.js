@@ -4,10 +4,6 @@ const AdresseSchema = require('../schemas/addresse.schema');
 const { uuid, fromString } = require('uuidv4');
 
 const AnnounceSchema = new mongoose.Schema({
-	user:{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'User'
-	},
 
 	title : {
 		type: String,
@@ -20,12 +16,63 @@ const AnnounceSchema = new mongoose.Schema({
 		trim: true,
 	},
 
-	phone :{
+	adType: {
 		type: String,
+		trim: true,
+		required: true
+	},
+
+	vehicleType:{
+		type: String,
+		trim: true,
+		required: true
+	},
+
+	engine : {
+		type : {
+			type: String,
+			trim: true,
+		},
+		gas : {
+			type: String,
+			trim: true,
+		},
+		cylinder : {
+			type: String,
+			trim: true,
+		}
+	},
+
+	mileage : {
+		type: Number,
 		trim: true,
 	},
 
-	address : AdresseSchema,
+	price : {
+		type: Number,
+		trim: true,
+	},
+
+	currency : {
+		type: Number,
+		trim: true,
+	},
+
+	doors : {
+		type: Number,
+		trim: true,
+	},
+
+	seats : {
+		type: Number,
+		trim: true,
+	},
+
+	user:{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User'
+	},
+
 }, {
 	timestamps: true,
 	toJSON: { virtuals: true },
