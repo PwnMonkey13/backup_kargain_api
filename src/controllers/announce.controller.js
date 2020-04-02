@@ -13,7 +13,7 @@ const getAnnounces = async (req, res, next) => {
     }
     const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
 
-    const query = Object.keys(filters).reduce((carry, key) => {
+    const query = filters ? Object.keys(filters).reduce((carry, key) => {
       const filter = filters[key]
       if (typeof filter === 'object') {
         if (filter.type === 'number') {
@@ -26,7 +26,7 @@ const getAnnounces = async (req, res, next) => {
         }
       }
       return carry
-    }, {})
+    }, {}) : {};
 
     const data = await AnnounceModel
       .find(query)
@@ -61,10 +61,12 @@ const getBySlug = async (req, res, next) => {
 }
 
 const create = async (req, res, next) => {
+
   let announce = new AnnounceModel({
-    user: req.user.id,
     ...req.body
   })
+
+  if(req.user) announce.user = req.user;
 
   announce.save().then(document => {
     return res.json({ success: true, message: 'Ad created successfully', data: document })

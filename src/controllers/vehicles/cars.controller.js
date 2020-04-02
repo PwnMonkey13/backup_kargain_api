@@ -1,10 +1,7 @@
 const fetch = require('node-fetch')
-const querystring = require('querystring')
 const utils = require('../../utils/functions')
-
 const redisConfig = require('../../config/redis');
 const redisClient = redisConfig.redisClient;
-
 const CONFIG = require('../../config/config')
 const BASE_API_URL = CONFIG.externalsAPI.databasesCar.API_URL
 const BASE_API_KEY = CONFIG.externalsAPI.databasesCar.API_TOKEN
@@ -31,7 +28,7 @@ const getData = (req, res, next) => {
     else {
       fetchApi(url).then(data => {
         redisClient.set(url, JSON.stringify(data))
-        return res.json({ success: true, msg: 'from API', data })
+        return res.json({ success: true, msg: 'from API', url, data })
       }).catch(next)
     }
   });

@@ -1,5 +1,6 @@
 const vehicleSchema = require("../schemas/vehicles/vehicleModel.schema");
 const mongoose = require('mongoose');
+const Airtable = require('airtable')
 
 const bulkInsert = (req, res, next) => {
   const data = req.body;
@@ -14,4 +15,22 @@ const bulkInsert = (req, res, next) => {
     .catch(next);
 }
 
-module.exports = { bulkInsert }
+const testAirTable = (req, res, next) => {
+  const AirTable = require('airtable');
+  const base = new AirTable({apiKey: 'key9AYMKfuKxT9Asd'}).base('appd6P7GXekeqmV2A');
+
+  base('Design projects').select({
+    view: 'All projects',
+    maxRecords: 5,
+    // filterByFormula: 'AND(Days > 5, Visited)',
+    fields: ['Name', 'Category'],
+    sort: [
+      {field: 'Name', direction: 'desc'},
+    ],
+  }).firstPage(function(err, records) {
+    if (err) return next(err);
+    return res.json({ success: true, data : records })
+  });
+}
+
+module.exports = { bulkInsert, testAirTable }

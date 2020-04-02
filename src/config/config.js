@@ -12,23 +12,60 @@ const global = {
       adresse_API_URL: "https://api-adresse.data.gouv.fr/search",
       geo_API_URL: "https://api-adresse.data.gouv.fr/search"
     },
-
     vindecoderFree : {
       API_URL : "https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues"
     },
-
     vindecoder : {
       API_URL : "http://api.carmd.com/v3.0",
       "partner-token" : "74563ccc0b0c4ca98e7cd7292b513716",
       authorization : "Basic MWM2MWE4NGMtMGQzZC00MDA2LTkxMGItMmZlNDUyN2QxMTc1"
     },
-
     databasesCar : {
       API_URL : "https://databases.one/api",
       API_TOKEN : '2bc401d0b2c3f47eb29ca4946',
     }
   },
-
+  mailer: {
+    from : {
+      name : 'Contact Kargain',
+      // email : 'contact@kargain.com'
+      email : "giraudo.nicolas13@gmail.com"
+    },
+    mailjet:{
+      API_KEY : '1228806536f8584e9449c86d3675d821',
+      password: '471a6894957996fff615aea4634a5f89'
+    },
+    stmp:{
+      ethereal:{
+        host: 'smtp.ethereal.email',
+        port: 587,
+        auth: {
+          user: 'josiane8@ethereal.email',
+          pass: 'zndYbvvQ4faW8w1WQd'
+        }
+      },
+      mailjet : {
+        host: 'in-v3.mailjet.com',
+        port: 587,
+        auth: {
+          user: '1228806536f8584e9449c86d3675d821',
+          pass: '471a6894957996fff615aea4634a5f89',
+        },
+      },
+      gmail:{
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'giraudo.nicolas',
+          pass: 'tX29P4QNadD7kAG7x5'
+        }
+      }
+    }
+  },
+  mailChimp:{
+    API_KEY : "991e70c5ec85e1e1432e3486242cdc5d-us19"
+  },
   redis:{
     host : 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
     port : 10042,

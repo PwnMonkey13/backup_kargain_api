@@ -17,53 +17,33 @@ const AnnounceSchema = new mongoose.Schema({
 	},
 
 	adType: {
-		type: String,
-		trim: true,
-		required: true
+		type: { value : String, label : String},
 	},
 
 	vehicleType:{
-		type: String,
-		trim: true,
-		required: true
+		type: { value : String, label : String},
 	},
 
 	engine : {
 		type : {
-			type: String,
+			type: { value : String, label : String},
 			trim: true,
 		},
 		gas : {
-			type: String,
+			type: { value : String, label : String},
 			trim: true,
 		},
 		cylinder : {
-			type: String,
+			type: { value : String, label : String},
 			trim: true,
 		}
 	},
-
 	mileage : {
 		type: Number,
 		trim: true,
 	},
 
 	price : {
-		type: Number,
-		trim: true,
-	},
-
-	currency : {
-		type: Number,
-		trim: true,
-	},
-
-	doors : {
-		type: Number,
-		trim: true,
-	},
-
-	seats : {
 		type: Number,
 		trim: true,
 	},

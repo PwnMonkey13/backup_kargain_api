@@ -2,10 +2,12 @@ const router = require('express').Router()
 const announceController = require('../controllers/announce.controller')
 const passportAuth = require('../middlewares/passport');
 
-router.post('/', announceController.getAnnounces)
+router.post('/paginate', announceController.getAnnounces)
 
 router.get('/slug/:slug', announceController.getBySlug)
 
-router.post('/', passportAuth.authenticate('jwt', { session: false }), announceController.create)
+// router.post('/', passportAuth.authenticate('jwt', { session: false }), announceController.create)
+
+router.post('/', announceController.create)
 
 module.exports = router

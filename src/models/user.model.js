@@ -11,52 +11,86 @@ const UserSchema = new mongoose.Schema({
 		required: true,
 		trim: true,
 	},
+
 	lastname: {
 		type: String,
 		required: true,
 		trim: true,
 	},
+
 	username : {
 		type: String,
 		trim: true,
 	},
+
 	email: {
 		type: String,
 		trim: true,
 		unique: true,
 		required: true
 	},
-	picture:{
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'media'
-	},
-	about: {
-		type: String,
-		trim: true,
-	},
-	phone: {
-		type: String,
-		trim: true,
-	},
-	address : AdresseSchema,
-	password: {
-		type: String,
-		trim: true,
-		required: true
-	},
-	clear_password: {
-		type: String,
-		trim: true,
-	},
+
 	role: {
 		type: String,
 		enum: ['Client', 'Admin'],
 		default: 'Client'
 	},
+
+	phone: {
+		type: String,
+		trim: true,
+	},
+
+	picture:{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'media'
+	},
+
+	about: {
+		type: String,
+		trim: true,
+	},
+
 	socials:{
 		twitter: String,
 		facebook: String
-	}
+	},
+
+	address : {
+		type: String,
+		trim: true,
+	},
+
+	postalcode : {
+		type: String,
+		trim: true,
+	},
+
+	city : {
+		type: String,
+		trim: true,
+	},
+
+	country : {
+		type: String,
+		trim: true,
+	},
+
+	password: {
+		type: String,
+		trim: true,
+		required: true
+	},
+
+	clear_password: {
+		type: String,
+		trim: true,
+	},
+
+	activated: Boolean,
+
+	email_validated: Boolean,
+
 }, {
 	strict: false,
 	toObject: {
