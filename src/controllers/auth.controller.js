@@ -3,108 +3,169 @@ const config = require('../config/config')
 const User = require('../models').User
 const CONFIG = require('../config/config')
 const mailer = require('../utils/mailer')
+const authMailer = require('../components/mailer').auth;
+const handleError = require('../utils/handleError');
+const { uuid, fromString } = require('uuidv4');
 
 // Constants
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/
 
-const login = (req, res, next) => {
+const loginAction = async (req, res, next) => {
   const { email, password } = req.body
 
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  // if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
+  if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
 
-  User.findOne({ email })
-    .then(user => {
-      if (!user) return res.status(404).json({ success: false, msg: 'user not found' })
+  try{
+    const user = await User.findByEmail(email);
+    const compare = await user.comparePassword(password);
+    if(!compare) throw handleError.Error('Invalid password or email');
 
-      // generate a signed son web token with the contents of user object and return it in the response
-      const token = jwt.sign({
-          exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
-          user: user
-        },
-        config.jwt.encryption
-      )
+    // generate a signed son web token with the contents of user object and return it in the response
+    const token = jwt.sign({
+        exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
+        user: user
+      },
+      config.jwt.encryption
+    );
 
-      res.cookie('token', token, {
-        maxAge: 60 * 60 * 1000, // 1 hour
-        httpOnly: true,
-        // secure: true,
-        // sameSite: true,
-      }) // Adds a new cookie to the response
-
-      return res.json({ success: true, data: { user, token } })
-    }).catch(next)
+    // Adds a new cookie to the response
+    res.cookie('token', token, {
+      maxAge: 60 * 60 * 1000, // 1 hour
+      httpOnly: true,
+      // secure: true,
+      // sameSite: true,
+    })
+    return res.json({ success: true, data: { user, token } })
+  }catch (err) {
+    next(err)
+  }
 }
 
-const register = async (req, res, next) => {
+const registerAction = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
   if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
 
-  const user = new User({
-    ...req.body,
-    activated: true,
-    email_validated: false,
-  })
+  const user = new User(req.body)
+  const hostname = req.protocol + '://' + req.get('host') + config.api_path;
+
+  const token = jwt.sign({
+      email
+    }, config.jwt.encryption, { expiresIn: '1h' }
+  );
 
   try{
     const document = await user.save();
-    const emailResult = await confirmEmail({
+    const emailResult = await authMailer.confirmAccount({
       firstname: document.firstname,
       lastname : document.lastname,
-      email : document.email
+      email : document.email,
+      token,
+      confirmUrl : `${hostname}/auth/confirm-email/${token}`
     });
-
-    return res.json({ success: true, msg: 'User signed up successfully', document, emailResult })
+    return res.json({ success: true, msg: 'User signed up successfully', emailResult, token })
   } catch (err) {
     next(err)
   }
 }
 
-const registerPro = async (req, res, next) => {
+const registerProAction = async (req, res, next) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
   if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
   if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
 
-  let user = new User({ ...req.body })
+  const user = new User(req.body);
+
+  const token = jwt.sign({
+      email
+    }, config.jwt.encryption, { expiresIn: '1h' }
+  );
 
   try {
     const document = await user.save();
-    return res.json({ success: true, message: 'User signed up successfully', data: document })
+    const emailResult = await authMailer.confirmAccount({
+      firstname: document.firstname,
+      lastname : document.lastname,
+      email : document.email,
+      confirmUrl : `${config.frontend}/auth/confirm-email/${token}`
+    });
+
+    return res.json({ success: true, message: 'User signed up successfully', data: document, emailResult })
   } catch(err) {
     next(err)
   }
 }
 
-function authorize (req, res) {
+function authorizeAction (req, res) {
   return res.json({ success: true, isLoggedIn: true })
 }
 
-function deleteSession (req, res, next) {
+function deleteSessionAction (req, res, next) {
   delete req.user
-  return res.status(200).send({
-    status: 'ok',
-    message: 'You have been logged out.'
-  })
+  return res.json({ success: true, msg: 'You have been logged out.' })
 }
 
-const testEmail = (req, res, next) => {
-  mailer.test((err, info) => {
-    if(err) next(err);
-    else return res.json({ success: true, info });
-  });
+const confirmEmailAction = async (req, res, next) => {
+  const { token }  = req.query;
+  try {
+    const decoded = await jwt.verify(token, config.jwt.encryption);
+    if(!decoded) return next('missing email');
+    const { email } = decoded;
+    if (!email) return next('missing email in token');
+    try {
+      const updated = await User.confirmUser(email);
+      return res.json({ success: true, msg: 'User confirmed successfully', data: updated });
+    } catch (err) {
+      return next(err);
+    }
+  }catch (err) {
+    return next(handleError.ExpiredTokenError('jwt expired'));
+  }
 }
 
-const verifyEmail = (req, res, next) => {
-  mailer.verify((err, info)=> {
-    if(err) next(err);
-    else return res.json({ success: true, info });
-  });
+const forgotPasswordAction = async (req,res, next) => {
+  const { email }  = req.body;
+  try {
+    let user = await User.findByEmail(email);
+    const token = jwt.sign({
+        email: user.email
+      }, config.jwt.encryption, { expiresIn: '1h' }
+    );
+
+    user.pass_reset = uuid();
+    const document = await user.save();
+
+    const emailResult = await authMailer.resetPassword({
+      firstname: document.firstname,
+      lastname : document.lastname,
+      email : document.email,
+      link : `${config.frontend}/auth/confirm-email/${token}`,
+      token
+    });
+
+    return res.json({ success: true, data: { emailResult } });
+  }catch (err) {
+    next(err);
+  }
 }
+
+const resetPasswordAction = async (req, res, next) => {
+  const { token, password }  = req.body;
+  try{
+    const decoded = await jwt.verify(token, config.jwt.encryption);
+    if(!decoded) return next('missing email');
+    const { email } = decoded;
+    const updated = await User.resetPassword(email, password);
+    return res.json({ success: true, msg: 'User password updated successfully', data : updated })
+  } catch (err) {
+    next(err)
+  }
+};
 
 const legacy = (req, res, next) => {
   const recipient = {
@@ -132,35 +193,13 @@ const legacy = (req, res, next) => {
   });
 }
 
-const confirmEmail = async params => {
-  const message = {
-    Messages: [
-      {
-        From: {
-          Email: CONFIG.mailer.from.name,
-          Name: CONFIG.mailer.from.name,
-        },
-        To: [
-          {
-            Email: 'giraudo.nicolas13@gmail.com',
-            Name: `${params.lastname} ${params.firstname}`
-          }
-        ],
-        TemplateID: 1331067,
-        TemplateLanguage: true,
-        Subject: "Activation Mail Kargain",
-        Variables: {
-          activation_link: 'https://app.mailjet.com/template/1331067/send'
-        }
-      }
-    ]
-  };
-
-  try {
-    return await mailer.sendMailJet(message);
-  } catch (err) {
-    next(err);
-  }
+module.exports = {
+  loginAction,
+  registerAction,
+  registerProAction,
+  authorizeAction,
+  deleteSessionAction,
+  confirmEmailAction,
+  forgotPasswordAction,
+  resetPasswordAction,
 }
-
-module.exports = { login, register, registerPro, authorize, deleteSession, testEmail, verifyEmail, confirmEmail }

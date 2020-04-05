@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto');
 const utils = require('../utils/functions');
-const AdresseSchema = require('../schemas/addresse.schema');
+const handleError = require('../utils/handleError');
 const { uuid, fromString } = require('uuidv4');
 
 const UserSchema = new mongoose.Schema({
@@ -87,9 +87,18 @@ const UserSchema = new mongoose.Schema({
 		trim: true,
 	},
 
-	activated: Boolean,
+	salt: String,
+	pass_reset: String,
 
-	email_validated: Boolean,
+	activated: {
+		type : Boolean,
+		default : false
+	},
+
+	email_validated: {
+		type : Boolean,
+		default : false
+	},
 
 }, {
 	strict: false,
@@ -111,25 +120,93 @@ const UserSchema = new mongoose.Schema({
 	}
 });
 
-//hashing a password before saving it to the database
-UserSchema.pre('save', function(next) {
-	let user = this;
-	const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`);
-	user.username = `${fullname}-${uuid().substr(0, 6)}`;
-	user.clear_password = user.password;
+const hashPassword = async (password, saltRounds = 10) => {
+		return await bcrypt.hash(password, saltRounds)
+};
 
-	this.constructor.find({ username: user.username }, function(err, result){
-		if (err) return next(err);
-		if(result.length !== 0) return next('username already in use');
-
-		bcrypt.hash(user.password, 10, function(err, hash) {
-			if(err) return next(err);
-			user.clear_password = user.password;
-			user.password = hash;
-			next();
-		});
-	});
+UserSchema.post('init', function(doc) {
+	console.log('%s has been initialized from the db', doc._id);
 });
+
+// Handler **must** take 3 parameters: the error that occurred, the document
+UserSchema.post('save', function(err, doc, next) {
+	if(err){
+		if (err.name === 'MongoError' && err.code === 11000) {
+			throw handleError.DuplicateError('duplicate user');
+		} else return next(err);
+	}
+	next();
+});
+
+UserSchema.post('save', function(doc) {
+	console.log('%s has been saved', doc._id);
+});
+
+UserSchema.post('remove', function(doc) {
+	console.log('%s has been removed', doc._id);
+});
+
+//hashing a password before saving it to the database
+UserSchema.pre('save', async function(next) {
+	let user = this;
+	try{
+		const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`);
+		user.username = `${fullname}-${uuid().substr(0, 6)}`;
+		user.password = await hashPassword(user.password);
+		next();
+	} catch (err) {
+		next(err);
+	}
+});
+
+UserSchema.statics.findByEmail = async function(email){
+	try{
+		const user = await this.model('User').findOne({email}).exec();
+		if(!user) throw handleError.NotFoundError("user not found");
+		else return user;
+	} catch (err) {
+		throw err;
+	}
+}
+
+UserSchema.statics.confirmUser = async function(email){
+	try{
+		const user = await this.model('User').findOne({ email }).exec();
+		if (!user)
+			throw handleError.NotFoundError();
+		if(user.activated && user.email_validated)
+			throw handleError.AlreadyActivated('user already activated');
+
+		user.activated = true;
+		user.email_validated = true;
+
+		return await user.save();
+	}
+	catch (err) {
+		throw err;
+	}
+}
+
+UserSchema.statics.resetPassword = async function(email, password){
+	try{
+		let user = await this.model('User').findByEmail(email);
+		const areIdentical = await user.comparePassword(password);
+		if(areIdentical) throw handleError.Error("Password are identical");
+		user.password = password;
+		return await user.save();
+	} catch (err) {
+		throw err;
+	}
+};
+
+UserSchema.methods.comparePassword = async function(password){
+	const user = this;
+	try{
+		return await bcrypt.compare(password, user.password);
+	} catch (err) {
+		throw err;
+	}
+};
 
 UserSchema.virtual( 'fullname' ).get( function () {
 	const user = this;

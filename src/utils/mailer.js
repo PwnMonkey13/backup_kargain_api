@@ -14,8 +14,6 @@ const transporter = nodemailer.createTransport(mailConfig)
 const verify = callback => {
   transporter.verify((err, success) => {
     if (err) return callback(err)
-    console.log(success)
-    console.log('Server is ready to take our messages')
     callback(null, success)
   })
 }
@@ -60,7 +58,11 @@ const sendMailJet = async message => {
   const mailer = mailjet.connect(CONFIG.mailer.mailjet.API_KEY, CONFIG.mailer.mailjet.password);
 
   try{
-    return await mailer.post('send', { 'version': 'v3.1' }).request(message);
+    return await mailer.post('send', {
+      'version': 'v3.1',
+      'timeout': 1000,
+      'perform_api_call': true // false to disable
+    }).request(message);
   }catch (err) {
     throw err;
   }

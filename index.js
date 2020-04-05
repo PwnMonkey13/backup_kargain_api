@@ -6,7 +6,7 @@ mongoose.Promise = global.Promise //set mongo up to use promises
 
 mongoose.connect(config.db.mongo_location, { useCreateIndex: true, useNewUrlParser: true })
   .catch(err => {
-    console.log(err)
+    console.log(err);
     throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location)
   })
 
@@ -14,8 +14,10 @@ let db = mongoose.connection
 
 db.once('open', () => {
   console.log('Connected to mongo at ' + config.db.mongo_location)
-  app.listen(config.port, function () {
-    console.log(`There will be dragons: http://localhost:${config.port}`)
+  const server = app.listen(config.port, 'localhost', function () {
+    const host = server.address().address;
+    const port = server.address().port;
+    console.log('There will be dragons http://' + host + ':' + port)
   })
 })
 

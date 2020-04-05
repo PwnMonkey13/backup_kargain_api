@@ -6,7 +6,7 @@ function setCorsResponseHeaders(allowCredentials = false, enableAllOrigin = fals
     credentials: allowCredentials,
     preflightContinue: true,
     origin: function (origin, callback) {
-      if (CONFIG.CORS_WHITELIST.indexOf(origin) !== -1 || enableAllOrigin) {
+      if (CONFIG.whileListDomains.indexOf(origin) !== -1 || enableAllOrigin) {
         callback(null, true)
       } else {
         callback(new Error('Not allowed by CORS'))

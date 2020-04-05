@@ -17,8 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static('public'))
 app.use(passport.initialize({ session: false }))
 
-
-app.use('/api', routes)
+app.use(config.api_path, routes)
 
 app.get('/', function (req, res, next) {
   res.json({
@@ -31,18 +30,25 @@ app.get('/endpoints', function (req, res, next) {
   tableRoutes(app)
 })
 
-// app.get('*', function (req, res, next) {
-//   const err = new Error('Page Not Found')
-//   err.statusCode = 404
-//   next(err)
-// })
+app.get('*', function (req, res, next) {
+  const err = new Error('Page Not Found')
+  err.statusCode = 404
+  next(err)
+})
 
 app.use(function (err, req, res, next) {
-  // render the error page
-  let msg = err.message || err
-  msg = config.isDev ? msg : 'Something failed on server'
-  console.log(msg)
-  res.status(err.status || 500).json({ success: false, msg })
+  const isError = err instanceof Error;
+  const code = err.code || err.statusCode || 500;
+  let message = isError ? err.message : err;
+  if(!config.isDev) message = 'Something failed on server';
+
+  const error = {
+    name : err.name || "Error",
+    code,
+    message
+  };
+
+  res.json({ success: false, error})
 })
 
 module.exports = app

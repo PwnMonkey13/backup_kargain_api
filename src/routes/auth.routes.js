@@ -1,24 +1,22 @@
 const cors = require('cors')
 const router = require('express').Router()
-const corsConfig = require('../config/cors')
 const authController = require('../controllers/auth.controller')
 const passportAuth = require('../middlewares/passport');
-const mailer = require('../utils/mailer')
 
-router.post('/login', cors(), authController.login)
+router.post('/login', cors(), authController.loginAction)
 
-router.post('/register', authController.register)
+router.post('/register', authController.registerAction)
 
-router.post('/register-pro', authController.registerPro)
+router.post('/register-pro', authController.registerProAction)
 
-router.get('/authorize', passportAuth.authenticate('jwt', { session: false }), authController.authorize)
+router.get('/authorize', passportAuth.authenticate('jwt', { session: false }), authController.authorizeAction)
 
-router.get('/logout', passportAuth.authenticate('jwt', { session: false }), authController.deleteSession)
+router.get('/logout', passportAuth.authenticate('jwt', { session: false }), authController.deleteSessionAction)
 
-router.post('/test-email', authController.testEmail)
+router.get('/confirm-account', authController.confirmEmailAction)
 
-router.post('/verify-email', authController.verifyEmail)
+router.post('/forgot-password', authController.forgotPasswordAction);
 
-router.post('/confirm-email', authController.confirmEmail)
+router.post('/reset-password', authController.resetPasswordAction);
 
 module.exports = router

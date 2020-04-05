@@ -2,8 +2,11 @@ require('dotenv').config()
 
 let env;
 let config;
+
+const domains = { local : 'http://localhost:3000', prod : 'https://kargain-app.now.sh'}
 const global = {
-  CORS_WHITELIST : ['http://localhost:3000', 'https://kargain-app.now.sh'],
+  api_path : '/api',
+  whileListDomains : Object.keys(domains).map(key => domains[key]),
   externalsAPI : {
     vicopo: {
       API_URL : 'https://vicopo.selfbuild.fr/cherche'
@@ -80,6 +83,7 @@ const global = {
 }
 
 const dev = {
+  frontend : domains.local,
   db: {
     // mongo_location: 'mongodb://' + CONFIG.db.host + ':' + CONFIG.db.port + '/' + CONFIG.db.name;
     mongo_location: process.env.MONGODB_URI_DEV,
@@ -88,6 +92,7 @@ const dev = {
 }
 
 const prod = {
+  frontend : domains.prod,
   db: {
     mongo_location: process.env.MONGODB_URI_PROD,
     name: process.env.DB_NAME_PROD || 'kargain'
