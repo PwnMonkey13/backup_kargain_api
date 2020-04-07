@@ -38,9 +38,9 @@ app.get('*', function (req, res, next) {
 
 app.use(function (err, req, res, next) {
   const isError = err instanceof Error;
-  const code = err.code || err.statusCode || 500;
+  const code = err.code || err.statusCode || 200;
   let message = isError ? err.message : err;
-  if(!config.isDev) message = 'Something failed on server';
+  // if(!config.isDev) message = 'Something failed on server';
 
   const error = {
     name : err.name || "Error",
@@ -48,7 +48,7 @@ app.use(function (err, req, res, next) {
     message
   };
 
-  res.json({ success: false, error})
+  return res.json({ success: false, error})
 })
 
 module.exports = app

@@ -1,9 +1,5 @@
-function throwError(msg, code) {
-  throw new CustomError(msg, code);
-}
-
 class CustomError extends Error {
-  constructor(message = "", name, code = 400) {
+  constructor(message = "", name, code = 200) {
     super();
     this.message = message;
     this.statusCode = code;
@@ -14,8 +10,9 @@ class CustomError extends Error {
 
 module.exports = {
   Error : (message, name, code) => new CustomError(message, name, code),
-  DuplicateError : (message) => new CustomError(message, code || 402),
-  AlreadyActivated : (message, name, code) => new CustomError(message, "AlreadyActivatedError", code),
-  ExpiredTokenError : (message, code) => new CustomError(message, "ExpiredTokenError",code || 401),
-  NotFoundError : (message, name, code) => new CustomError(message || 'not found', "NotFoundError", code),
+  AlreadyActivated : (message) => new CustomError(message, "AlreadyActivatedError", 201),
+  NotFoundError : (message) => new CustomError(message, "NotFoundError", 204),
+  DuplicateError : (message) => new CustomError(message, 'DuplicateError', 205),
+  ExpiredTokenError : (message) => new CustomError(message, "ExpiredTokenError",401),
+  UnAuthorizedError : (message) => new CustomError(message, 'UnAuthorizedError', 403),
 }

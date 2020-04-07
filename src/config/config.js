@@ -99,6 +99,8 @@ const prod = {
   }
 }
 
+console.log(global.env);
+
 switch (global.env) {
   case 'development' || 'dev':
   default :

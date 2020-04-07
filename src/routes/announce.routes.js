@@ -2,7 +2,7 @@ const router = require('express').Router()
 const announceController = require('../controllers/announce.controller')
 const passportAuth = require('../middlewares/passport');
 
-router.post('/paginate', announceController.getAnnounces)
+router.get('/announces/:base64params', announceController.getAnnounces)
 
 router.get('/slug/:slug', announceController.getBySlug)
 

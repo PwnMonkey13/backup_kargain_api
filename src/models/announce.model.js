@@ -16,12 +16,16 @@ const AnnounceSchema = new mongoose.Schema({
 		trim: true,
 	},
 
+	//sale, rent ...
 	adType: {
-		type: { value : String, label : String},
+		type: String,
+		trim: true,
 	},
 
+	//car, moto etc ...
 	vehicleType:{
-		type: { value : String, label : String},
+		type: String,
+		trim: true,
 	},
 
 	engine : {

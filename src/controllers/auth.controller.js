@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken')
-const config = require('../config/config')
 const User = require('../models').User
-const CONFIG = require('../config/config')
+const config = require('../config/config')
 const mailer = require('../utils/mailer')
 const authMailer = require('../components/mailer').auth;
 const handleError = require('../utils/handleError');
@@ -13,17 +12,14 @@ const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/
 
 const loginAction = async (req, res, next) => {
   const { email, password } = req.body
-
-  if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
-  if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) { return res.status(400).json({ success: false, msg: 'password invalid (must length 4 - 8 and include 1 number at least)' }) }
+  if (!email || !password) return next('missing parameters')
+  if (!EMAIL_REGEX.test(email)) return next('email is not valid')
 
   try{
     const user = await User.findByEmail(email);
     const compare = await user.comparePassword(password);
-    if(!compare) throw handleError.Error('Invalid password or email');
+    if(!compare) return next(handleError.UnAuthorizedError('Invalid password or email'));
 
-    // generate a signed son web token with the contents of user object and return it in the response
     const token = jwt.sign({
         exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
         user: user
@@ -38,7 +34,7 @@ const loginAction = async (req, res, next) => {
       // secure: true,
       // sameSite: true,
     })
-    return res.json({ success: true, data: { user, token } })
+    return res.json({ success: true, data: { user } })
   }catch (err) {
     next(err)
   }
@@ -46,12 +42,11 @@ const loginAction = async (req, res, next) => {
 
 const registerAction = async (req, res, next) => {
   const { email, password } = req.body
-  if (!email || !password) return res.status(400).json({ success: false, msg: 'missing parameters' })
-  if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
-  if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
+  if (!email || !password) return next('missing parameters');
+  if (!EMAIL_REGEX.test(email)) return next('email is not valid');
+  if (!PASSWORD_REGEX.test(password)) return next('Password invalid (must length 4 - 8 chars and include 1 number at least');
 
   const user = new User(req.body)
-  const hostname = req.protocol + '://' + req.get('host') + config.api_path;
 
   const token = jwt.sign({
       email
@@ -65,7 +60,7 @@ const registerAction = async (req, res, next) => {
       lastname : document.lastname,
       email : document.email,
       token,
-      confirmUrl : `${hostname}/auth/confirm-email/${token}`
+      confirmUrl : `${config.frontend}/auth/confirm-email/${token}`
     });
     return res.json({ success: true, msg: 'User signed up successfully', emailResult, token })
   } catch (err) {
@@ -176,8 +171,8 @@ const legacy = (req, res, next) => {
 
   const message = {
     from: {
-      name: CONFIG.mailer.from.name,
-      address: CONFIG.mailer.from.email
+      name: config.mailer.from.name,
+      address: config.mailer.from.email
     },
     to: {
       name: `${recipient.lastname} ${recipient.lastname}`,

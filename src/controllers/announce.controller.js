@@ -1,12 +1,15 @@
 const AnnounceModel = require('../models').Announce
 
 const getAnnounces = async (req, res, next) => {
-  const { filters, sorters } = req.body
+  const { base64params } = req.params;
+  const buff = new Buffer(base64params, 'base64');
+  const string = buff.toString('ascii');
+  const filters = JSON.parse(string);
 
   try {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
     const sort = (req.query.sort) ? { [req.query.sort]: 1 } : {}
-    let size = 10
+    let size = 5
 
     if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
       size = parseInt(req.query.size)
@@ -28,26 +31,23 @@ const getAnnounces = async (req, res, next) => {
       return carry
     }, {}) : {};
 
-    const data = await AnnounceModel
+    const announces = await AnnounceModel
       .find(query)
       .skip(skip)
       .sort(sort)
       .limit(size)
       .populate('user')
 
-    const total = data.length
+    const allData = await AnnounceModel.find().exec();
 
-    let response = {
-      query,
-      filters: req.body.filters,
-      total,
-      data,
-      page,
-      size,
-      sort,
+    let data = {
+      filters,
+      length : announces.length,
+      total : allData.length,
+      announces
     }
 
-    return res.json({ success: true, ...response })
+    return res.json({ success: true, data });
 
   } catch (e) {
     throw e
