@@ -4,12 +4,14 @@ const getAnnounces = async (req, res, next) => {
   const { base64params } = req.params;
   const buff = new Buffer(base64params, 'base64');
   const string = buff.toString('ascii');
-  const filters = JSON.parse(string);
+  const params = JSON.parse(string);
+  const {filters, sorter} = params;
 
   try {
-    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
-    const sort = (req.query.sort) ? { [req.query.sort]: 1 } : {}
-    let size = 5
+    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1;
+    let size = 5;
+    let sorters = { "createdAt": -1 };
+    if(sorter) sorters = {[sorter.value.key] : sorter.value.desc ? -1 : 1, ...sorters };
 
     if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
       size = parseInt(req.query.size)
@@ -23,7 +25,12 @@ const getAnnounces = async (req, res, next) => {
           if (!carry[filter.ref]) carry[filter.ref] = {}
           if (filter.rule === 'min') carry[filter.ref] = { ...carry[filter.ref], $gte: filter.value }
           else if (filter.rule === 'max') carry[filter.ref] = { ...carry[filter.ref], $lte: filter.value }
-        } else carry[key] = filter.rule === 'strict' ? filter.value.toLowerCase() : {
+        }
+        //TODO
+        else if(typeof filter === 'object'){
+          console.log(filter);
+        }
+        else carry[key] = filter.rule === 'strict' ? filter.value.toLowerCase() : {
           '$regex': filter.value,
           '$options': 'i'
         }
@@ -34,7 +41,7 @@ const getAnnounces = async (req, res, next) => {
     const announces = await AnnounceModel
       .find(query)
       .skip(skip)
-      .sort(sort)
+      .sort(sorters)
       .limit(size)
       .populate('user')
 

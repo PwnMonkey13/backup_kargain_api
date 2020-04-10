@@ -28,7 +28,19 @@ const AnnounceSchema = new mongoose.Schema({
 		trim: true,
 	},
 
-	engine : {
+	//neuf, occas
+	vehicleGeneralState : {
+		type: String,
+		trim: true,
+	},
+
+	//taxi, personal
+	vehicleFunction : {
+		type: String,
+		trim: true,
+	},
+
+	vehicleEngine : {
 		type : {
 			type: { value : String, label : String},
 			trim: true,
