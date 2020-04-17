@@ -28,6 +28,12 @@ const AnnounceSchema = new mongoose.Schema({
 		trim: true,
 	},
 
+	//citadine, cabriolet, etc ...
+	vehicleFunctionUse:{
+		type: String,
+		trim: true,
+	},
+
 	//neuf, occas
 	vehicleGeneralState : {
 		type: String,
