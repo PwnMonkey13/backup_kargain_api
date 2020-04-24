@@ -1,45 +1,45 @@
 require('dotenv').config()
 
-let env;
-let config;
+let env
+let config
 
-const domains = { local : 'http://localhost:3000', prod : 'https://kargain-app.now.sh'}
+const domains = { local: 'http://localhost:3000', prod: 'https://kargain.web.app' }
 const global = {
-  api_path : '/api',
-  whileListDomains : Object.keys(domains).map(key => domains[key]),
-  externalsAPI : {
+  api_path: '/api',
+  whileListDomains: ['http://localhost:3000', 'https://kargain-app.now.sh', 'https://kargain.web.app'],
+  externalsAPI: {
     vicopo: {
-      API_URL : 'https://vicopo.selfbuild.fr/cherche'
+      API_URL: 'https://vicopo.selfbuild.fr/cherche'
     },
     geoGouv: {
-      adresse_API_URL: "https://api-adresse.data.gouv.fr/search",
-      geo_API_URL: "https://api-adresse.data.gouv.fr/search"
+      adresse_API_URL: 'https://api-adresse.data.gouv.fr/search',
+      geo_API_URL: 'https://api-adresse.data.gouv.fr/search'
     },
-    vindecoderFree : {
-      API_URL : "https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues"
+    vindecoderFree: {
+      API_URL: 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues'
     },
-    vindecoder : {
-      API_URL : "http://api.carmd.com/v3.0",
-      "partner-token" : "74563ccc0b0c4ca98e7cd7292b513716",
-      authorization : "Basic MWM2MWE4NGMtMGQzZC00MDA2LTkxMGItMmZlNDUyN2QxMTc1"
+    vindecoder: {
+      API_URL: 'http://api.carmd.com/v3.0',
+      'partner-token': '74563ccc0b0c4ca98e7cd7292b513716',
+      authorization: 'Basic MWM2MWE4NGMtMGQzZC00MDA2LTkxMGItMmZlNDUyN2QxMTc1'
     },
-    databasesCar : {
-      API_URL : "https://databases.one/api",
-      API_TOKEN : '2bc401d0b2c3f47eb29ca4946',
+    databasesCar: {
+      API_URL: 'https://databases.one/api',
+      API_TOKEN: '2bc401d0b2c3f47eb29ca4946',
     }
   },
   mailer: {
-    from : {
-      name : 'Contact Kargain',
+    from: {
+      name: 'Contact Kargain',
       // email : 'contact@kargain.com'
-      email : "giraudo.nicolas13@gmail.com"
+      email: 'giraudo.nicolas13@gmail.com'
     },
-    mailjet:{
-      API_KEY : '1228806536f8584e9449c86d3675d821',
+    mailjet: {
+      API_KEY: '1228806536f8584e9449c86d3675d821',
       password: '471a6894957996fff615aea4634a5f89'
     },
-    stmp:{
-      ethereal:{
+    stmp: {
+      ethereal: {
         host: 'smtp.ethereal.email',
         port: 587,
         auth: {
@@ -47,7 +47,7 @@ const global = {
           pass: 'zndYbvvQ4faW8w1WQd'
         }
       },
-      mailjet : {
+      mailjet: {
         host: 'in-v3.mailjet.com',
         port: 587,
         auth: {
@@ -55,7 +55,7 @@ const global = {
           pass: '471a6894957996fff615aea4634a5f89',
         },
       },
-      gmail:{
+      gmail: {
         host: 'smtp.gmail.com',
         port: 587,
         secure: false,
@@ -66,12 +66,12 @@ const global = {
       }
     }
   },
-  mailChimp:{
-    API_KEY : "991e70c5ec85e1e1432e3486242cdc5d-us19"
+  mailChimp: {
+    API_KEY: '991e70c5ec85e1e1432e3486242cdc5d-us19'
   },
-  redis:{
-    host : 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
-    port : 10042,
+  redis: {
+    host: 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
+    port: 10042,
     password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw',
   },
   port: parseInt(process.env.PORT) || 8080,
@@ -83,7 +83,7 @@ const global = {
 }
 
 const dev = {
-  frontend : domains.local,
+  frontend: domains.local,
   db: {
     // mongo_location: 'mongodb://' + CONFIG.db.host + ':' + CONFIG.db.port + '/' + CONFIG.db.name;
     mongo_location: process.env.MONGODB_URI_DEV,
@@ -92,25 +92,23 @@ const dev = {
 }
 
 const prod = {
-  frontend : domains.prod,
+  frontend: domains.prod,
   db: {
     mongo_location: process.env.MONGODB_URI_PROD,
     name: process.env.DB_NAME_PROD || 'kargain'
   }
 }
 
-console.log(global.env);
-
 switch (global.env) {
   case 'development' || 'dev':
   default :
-    env = 'dev';
-    config = dev;
+    env = 'dev'
+    config = dev
     break
   case 'production' || 'prod':
-    env = 'prod';
-    config = prod;
+    env = 'prod'
+    config = prod
     break
 }
 
-module.exports = { ...global, ...config, env, isDev : env === 'dev'};
+module.exports = { ...global, ...config, env, isDev: env === 'dev' }

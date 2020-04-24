@@ -1,11 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.js",
-      "use": "@now/node-server"
-    }
-  ],
+  "env": {
+    "MONGODB_URI_PROD": "@mongodb_uri_prod"
+  },
   "routes": [{
     "headers": {
       "Access-Control-Allow-Origin": "*",
@@ -15,7 +12,10 @@
     "src": "/.*",
     "dest": "/index.js"
   }],
-  "env": {
-    "MONGODB_URI_PROD": "@mongodb_uri_prod"
-  }
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@now/node-server"
+    }
+  ]
 }

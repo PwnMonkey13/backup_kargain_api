@@ -11,6 +11,17 @@ const AnnounceSchema = new mongoose.Schema({
 		required: true
 	},
 
+	active:{
+		type: Boolean,
+		default: false,
+	},
+
+	status:{
+		type: String,
+		enum : ["archived", "deleted", "pending", "done"],
+		default : 'pending'
+	},
+
 	slug : {
 		type: String,
 		trim: true,
@@ -70,11 +81,31 @@ const AnnounceSchema = new mongoose.Schema({
 		trim: true,
 	},
 
+	location : {
+		city : {
+			type: String,
+			trim: true,
+		},
+
+		postalcode: {
+			type: String,
+			trim: true,
+		}
+	},
+
 	user:{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User'
 	},
 
+	featured_thumbnail : {
+		type: String
+	},
+
+	// featured_thumbnail : {
+	// 	type: mongoose.Schema.Types.ObjectId,
+	// 	ref: 'Media'
+	// }
 }, {
 	timestamps: true,
 	toJSON: { virtuals: true },

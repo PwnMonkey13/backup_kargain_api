@@ -36,6 +36,11 @@ const UserSchema = new mongoose.Schema({
 		default: 'Client'
 	},
 
+	pro: {
+		type : Boolean,
+		default : false,
+	},
+
 	phone: {
 		type: String,
 		trim: true,

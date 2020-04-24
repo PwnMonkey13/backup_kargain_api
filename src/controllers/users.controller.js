@@ -13,10 +13,11 @@ const getUsers = async (req, res, next) => {
     }
 
     const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
+
     const rows = await User.find().skip(skip).sort(sort).limit(size)
     const total = await User.estimatedDocumentCount().exec()
 
-    const response = {
+    const data = {
       page: page,
       pages: Math.ceil(total / size),
       total,
@@ -25,7 +26,7 @@ const getUsers = async (req, res, next) => {
       rows
     }
 
-    return res.json({ success: true, data: response })
+    return res.json({ success: true, data })
   } catch (e) {
     next(e)
   }
