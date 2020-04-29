@@ -1,16 +1,25 @@
 const mongoose = require('mongoose');
 const utils = require('../utils/functions');
-const AdresseSchema = require('../schemas/addresse.schema');
 const { uuid, fromString } = require('uuidv4');
 
 const AnnounceSchema = new mongoose.Schema({
-
+	
+	user:{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User'
+	},
+	
 	title : {
 		type: String,
 		trim: true,
 		required: true
 	},
-
+	
+	content : {
+		type: String,
+		trim: true,
+	},
+	
 	active:{
 		type: Boolean,
 		default: false,
@@ -21,7 +30,11 @@ const AnnounceSchema = new mongoose.Schema({
 		enum : ["archived", "deleted", "pending", "done"],
 		default : 'pending'
 	},
-
+	
+	expirationDate:{
+		type: Date,
+	},
+	
 	slug : {
 		type: String,
 		trim: true,
@@ -69,8 +82,13 @@ const AnnounceSchema = new mongoose.Schema({
 		cylinder : {
 			type: { value : String, label : String},
 			trim: true,
+		},
+		cylinder : {
+			type: { value : String, label : String},
+			trim: true,
 		}
 	},
+	
 	mileage : {
 		type: Number,
 		trim: true,
@@ -93,19 +111,28 @@ const AnnounceSchema = new mongoose.Schema({
 		}
 	},
 
-	user:{
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'User'
-	},
-
 	featured_thumbnail : {
-		type: String
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Media'
 	},
-
-	// featured_thumbnail : {
-	// 	type: mongoose.Schema.Types.ObjectId,
-	// 	ref: 'Media'
-	// }
+	
+	images : [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Media'
+	}],
+	
+	tags : [
+		{
+			name : String
+		}
+	],
+	
+	comments : [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Comment'
+		}
+	]
 }, {
 	timestamps: true,
 	toJSON: { virtuals: true },
@@ -114,10 +141,20 @@ const AnnounceSchema = new mongoose.Schema({
 
 //hashing a password before saving it to the database
 AnnounceSchema.pre('save', function(next) {
-	const min = utils.stringToSlug(this.title);
-	this.slug = `${min}-${fromString(min).substr(0, 6)}`;
+	const date = new Date();
+	const titleLower = utils.stringToSlug(this.title);
+	this.slug = `${titleLower}-${fromString(min).substr(0, 6)}`;
+	this.expirationDate = new Date(date.setMonth(date.getMonth()+1))
 	next();
 });
+
+AnnounceSchema.statics.findByUser = async function(uid){
+	try{
+		return await this.model('Announce').find({ user : uid }).exec()
+	} catch (err) {
+		throw err;
+	}
+}
 
 // Export mongoose model
 module.exports = mongoose.model('Announce', AnnounceSchema);

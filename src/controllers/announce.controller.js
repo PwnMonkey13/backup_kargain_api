@@ -1,4 +1,5 @@
 const AnnounceModel = require('../models').Announce
+const UserModel = require('../models').User
 
 //TODO
 const getAnnouncesLegacy = async (req, res, next) => {
@@ -106,6 +107,15 @@ const getAnnounces = async (req, res, next) => {
 	}
 }
 
+const getAnnouncesByUser = async (req, res, next) => {
+	const uid = req.params.uid
+	const user = await UserModel.findById(uid)
+	if (!user) return next('No user found')
+	const announces = await AnnounceModel.findByUser(uid)
+	if (announces) return res.json({ success: true, data: announces })
+	else return res.status(400).json({ success: false, msg: 'no announces found', uid })
+}
+
 const getBySlug = async (req, res, next) => {
 	const announce = await AnnounceModel.findOne({ slug: req.params.slug }).populate('user')
 	if (announce) return res.json({ success: true, data: announce })
@@ -125,4 +135,4 @@ const create = async (req, res, next) => {
 	}).catch(err => next(err))
 }
 
-module.exports = { getAnnouncesLegacy, getAnnounces, getBySlug, create }
+module.exports = { getAnnouncesLegacy, getAnnounces, getAnnouncesByUser, getBySlug, create }

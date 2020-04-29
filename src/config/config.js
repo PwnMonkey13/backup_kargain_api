@@ -5,110 +5,118 @@ let config
 
 const domains = { local: 'http://localhost:3000', prod: 'https://kargain.web.app' }
 const global = {
-  api_path: '/api',
-  whileListDomains: ['http://localhost:3000', 'https://kargain-app.now.sh', 'https://kargain.web.app'],
-  externalsAPI: {
-    vicopo: {
-      API_URL: 'https://vicopo.selfbuild.fr/cherche'
-    },
-    geoGouv: {
-      adresse_API_URL: 'https://api-adresse.data.gouv.fr/search',
-      geo_API_URL: 'https://api-adresse.data.gouv.fr/search'
-    },
-    vindecoderFree: {
-      API_URL: 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues'
-    },
-    vindecoder: {
-      API_URL: 'http://api.carmd.com/v3.0',
-      'partner-token': '74563ccc0b0c4ca98e7cd7292b513716',
-      authorization: 'Basic MWM2MWE4NGMtMGQzZC00MDA2LTkxMGItMmZlNDUyN2QxMTc1'
-    },
-    databasesCar: {
-      API_URL: 'https://databases.one/api',
-      API_TOKEN: '2bc401d0b2c3f47eb29ca4946',
-    }
-  },
-  mailer: {
-    from: {
-      name: 'Contact Kargain',
-      // email : 'contact@kargain.com'
-      email: 'giraudo.nicolas13@gmail.com'
-    },
-    mailjet: {
-      API_KEY: '1228806536f8584e9449c86d3675d821',
-      password: '471a6894957996fff615aea4634a5f89'
-    },
-    stmp: {
-      ethereal: {
-        host: 'smtp.ethereal.email',
-        port: 587,
-        auth: {
-          user: 'josiane8@ethereal.email',
-          pass: 'zndYbvvQ4faW8w1WQd'
-        }
-      },
-      mailjet: {
-        host: 'in-v3.mailjet.com',
-        port: 587,
-        auth: {
-          user: '1228806536f8584e9449c86d3675d821',
-          pass: '471a6894957996fff615aea4634a5f89',
+    api_path: '/api',
+    whileListDomains: ['http://localhost:8080', 'http://localhost:3000', 'https://kargain-app.now.sh', 'https://kargain.web.app'],
+    externalsAPI: {
+        vicopo: {
+            API_URL: 'https://vicopo.selfbuild.fr/cherche'
         },
-      },
-      gmail: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'giraudo.nicolas',
-          pass: 'tX29P4QNadD7kAG7x5'
+        geoGouv: {
+            adresse_API_URL: 'https://api-adresse.data.gouv.fr/search',
+            geo_API_URL: 'https://api-adresse.data.gouv.fr/search'
+        },
+        vindecoderFree: {
+            API_URL: 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues'
+        },
+        vindecoder: {
+            API_URL: 'http://api.carmd.com/v3.0',
+            'partner-token': '74563ccc0b0c4ca98e7cd7292b513716',
+            authorization: 'Basic MWM2MWE4NGMtMGQzZC00MDA2LTkxMGItMmZlNDUyN2QxMTc1'
+        },
+        databasesCar: {
+            API_URL: 'https://databases.one/api',
+            API_TOKEN: '2bc401d0b2c3f47eb29ca4946',
         }
-      }
-    }
-  },
-  mailChimp: {
-    API_KEY: '991e70c5ec85e1e1432e3486242cdc5d-us19'
-  },
-  redis: {
-    host: 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
-    port: 10042,
-    password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw',
-  },
-  port: parseInt(process.env.PORT) || 8080,
-  env: process.env.NODE_ENV || "development",
-  jwt: {
-    encryption: process.env.JWT_ENCRYPTION || 'changeme',
-    expiration: process.env.JWT_EXPIRATION || '10000'
-  },
+    },
+    aws: {
+        s3: {
+            S3_KEY: 'AKIAXWHL2GWRJIYFQGFD',
+            S3_SECRET: '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',
+            BUCKET_NAME: 'kargain',
+            BUCKET_REGION: 'eu-west-3'
+        }
+    },
+    mailer: {
+        from: {
+            name: 'Contact Kargain',
+            // email : 'contact@kargain.com'
+            email: 'giraudo.nicolas13@gmail.com'
+        },
+        mailjet: {
+            API_KEY: '1228806536f8584e9449c86d3675d821',
+            password: '471a6894957996fff615aea4634a5f89'
+        },
+        stmp: {
+            ethereal: {
+                host: 'smtp.ethereal.email',
+                port: 587,
+                auth: {
+                    user: 'josiane8@ethereal.email',
+                    pass: 'zndYbvvQ4faW8w1WQd'
+                }
+            },
+            mailjet: {
+                host: 'in-v3.mailjet.com',
+                port: 587,
+                auth: {
+                    user: '1228806536f8584e9449c86d3675d821',
+                    pass: '471a6894957996fff615aea4634a5f89',
+                },
+            },
+            gmail: {
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: 'giraudo.nicolas',
+                    pass: 'tX29P4QNadD7kAG7x5'
+                }
+            }
+        }
+    },
+    mailChimp: {
+        API_KEY: '991e70c5ec85e1e1432e3486242cdc5d-us19'
+    },
+    redis: {
+        host: 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
+        port: 10042,
+        password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw',
+    },
+    port: parseInt(process.env.PORT) || 8080,
+    env: process.env.NODE_ENV || 'development',
+    jwt: {
+        encryption: process.env.JWT_ENCRYPTION || 'changeme',
+        expiration: process.env.JWT_EXPIRATION || 60 * 60 * 24 * 30
+    },
 }
 
 const dev = {
-  frontend: domains.local,
-  db: {
-    // mongo_location: 'mongodb://' + CONFIG.db.host + ':' + CONFIG.db.port + '/' + CONFIG.db.name;
-    mongo_location: process.env.MONGODB_URI_DEV,
-    name: process.env.DB_NAME_DEV || 'kargain'
-  }
+    frontend: domains.local,
+    db: {
+        // mongo_location: 'mongodb://' + CONFIG.db.host + ':' + CONFIG.db.port + '/' + CONFIG.db.name;
+        mongo_location: process.env.MONGODB_URI_DEV,
+        name: process.env.DB_NAME_DEV || 'kargain'
+    }
 }
 
 const prod = {
-  frontend: domains.prod,
-  db: {
-    mongo_location: process.env.MONGODB_URI_PROD,
-    name: process.env.DB_NAME_PROD || 'kargain'
-  }
+    frontend: domains.prod,
+    db: {
+        mongo_location: process.env.MONGODB_URI_PROD,
+        name: process.env.DB_NAME_PROD || 'kargain'
+    }
 }
 
 switch (global.env) {
-  case 'development' || 'dev':
-  default :
-    env = 'dev'
-    config = dev
-    break
-  case 'production' || 'prod':
-    env = 'prod'
-    config = prod
-    break
+    case 'development' || 'dev':
+    default :
+        env = 'dev'
+        config = dev
+        break
+    case 'production' || 'prod':
+        env = 'prod'
+        config = prod
+        break
 }
 
 module.exports = { ...global, ...config, env, isDev: env === 'dev' }

@@ -1,38 +1,59 @@
-const redis = require('redis');
-const { promisify } = require("util");
-const CONFIG = require('../config/config');
+const redis = require('redis')
+const { promisify } = require('util')
+const CONFIG = require('../config/config')
 
 const redisClient = redis.createClient({
-  port: CONFIG.redis.port,
-  host: CONFIG.redis.host,
-  password : CONFIG.redis.password
-});
+    port: CONFIG.redis.port,
+    host: CONFIG.redis.host,
+    password: CONFIG.redis.password,
+    retry_strategy: function (options) {
+      if (options.error.code === 'ECONNREFUSED') {
+        // End reconnecting on a specific error and flush all commands with a individual error
+        return new Error('The server refused the connection');
+      }
+      if (options.total_retry_time > 1000 * 60 * 60) {
+        // End reconnecting after a specific timeout and flush all commands with a individual error
+        return new Error('Retry time exhausted');
+      }
+      if (options.times_connected > 10) {
+        // End reconnecting with built in error
+        return undefined;
+      }
+      // reconnect after
+      return Math.max(options.attempt * 100, 3000);
+    }
+})
 
-redisClient.on("error", function(err) {
-  throw err;
-});
+setInterval(function(){
+  console.log('redisClient => Sending Ping...');
+  redisClient.ping();
+}, 60000); // 60 seconds
+
+redisClient.on('error', function (err) {
+    throw err
+})
 
 const getCacheKey = (key) => {
-  return new Promise((resolve, reject) => {
-    try {
-      redisClient.get(key, (err, entry) => {
-        if (err) throw err
-        if (entry) {
-          try {
-            resolve(JSON.parse(entry));
-          } catch (e) {
-            throw e
-          }
-        } else resolve(null);
-      })
-    } catch (err) {
-      throw err
-    }
-  });
-};
+    return new Promise((resolve, reject) => {
+        try {
+            redisClient.get(key, (err, entry) => {
+                if (err) throw err
+                if (entry) {
+                    try {
+                        resolve(JSON.parse(entry))
+                    } catch (e) {
+                        throw e
+                    }
+                } else resolve(null)
+            })
+        } catch (err) {
+            throw err
+        }
+    })
+}
 
 const delCacheKey = (key, cb) => {
-  redisClient.del(key, (err, data) => cb(err, data))
+    redisClient.del(key, (err, data) => cb(err, data))
 }
 
 /*
@@ -40,6 +61,6 @@ const delCacheKey = (key, cb) => {
  * command finishes. Otherwise the client would hang as long as the
  * client-server connection is alive.
  */
-redisClient.unref();
+redisClient.unref()
 
-module.exports = {redisClient, getCacheKey, delCacheKey};
+module.exports = { redisClient, getCacheKey, delCacheKey }

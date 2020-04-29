@@ -6,6 +6,12 @@ const handleError = require('../utils/handleError');
 const { uuid, fromString } = require('uuidv4');
 
 const UserSchema = new mongoose.Schema({
+	
+	role_id : {
+		type : Number,
+		enum: [10,20,35]
+	},
+	
 	firstname: {
 		type: String,
 		required: true,
@@ -104,30 +110,34 @@ const UserSchema = new mongoose.Schema({
 		type : Boolean,
 		default : false
 	},
+	
+	followers : [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User'
+		}
+	],
+	
+	followings : [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User'
+		}
+	]
 
 }, {
-	strict: false,
 	toObject: {
 		virtuals: true,
 		transform: function (doc, ret) {
-			delete ret._id;
-			delete ret.password;
-			delete ret.clear_password;
 		}
 	},
 	toJSON: {
 		virtuals: true,
 		transform: function (doc, ret) {
-			delete ret._id;
 			delete ret.password;
-			delete ret.clear_password;
 		}
 	}
 });
-
-const hashPassword = async (password, saltRounds = 10) => {
-		return await bcrypt.hash(password, saltRounds)
-};
 
 UserSchema.post('init', function(doc) {
 	console.log('%s has been initialized from the db', doc._id);
@@ -163,6 +173,12 @@ UserSchema.pre('save', async function(next) {
 		next(err);
 	}
 });
+
+UserSchema.statics.hashPassword = async (password, salt) => await hashPassword(password, salt)
+
+const hashPassword = async (password, saltRounds = 10) => {
+	return await bcrypt.hash(password, saltRounds)
+};
 
 UserSchema.statics.findByEmail = async function(email){
 	try{
@@ -212,6 +228,12 @@ UserSchema.methods.comparePassword = async function(password){
 		throw err;
 	}
 };
+
+UserSchema.virtual( 'id' ).get( function () {
+	const user = this;
+	return user._id
+});
+
 
 UserSchema.virtual( 'fullname' ).get( function () {
 	const user = this;
