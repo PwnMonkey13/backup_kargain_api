@@ -4,10 +4,10 @@ const router = require('express').Router()
 const authController = require('../controllers/auth.controller')
 const passportAuth = require('../middlewares/passport')
 
-router.options('/login', cors(corsMiddleware.clientCors)) // enable pre-flights
+router.options('/login', cors(corsMiddleware.authedCors)) // enable pre-flights
 
 router.post('/login',
-    cors(corsMiddleware.clientCors),
+    cors(corsMiddleware.authedCors),
     authController.LoginValidation,
     passportAuth.authenticate('local', { session: false }),
     authController.loginAction)

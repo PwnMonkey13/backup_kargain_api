@@ -204,11 +204,9 @@ const AnnounceSchema = new mongoose.Schema({
         autopopulate: true
     }],
     
-    tags: [
-        {
-            name: String
-        }
-    ],
+    tags: [{
+        type: String
+    }],
     
     comments: [
         {
@@ -223,14 +221,16 @@ const AnnounceSchema = new mongoose.Schema({
     strict: false
 })
 
-AnnounceSchema.plugin(require('mongoose-autopopulate'));
+AnnounceSchema.plugin(require('mongoose-autopopulate'))
 
 // hashing a password before saving it to the database
 AnnounceSchema.pre('save', function (next) {
-    const date = new Date()
-    const titleLower = utils.stringToSlug(this.title)
-    this.slug = `${titleLower}-${shortid.generate()}`
-    this.expirationDate = new Date(date.setMonth(date.getMonth() + 1))
+    if (this.isNew) {
+        const date = new Date()
+        const titleLower = utils.stringToSlug(this.title)
+        this.slug = `${titleLower}-${shortid.generate()}`
+        this.expirationDate = new Date(date.setMonth(date.getMonth() + 1))
+    }
     next()
 })
 

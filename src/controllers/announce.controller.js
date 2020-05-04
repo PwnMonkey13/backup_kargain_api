@@ -154,7 +154,6 @@ const createAnnounce = async (req, res, next) => {
 const uploadImages = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     if (!req.announce) return next(Errors.NotFoundError('no announce found'))
-    if (!req.uploadedFiles) return next(Errors.NotFoundError('no files found'))
     
     const announce = req.announce;
     
