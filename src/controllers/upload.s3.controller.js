@@ -1,60 +1,79 @@
 const utilsS3 = require('../utils/s3-presigner')
-const { uuid } = require('uuidv4');
-const shortid = require('shortid');
-const mediaModel = require('../models').Media;
+const { uuid } = require('uuidv4')
+const shortid = require('shortid')
+const MediaModel = require('../models').Media
+const Errors = require('../utils/Errors')
 
-function getWithoutExtension(filename){
+function getWithoutExtension (filename) {
     return filename.split('.').slice(0, -1).join('.')
 }
 
-function getExtension(filename){
-    return filename.split('.').pop();
+function getExtension (filename) {
+    return filename.split('.').pop()
 }
 
 const getS3Config = (req, res, next) => {
-    try{
-        const config = utilsS3.getConfig();
-        res.json({ success: true, data : { config }})
-    }catch (err) {
-        next(err)
-    }
-};
-
-const postObjects = async (req, res, next) => {
-    const baseDir = req.body.base;
-    const hash = Boolean(req.body.hash)
-    
-    //see https://attacomsian.com/blog/uploading-files-nodejs-express
-    if(!req.files || !req.files.images) return next('missing files to upload')
-    
-    try{
-        const images = !Array.isArray(req.files.images) ? [req.files.images] : req.files.images;
-        
-        const pArray = (images, baseDir) => {
-            return images.map(async file => {
-                const dir = `${baseDir ? baseDir + '/' : ''}`
-                const name = hash ? `${uuid()}` : `${getWithoutExtension(file.name)}_${shortid.generate()}`
-                const key = `${dir}${name}.${getExtension(file.name)}`
-                const uploadResponse = await utilsS3.uploadObject(file.data, key)
-                
-                const media = new mediaModel({
-                    originalName : file.name,
-                    mimeType : file.mimetype,
-                    size : file.size,
-                    etag : uploadResponse.ETag,
-                    location : uploadResponse.Location,
-                    filename : uploadResponse.Key,
-                });
-                
-                return await media.save();
-            });
-        }
-        
-        const result = await Promise.all(pArray(images, baseDir));
-        res.json({ success: true, data : result })
+    try {
+        const config = utilsS3.getConfig()
+        res.json({ success: true, data: { config } })
     } catch (err) {
         next(err)
     }
+}
+
+const postObjects = async (req, res, next) => {
+    const date = new Date()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const baseDir = req.body.baseDir || `uploads/${date.getFullYear()}/${month}`
+    const typeDir = req.body.typeDir
+    const dir = typeDir ? `${baseDir}/${typeDir}` : `${baseDir}`
+    const enableHash = req.body.enableHash || true
+    const allowedFileNames = ['images', 'featured_image']
+    
+    // see https://attacomsian.com/blog/uploading-files-nodejs-express
+    if (!req.files) return next()
+    if (!req.announce) return next()
+    
+    const files = Object.keys(req.files)
+    .filter(key => allowedFileNames.includes(key))
+    .reduce((carry, key) => ({ ...carry, [key]: req.files[key] }), {})
+    
+    try {
+        req.uploadedFiles = await pArray(files, enableHash, dir)
+        return next()
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const pArray = async (filesObj, enableHash, baseDir) => {
+    const filesKeys = Object.keys(filesObj)
+    const uploads = await Promise.all(filesKeys.map(key => {
+        const files = Array.isArray(filesObj[key]) ? filesObj[key] : [filesObj[key]]
+        return Promise.all(files.map(image => uploadMedia(image, enableHash, baseDir)))
+    }))
+    
+    return uploads.reduce((carry, arr, index) => {
+        return { ...carry, [filesKeys[index]]: arr }
+    }, {})
+}
+
+const uploadMedia = async (image, enableHash, baseDir) => {
+    const dir = `${baseDir ? baseDir + '/' : ''}`
+    const name = enableHash ? `${uuid()}` : `${getWithoutExtension(image.name)}_${shortid.generate()}`
+    const key = `${dir}${name}.${getExtension(image.name)}`
+    const uploadResponse = await utilsS3.uploadObject(image.data, key)
+    
+    const media = new MediaModel({
+        originalName: image.name,
+        mimeType: image.mimetype,
+        size: image.size,
+        etag: uploadResponse.ETag,
+        location: uploadResponse.Location,
+        filename: uploadResponse.Key,
+        key
+    })
+    return await media.save()
 }
 
 // GET URL
@@ -79,11 +98,11 @@ const generatePutUrl = (req, res, next) => {
     // ContentType refers to the MIME content type, in this case image/jpeg
     const { Key, ContentType } = req.query
     utilsS3.generatePutUrl(Key, ContentType).then(putURL => {
-        res.json({ success: true, data : { putURL }})
+        res.json({ success: true, data: { putURL } })
     })
     .catch(err => {
         next(err)
     })
 }
 
-module.exports = {getS3Config, postObjects, generateGetUrl, generatePutUrl}
+module.exports = { getS3Config, postObjects, generateGetUrl, generatePutUrl }
