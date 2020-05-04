@@ -6,9 +6,9 @@ const CONFIG = require('../config/config')
 // if (!CONFIG.isDev){
 //   mailConfig = CONFIG.mailer.stmp.ethereal;
 // } else {
-//}
+// }
 
-let mailConfig = CONFIG.mailer.stmp.mailjet;
+const mailConfig = CONFIG.mailer.stmp.mailjet
 const transporter = nodemailer.createTransport(mailConfig)
 
 const verify = callback => {
@@ -35,7 +35,7 @@ const test = callback => {
       address: recipient.email
     },
     subject: 'Message title',
-    text: 'Plaintext version of the message',
+    text: 'Plaintext version of the message'
   }
 
   nodemailer.createTestAccount((err) => {
@@ -55,18 +55,12 @@ const nodeMailerLegacy = (message, callback) => {
 }
 
 const sendMailJet = async message => {
-  const mailer = mailjet.connect(CONFIG.mailer.mailjet.API_KEY, CONFIG.mailer.mailjet.password);
-
-  try{
-    return await mailer.post('send', {
-      'version': 'v3.1',
-      'timeout': 1000,
-      'perform_api_call': true // false to disable
-    }).request(message);
-  }catch (err) {
-    throw err;
-  }
+  const mailer = mailjet.connect(CONFIG.mailer.mailjet.API_KEY, CONFIG.mailer.mailjet.password)
+  return await mailer.post('send', {
+    version: 'v3.1',
+    timeout: 1000,
+    perform_api_call: true // false to disable
+  }).request(message)
 }
 
 module.exports = { test, verify, nodeMailerLegacy, sendMailJet }
-

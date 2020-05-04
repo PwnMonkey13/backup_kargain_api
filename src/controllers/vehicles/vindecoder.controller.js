@@ -5,24 +5,24 @@ const CONFIG = require('../../config/config')
 
 const decodeFree = (req, res, next) => {
   const BASE_API_URL = CONFIG.externalsAPI.vindecoderFree.API_URL
-  const vin = req.params.vin;
+  const vin = req.params.vin
 
   const params = {
-    format: "json",
+    format: 'json'
   }
 
   const url = utils.buildUrl(`${BASE_API_URL}/${vin}`, params)
 
   redisConfig.getCacheKey(url).then(data => {
-    if (data) return res.json({ success: true, msg: 'from redis', from : url, hostname: redisClient.address, data })
+    if (data) return res.json({ success: true, msg: 'from redis', from: url, hostname: redisClient.address, data })
     else {
       utils.fetchExternalApi(url).then(result => {
-        const data = result['Results'][0];
-        if(data){
+        const data = result.Results[0]
+        if (data) {
           redisClient.set(url, JSON.stringify(data))
-          return res.json({ success: true, msg: 'from API', from : url, data  })
+          return res.json({ success: true, msg: 'from API', from: url, data })
         } else next('error while decoding VIN')
-      }).catch(next);
+      }).catch(next)
     }
   })
 }
@@ -38,7 +38,7 @@ const decode = (req, res, next) => {
   }
 
   const params = {
-    vin: req.params.vin,
+    vin: req.params.vin
   }
 
   const url = utils.buildUrl(`${BASE_API_URL}/decode`, params)
@@ -65,7 +65,7 @@ const image = (req, res, next) => {
   }
 
   const params = {
-    vin: req.params.vin,
+    vin: req.params.vin
   }
 
   const url = utils.buildUrl(`${BASE_API_URL}/image`, params)

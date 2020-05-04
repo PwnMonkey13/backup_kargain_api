@@ -1,4 +1,4 @@
-const AuthMailer = require("./auth");
+const AuthMailer = require('./auth')
 
 module.exports = {
   auth: AuthMailer

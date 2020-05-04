@@ -6,8 +6,8 @@ function stringToSlug (str) {
   str = str.toLowerCase()
 
   // remove accents, swap ñ for n, etc
-  let from = 'àáãäâèéëêìíïîòóöôùúüûñç·/_,:;'
-  let to = 'aaaaaeeeeiiiioooouuuunc------'
+  const from = 'àáãäâèéëêìíïîòóöôùúüûñç·/_,:;'
+  const to = 'aaaaaeeeeiiiioooouuuunc------'
 
   for (let i = 0, l = from.length; i < l; i++) {
     str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i))
@@ -21,7 +21,7 @@ function stringToSlug (str) {
 }
 
 function convertToDotNotation (obj, newObj = {}, prefix = '') {
-  for (let key in obj) {
+  for (const key in obj) {
     if (typeof obj[key] === 'object') {
       convertToDotNotation(obj[key], newObj, prefix + key + '.')
     } else {
@@ -36,12 +36,12 @@ const fetchExternalApi = (url, headers = {}) => {
     .then(response => response.json())
     .catch(err => {
       throw err
-      }
+    }
     )
 }
 
 const buildUrl = (baseUrl, params) => {
-  return Object.keys(params).length ? `${baseUrl}?${querystring.stringify(params)}` : baseUrl;
+  return Object.keys(params).length ? `${baseUrl}?${querystring.stringify(params)}` : baseUrl
 }
 
 module.exports = { stringToSlug, convertToDotNotation, fetchExternalApi, buildUrl }

@@ -25,7 +25,7 @@ const global = {
         },
         databasesCar: {
             API_URL: 'https://databases.one/api',
-            API_TOKEN: '2bc401d0b2c3f47eb29ca4946',
+            API_TOKEN: '2bc401d0b2c3f47eb29ca4946'
         }
     },
     aws: {
@@ -60,8 +60,8 @@ const global = {
                 port: 587,
                 auth: {
                     user: '1228806536f8584e9449c86d3675d821',
-                    pass: '471a6894957996fff615aea4634a5f89',
-                },
+                    pass: '471a6894957996fff615aea4634a5f89'
+                }
             },
             gmail: {
                 host: 'smtp.gmail.com',
@@ -80,14 +80,14 @@ const global = {
     redis: {
         host: 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
         port: 10042,
-        password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw',
+        password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw'
     },
     port: parseInt(process.env.PORT) || 8080,
     env: process.env.NODE_ENV || 'development',
     jwt: {
         encryption: process.env.JWT_ENCRYPTION || 'changeme',
         expiration: process.env.JWT_EXPIRATION || 60 * 60 * 24 * 30
-    },
+    }
 }
 
 const dev = {

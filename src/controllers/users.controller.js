@@ -2,7 +2,6 @@ const User = require('../models').User
 const functions = require('../utils/functions')
 
 const getUsers = async (req, res, next) => {
-
   try {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
     const sort = (req.query.sort) ? { [req.query.sort]: 1 } : {}

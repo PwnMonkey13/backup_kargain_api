@@ -1,23 +1,23 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const MakeSchema = new mongoose.Schema({
-  make : {
+  make: {
     type: String,
     trim: true,
     required: true
   },
-  make_ru : {
+  make_ru: {
     type: String,
-    trim: true,
+    trim: true
   },
-  make_logo : {
+  make_logo: {
     type: String,
-    trim: true,
-  },
+    trim: true
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
   strict: false
-});
+})
 
-module.exports = MakeSchema;
+module.exports = MakeSchema

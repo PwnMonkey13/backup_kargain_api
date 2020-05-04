@@ -7,17 +7,17 @@ const fetchGouvAdressesAPI = (req, res, next) => {
 
   utils.fetchExternalApi(url)
     .then(results => {
-      return res.json({ success: true, msg: `from ${ADRESSE_API_URL}`, data : results })
-  }).catch(next)
+      return res.json({ success: true, msg: `from ${ADRESSE_API_URL}`, data: results })
+    }).catch(next)
 }
 
 const fetchVicopoAPI = (req, res, next) => {
   const API_URL = CONFIG.externalsAPI.vicopo.API_URL
-  const url = `${API_URL}/${req.params.query}`;
+  const url = `${API_URL}/${req.params.query}`
 
   utils.fetchExternalApi(url)
     .then(cities => {
-      return res.json({ success: true, msg: `from ${API_URL}`, data : cities })
+      return res.json({ success: true, msg: `from ${API_URL}`, data: cities })
     }).catch(next)
 }
 

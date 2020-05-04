@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 const utils = require('../../utils/functions')
-const redisConfig = require('../../config/redis');
-const redisClient = redisConfig.redisClient;
+const redisConfig = require('../../config/redis')
+const redisClient = redisConfig.redisClient
 const CONFIG = require('../../config/config')
 const BASE_API_URL = CONFIG.externalsAPI.databasesCar.API_URL
 const BASE_API_KEY = CONFIG.externalsAPI.databasesCar.API_TOKEN
@@ -31,14 +31,14 @@ const getData = (req, res, next) => {
         return res.json({ success: true, msg: 'from API', url, data })
       }).catch(next)
     }
-  });
+  })
 }
 
 const fetchApi = (url, headers = {}) => {
   return fetch(url, { headers })
     .then(response => {
       if (response.status >= 400) {
-        throw 'Bad response from server'
+        throw new Error('Bad response from server')
       }
       return response.json()
     })

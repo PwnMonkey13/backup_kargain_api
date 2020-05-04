@@ -1,26 +1,26 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const vehicleModelSchema = (type) => {
   return new mongoose.Schema({
 
-    make_id:{
+    make_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: `${type}_makes`,
       required: true
     },
 
-    make : {
+    make: {
       type: String,
-      trim: true,
+      trim: true
     },
 
-    model_id:{
+    model_id: {
       type: String,
       trim: true,
       required: true
     },
 
-    model:{
+    model: {
       type: String,
       trim: true,
       required: true
@@ -28,9 +28,9 @@ const vehicleModelSchema = (type) => {
 
     model_ru: {
       type: String,
-      trim: true,
-    },
-  });
+      trim: true
+    }
+  })
 }
 
-module.exports = vehicleModelSchema;
+module.exports = vehicleModelSchema

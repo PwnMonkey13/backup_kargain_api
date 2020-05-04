@@ -24,7 +24,7 @@ router.use('/places', PlacesRoutes)
 router.use('/comments', Comments)
 
 if (CONFIG.isDev) {
-    router.use('/dev', DevRoutes)
+  router.use('/dev', DevRoutes)
 }
 
 module.exports = router
