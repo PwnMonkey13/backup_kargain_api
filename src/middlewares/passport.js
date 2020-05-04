@@ -42,7 +42,7 @@ const opts = {
 passport.use(new LocalStrategy({
         passReqToCallback: true,
         usernameField: 'email',
-        passwordField: 'password',
+        passwordField: 'password'
     }, async function (req, email, password, done) {
         try {
             const user = await User.findByEmail(email)
@@ -58,9 +58,9 @@ passport.use(new LocalStrategy({
 ))
 
 // Setting up JWT login strategy
-passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
-    if (jwt_payload.uid) {
-        User.findOne({ _id: jwt_payload.uid }, function (err, user) {
+passport.use(new JwtStrategy(opts, (jwtPayload, done) => {
+    if (jwtPayload.uid) {
+        User.findOne({ _id: jwtPayload.uid }, function (err, user) {
             if (err) return done(err)
             if (!user) return done('missing user')
             return done(null, user)
@@ -70,7 +70,11 @@ passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
 
 // Setting up Cookie based login strategy
 passport.use(new CookieStrategy(async (token, done) => {
+    console.log("token")
+    console.log(token)
     try {
+        const raw = await jwt.decode(token);
+        console.log(raw)
         const decoded = await jwt.verify(token, config.jwt.encryption)
         if (!decoded || !decoded.uid) return done('missing uid')
         const user = await User.findById(decoded.uid)

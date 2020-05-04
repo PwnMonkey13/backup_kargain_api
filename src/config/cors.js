@@ -1,4 +1,5 @@
 const CONFIG = require('./config')
+const Errors = require('../utils/Errors')
 
 function corsOptions (allowCredentials = false, enableAllOrigin = false) {
     return {
@@ -9,16 +10,16 @@ function corsOptions (allowCredentials = false, enableAllOrigin = false) {
             if (CONFIG.whileListDomains.indexOf(origin) !== -1 || enableAllOrigin) {
                 callback(null, true)
             } else {
-                callback(new Error('Not allowed by CORS'))
+                callback(Errors.UnAuthorizedError('Not allowed by CORS'))
             }
         }
     }
 }
 
-const authCors = corsOptions(true)
+const authedCors = corsOptions(true)
 
-const wideCors = corsOptions(false, true)
+const wideCors = corsOptions(true, true)
 
-const loginCors = corsOptions(true);
+const clientCors = corsOptions()
 
-module.exports = { loginCors, authCors, wideCors }
+module.exports = { clientCors, authedCors, wideCors }

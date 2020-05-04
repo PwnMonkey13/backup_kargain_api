@@ -1,14 +1,14 @@
 
 const router = require('express').Router()
-const passportAuth = require('../middlewares/passport');
-const auth = require('../middlewares/auth');
+const passportAuth = require('../middlewares/passport')
+const auth = require('../middlewares/auth')
 const usersController = require('../controllers/users.controller')
 
 // router.use(passportAuth.authenticate('jwt', { session: false }));
 
 router.get('/',
   // auth.requireAdmin,
-  usersController.getUsers);
+  usersController.getUsers)
 // users?page=${page}&size=${size}
 
 router.get('/:username', usersController.getUser)
@@ -16,8 +16,7 @@ router.get('/:username', usersController.getUser)
 router.put('/:username',
   passportAuth.authenticate('jwt', { session: false }),
   // auth.requireAdminOrSelf,
-  usersController.updateUser);
-
+  usersController.updateUser)
 
 router.delete('/:uid', usersController.deleteUser)
 

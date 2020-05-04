@@ -1,17 +1,15 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models').User
 const config = require('../config/config')
-const mailer = require('../utils/mailer')
 const authMailer = require('../components/mailer').auth
-const handleError = require('../utils/handleError')
-const { uuid, fromString } = require('uuidv4')
+const Errors = require('../utils/Errors')
+const { uuid } = require('uuidv4')
 
 // Constants
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/
 
 const LoginValidation = (req, res, next) => {
-    const origin = req.get('origin');
     const { email, password } = req.body
     if (!email || !password) return next('missing parameters')
     if (!EMAIL_REGEX.test(email)) return next('email is not valid')
@@ -20,23 +18,25 @@ const LoginValidation = (req, res, next) => {
 }
 
 const loginAction = async (req, res, next) => {
-    const user = req.user;
+    if (!req.user) return next(Errors.UnAuthorizedError())
+    const user = req.user
+    const expirationTimeSeconds = Date.now() + 1000 * 60 * 60 * 24 * 10
     const token = jwt.sign({
-        exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour expiration
-        uid: user._id
-    },
-    config.jwt.encryption);
+            exp: Math.floor(expirationTimeSeconds/1000), // 10days (seconds)
+            uid: user._id
+        },
+        config.jwt.encryption)
     
     // Adds a new cookie to the response
     return res.cookie('token',
         token, {
-            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10), // 10days
-            httpOnly: true,
+            expires: new Date(expirationTimeSeconds), // 10days (milliseconds)
+            httpOnly: true
             // signed: true,
             // secure: true,
             // sameSite: true,
         }
-    ).json({ success: true, data: { user }})
+    ).json({ success: true, data: { user, exp : Math.floor(expirationTimeSeconds/1000) } })
 }
 
 const registerAction = async (req, res, next) => {
@@ -96,8 +96,9 @@ const registerProAction = async (req, res, next) => {
 }
 
 const authorizeAction = async (req, res) => {
-    return res.json({ success: true, data : { isLoggedIn: true, user : req.user }})
-};
+    const cookies = req.cookies;
+    return res.json({ success: true, data: { isLoggedIn: true, user: req.user, cookies } })
+}
 
 const confirmEmailAction = async (req, res, next) => {
     const { token } = req.query
@@ -113,14 +114,14 @@ const confirmEmailAction = async (req, res, next) => {
             return next(err)
         }
     } catch (err) {
-        return next(handleError.ExpiredTokenError('jwt expired'))
+        return next(Errors.ExpiredTokenError('jwt expired'))
     }
 }
 
 const forgotPasswordAction = async (req, res, next) => {
     const { email } = req.body
     try {
-        let user = await User.findByEmail(email)
+        const user = await User.findByEmail(email)
         const token = jwt.sign({
                 email: user.email
             }, config.jwt.encryption, { expiresIn: '1h' }
@@ -156,32 +157,6 @@ const resetPasswordAction = async (req, res, next) => {
     }
 }
 
-const legacy = (req, res, next) => {
-    const recipient = {
-        firstname: 'nicolas',
-        lastname: 'giraudo',
-        email: 'giraudo.nicolas13@gmail.com'
-    }
-    
-    const message = {
-        from: {
-            name: config.mailer.from.name,
-            address: config.mailer.from.email
-        },
-        to: {
-            name: `${recipient.lastname} ${recipient.lastname}`,
-            address: recipient.email
-        },
-        subject: 'Message title',
-        text: 'Plaintext version of the message',
-    }
-    
-    mailer.nodeMailerLegacy(message, (err, info) => {
-        if (err) next(err)
-        else return res.json({ success: true, info })
-    })
-}
-
 module.exports = {
     LoginValidation,
     loginAction,
@@ -190,5 +165,5 @@ module.exports = {
     authorizeAction,
     confirmEmailAction,
     forgotPasswordAction,
-    resetPasswordAction,
+    resetPasswordAction
 }

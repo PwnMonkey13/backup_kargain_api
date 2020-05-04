@@ -16,13 +16,8 @@ app.use(helmet())
 app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true }))
-app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, '../', 'public')))
 app.set('trust proxy', 1) // trust first proxy
-
-// view engine setup
-// app.set('views', path.join(__dirname, '../', 'views'));
-// app.set('view engine', 'twig');
 
 app.use(passport.initialize({ session: false }))
 // app.use(passport.inistialize());
@@ -30,30 +25,42 @@ app.use(passport.initialize({ session: false }))
 
 // enable files upload
 app.use(fileUpload({
-  createParentPath: true
-}));
+    createParentPath: true
+}))
+
+app.use((req, res, next) => {
+    if(!req.headers.origin){
+        req.headers.origin = req.protocol + '://' + req.get('host');
+    }
+    next()
+})
+
+app.get('/', function (req, res, next) {
+    return res.end('api live')
+})
+
+app.get('/db', function (req, res, next) {
+    return res.end(config.db.mongo_location)
+})
 
 app.use(config.api_path, routes)
 
 app.get('*', function (req, res, next) {
-  const err = new Error('Page Not Found')
-  err.statusCode = 404
-  next(err)
+    const err = new Error('Page Not Found')
+    err.statusCode = 404
+    next(err)
 })
 
 app.use(function (err, req, res, next) {
-  const isError = err instanceof Error;
-  const code = err.code || err.statusCode || 200;
-  let message = isError ? err.message : err;
-  // if(!config.isDev) message = 'Something failed on server';
-
-  const error = {
-    name : err.name || "Error",
-    code,
-    message
-  };
-
-  return res.json({ success: false, error})
+    const isError = err instanceof Error
+    const code = err.code || err.statusCode || 200
+    const error = {
+        code,
+        name: err.name || 'Error',
+        message: !config.isDev && code === 500 ? 'Something failed on server' : isError ? err.message : err
+    }
+    console.log(error)
+    return res.json({ success: false, error })
 })
 
 module.exports = app
