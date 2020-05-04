@@ -1,21 +1,32 @@
 const express = require('express')
+const cors = require('cors')
 const routes = express.Router()
-const passportAuth = require('../middlewares/passport');
+const passportAuth = require('../middlewares/passport')
 const commentController = require('../controllers/comments.controller')
 const AuthMiddleware = require('../middlewares/auth')
+const corsMiddleware = require('../config/cors')
 
 routes.get('/:announce_id', commentController.getCommentsByAnnounce)
 
-routes.post('/', commentController.createComment)
+routes.post('/',
+    cors(corsMiddleware.authedCors),
+    passportAuth.authenticate('cookie', { session: false }),
+    AuthMiddleware.requireAdminOrSelf,
+    commentController.createComment
+)
 
 routes.put('/enable/:comment_id',
-    passportAuth.authenticate('jwt', { session: false }),
+    cors(corsMiddleware.authedCors),
+    passportAuth.authenticate('cookie', { session: false }),
     AuthMiddleware.requireAdminOrSelf,
-    commentController.enableComment)
+    commentController.enableComment
+)
 
 routes.put('/disable/:comment_id',
-    passportAuth.authenticate('jwt', { session: false }),
+    cors(corsMiddleware.authedCors),
+    passportAuth.authenticate('cookie', { session: false }),
     AuthMiddleware.requireAdminOrSelf,
-    commentController.disableComment)
+    commentController.disableComment
+)
 
 module.exports = routes
