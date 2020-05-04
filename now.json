@@ -3,15 +3,17 @@
   "env": {
     "MONGODB_URI_PROD": "@mongodb_uri_prod"
   },
-  "routes": [{
-    "headers": {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept"
-    },
-    "src": "/.*",
-    "dest": "/index.js"
-  }],
+  "routes": [
+    {
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept"
+      },
+      "src": "/.*",
+      "dest": "/index.js"
+    }
+  ],
   "builds": [
     {
       "src": "index.js",
