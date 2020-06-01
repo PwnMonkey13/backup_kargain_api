@@ -4,6 +4,8 @@ const config = require('./src/config/config')
 
 mongoose.Promise = global.Promise // set mongo up to use promises
 
+mongoose.set('debug', true);
+
 mongoose.connect(config.db.mongo_location, { useCreateIndex: true, useNewUrlParser: true })
 .catch(err => {
     console.log(err)

@@ -6,7 +6,12 @@ let config
 const domains = { local: 'http://localhost:3000', prod: 'https://kargain.web.app' }
 const global = {
     api_path: '/api',
-    whileListDomains: ['http://localhost:8080', 'http://localhost:3000', 'https://kargain-app.now.sh', 'https://kargain.web.app'],
+    whileListDomains: [
+        'http://localhost:8080',
+        'http://localhost:3000',
+        'https://kargain-app.now.sh',
+        'https://kargain.web.app'
+    ],
     externalsAPI: {
         vicopo: {
             API_URL: 'https://vicopo.selfbuild.fr/cherche'
