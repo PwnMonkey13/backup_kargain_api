@@ -1,13 +1,13 @@
 const express = require('express')
 const routes = express.Router()
 const cors = require('cors')
-const wideCors = require('../config/cors').wideCors
+const corsMiddleware = require('../middlewares/cors.middleware')
 const PlacesController = require('../controllers/places.controller')
 
 // https://api-adresse.data.gouv.fr/
-routes.get('/adresses-gouv', cors(wideCors), PlacesController.fetchGouvAdressesAPI)
+routes.get('/adresses-gouv', cors(corsMiddleware.wideCors), PlacesController.fetchGouvAdressesAPI)
 
-routes.get('/vicopo/:query', cors(wideCors), PlacesController.fetchVicopoAPI)
+routes.get('/vicopo/:query', cors(corsMiddleware.wideCors), PlacesController.fetchVicopoAPI)
 
 // https://geo.api.gouv.fr
 // routes.get('/communes', cors(corsConfig(false, true)), AdresseGouvController.fetchCities)
