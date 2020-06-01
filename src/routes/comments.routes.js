@@ -1,32 +1,70 @@
 const express = require('express')
 const cors = require('cors')
 const routes = express.Router()
-const passportAuth = require('../middlewares/passport')
+const passportMiddleware = require('../middlewares/passport')
 const commentController = require('../controllers/comments.controller')
-const AuthMiddleware = require('../middlewares/auth')
-const corsMiddleware = require('../config/cors')
+const corsMiddleware = require('../middlewares/cors.middleware')
+const rolesMiddleware = require('../middlewares/roles.middleware')
 
-routes.get('/:announce_id', commentController.getCommentsByAnnounce)
-
-routes.post('/',
+routes.get('/:announce_id',
     cors(corsMiddleware.authedCors),
-    passportAuth.authenticate('cookie', { session: false }),
-    AuthMiddleware.requireAdminOrSelf,
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('readAny', 'comment'),
+    commentController.getCommentsByAnnounce
+)
+
+routes.options('/', cors(corsMiddleware.wideCors)) // enable pre-flights
+routes.post('/',
+    cors(corsMiddleware.wideCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
     commentController.createComment
 )
 
 routes.put('/enable/:comment_id',
     cors(corsMiddleware.authedCors),
-    passportAuth.authenticate('cookie', { session: false }),
-    AuthMiddleware.requireAdminOrSelf,
+    passportMiddleware.authenticate('cookie', { session: false }),
     commentController.enableComment
 )
 
 routes.put('/disable/:comment_id',
     cors(corsMiddleware.authedCors),
-    passportAuth.authenticate('cookie', { session: false }),
-    AuthMiddleware.requireAdminOrSelf,
+    passportMiddleware.authenticate('cookie', { session: false }),
     commentController.disableComment
+)
+
+routes.options('/like/:comment_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.put('/like/:comment_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.createCommentLike
+)
+
+routes.options('/unlike/:comment_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.put('/unlike/:comment_id/:likeIndex',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.removeCommentLike
+)
+
+routes.options('/response', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.post('/response',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.createCommentResponse
+)
+
+routes.options('/response', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.put('/response/like/:comment_id/:responseIndex',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.createCommentResponseLike
+)
+
+routes.options('/response', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.put('/response/unlike/:comment_id/:responseIndex/:likeIndex',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.removeCommentResponseLike
 )
 
 module.exports = routes
