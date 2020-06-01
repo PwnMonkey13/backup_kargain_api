@@ -1,5 +1,7 @@
 const AuthMailer = require('./auth')
+const AnnouncesMailer = require('./announces')
 
 module.exports = {
-  auth: AuthMailer
+  auth: AuthMailer,
+  announces : AnnouncesMailer
 }

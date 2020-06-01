@@ -1,75 +1,152 @@
+const jwt = require('jsonwebtoken')
+const config = require('../config/config')
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
 const Errors = require('../utils/Errors')
+const functions = require('../utils/functions')
+const announcesFiltersMapper = require('../utils/announcesFiltersMapper')
+const announcesSorterMapper = require('../utils/announcesSorterMapper')
+const AnnounceMailer = require('../components/mailer').announces
+const DEFAULT_RESULTS_PER_PAGE = 10
 
-// TODO
-const getAnnouncesLegacy = async (req, res, next) => {
-    const { base64params } = req.params
-    const buff = new Buffer(base64params, 'base64')
-    const string = buff.toString('ascii')
-    const params = JSON.parse(string)
-    const { filters, sorter } = params
+const getAnnounces = async (req, res, next) => {
+    const { coordinates, enableGeocoding, radius } = req.query
+    let size = DEFAULT_RESULTS_PER_PAGE
+    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    let sorters = {
+        createdAt: -1
+    }
     
-    try {
-        const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
-        let size = 5
-        let sorters = { createdAt: -1 }
-        if (sorter) sorters = { [sorter.value.key]: sorter.value.desc ? -1 : 1, ...sorters }
-        
-        if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
-            size = parseInt(req.query.size)
+    if (req.query.sort_by) {
+        const sortBy = announcesSorterMapper[req.query.sort_by]
+        const sortOrder = req.query.sort_ord ? req.query.sort_ord === 'ASC' ? 1 : -1 : -1
+        sorters = {
+            [sortBy]: sortOrder,
+            ...sorters
         }
-        const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
-        
-        const query = filters ? Object.keys(filters).reduce((carry, key) => {
-            const filter = filters[key]
-            if (typeof filter === 'object') {
-                if (filter.type === 'number') {
-                    if (!carry[filter.ref]) carry[filter.ref] = {}
-                    if (filter.rule === 'min') carry[filter.ref] = { ...carry[filter.ref], $gte: filter.value }
-                    else if (filter.rule === 'max') carry[filter.ref] = { ...carry[filter.ref], $lte: filter.value }
+    }
+    
+    if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
+        size = parseInt(req.query.size)
+    }
+    
+    const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
+    
+    const filters = Object.keys(announcesFiltersMapper).reduce((carry, key) => {
+        const match = Object.keys(req.query).find(prop => prop === key)
+        if (match) {
+            return {
+                ...carry,
+                [key]: {
+                    ...announcesFiltersMapper[key],
+                    value: req.query[key]
                 }
-                    
-                    // TODO
-                // else if (typeof filter === 'object') {}
+            }
+        } else return carry
+    }, {})
+    
+    let defaultQuery = {
+        published: true,
+        visible: true,
+        status: 'active' //enum['deleted', 'archived', 'active']
+    }
+    
+    let query = Object.keys(filters).reduce((carry, key) => {
+        const filter = filters[key]
+        if (typeof filter === 'object') {
+            
+            if (!carry[filter.ref]) carry[filter.ref] = {}
+            
+            if (filter.type === 'range') {
+                const values = filter.value.split(',')
+                const min = Number(values[0])
+                const max = Number(values[1])
                 
-                else {
-                    carry[key] = filter.rule === 'strict' ? filter.value.toLowerCase() : {
+                if (!filter.disable) {
+                    if (min) carry[filter.ref]['$gte'] = min
+                    if (max) {
+                        if (filter.maxDisable && max < filter.maxDisable) {
+                            carry[filter.ref]['$lte'] = max
+                        } else carry[filter.ref]['$lte'] = max
+                    }
+                }
+            } else if (typeof filter.value === 'string') {
+                if (filter.rule === 'strict') {
+                    carry[filter.ref] = filter.value.toLowerCase()
+                } else {
+                    carry[filter.ref] = {
                         $regex: filter.value,
                         $options: 'i'
                     }
                 }
             }
-            return carry
-        }, {}) : {}
-        
+        }
+        return carry
+    }, defaultQuery)
+    
+    if (enableGeocoding && Array.isArray(coordinates) && radius) {
+        query = {
+            ...query,
+            'location': {
+                $near: {
+                    $geometry:
+                        {
+                            type: 'Point',
+                            coordinates: [
+                                coordinates[0],
+                                coordinates[1]
+                            ]
+                        },
+                    $maxDistance: radius * 1000
+                }
+            }
+        }
+    }
+    
+    try {
         const rows = await AnnounceModel
-        .find(query)
+        .find(query, '-damages')
         .skip(skip)
         .sort(sorters)
         .limit(size)
-        .populate('user')
+        // .lean()
+        .populate('images')
+        .populate({
+            path: 'user',
+            select: '-followings -followers -favorites -garage'
+        })
+        .populate({
+            path: 'comments',
+            select: '-announce -responses -likes',
+            populate: {
+                path: 'user',
+                select: '-followings -followers -favorites -garage'
+            }
+        })
         
-        const total = await AnnounceModel.estimatedDocumentCount().exec()
+        const total = await AnnounceModel
+        .find(query)
+        .skip(skip)
+        .limit(size)
+        .count()
         
         const data = {
             query,
-            filters,
-            sorter,
-            page: page,
+            sorters,
             pages: Math.ceil(total / size),
+            page,
             total,
-            size: size,
+            size,
             rows
         }
         
         return res.json({ success: true, data })
-    } catch (e) {
-        throw e
+    } catch (err) {
+        return next(err)
     }
 }
 
-const getAnnounces = async (req, res, next) => {
+const getAnnouncesAll = async (req, res, next) => {
     try {
         const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
         let size = 5
@@ -114,11 +191,49 @@ const getAnnouncesByUser = async (req, res, next) => {
     else return res.status(400).json({ success: false, msg: 'no announces found', uid })
 }
 
-const getBySlug = async (req, res, next) => {
+const getAnnounceBySlug = async (req, res, next) => {
     try {
-        const announce = await AnnounceModel.findOne({ slug: req.params.slug })
-        if (announce) return res.json({ success: true, data: announce })
-        else return next(Errors.NotFoundError('no announce found'))
+        const announce = await AnnounceModel
+        .findOne({  slug: req.params.slug })
+        .populate('user')
+        .populate('comments')
+        
+        if (!announce) return next(Errors.NotFoundError('no announce found'))
+        
+        if (req.user) {
+            if (req.user.role === 'admin') {
+                return res.json({ success: true, data: announce })
+            }
+            
+            if (req.user.id.toString() === announce.user.id.toString()) {
+                return res.json({ success: true, data: announce })
+            }
+        }
+        
+        const displayAd =
+            announce.activated &&
+            announce.visible &&
+            announce.published &&
+            announce.status === 'active'
+        
+        if (displayAd) return res.json({ success: true, data: announce })
+        
+        return next(Errors.NotFoundError('no announce found'))
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getByIdAndNext = (method = 'GET') => async (req, res, next) => {
+    let announceId = method === 'GET' ? req.params.announce_id : req.body.announce_id
+    
+    try {
+        const announce = await AnnounceModel.findById(announceId)
+        if (announce) {
+            req.announce = announce
+            return next()
+        }
+        return next(Errors.NotFoundError('no announce found'))
     } catch (err) {
         return next(err)
     }
@@ -127,8 +242,8 @@ const getBySlug = async (req, res, next) => {
 const getBySlugAndNext = async (req, res, next) => {
     try {
         const announce = await AnnounceModel.findOne({ slug: req.params.slug })
-        if (announce){
-            req.announce = announce;
+        if (announce) {
+            req.announce = announce
             return next()
         }
         return next(Errors.NotFoundError('no announce found'))
@@ -138,16 +253,148 @@ const getBySlugAndNext = async (req, res, next) => {
 }
 
 const createAnnounce = async (req, res, next) => {
-    if (!req.user) return next('missing user')
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    const max = req.user.config.garageLengthAllowed ?? 5
     
-    const announce = new AnnounceModel(req.body)
-    announce.user = req.user
+    if (req.user.garage.length > max) {
+        return next('max announces limit reached')
+    }
     
     try {
+        const announce = new AnnounceModel({
+            ...req.body,
+            user: req.user
+        })
+        
         const document = await announce.save()
-        return res.json({ success: true, message: 'Ad created successfully', data: document })
+        const userInsertion = await UserModel.updateOne(
+            { _id: req.user.id },
+            {
+                $addToSet: {
+                    garage: document._id
+                }
+            }
+        )
+        
+        const token = jwt.sign({
+                slug: announce.slug
+            }, config.jwt.encryption, { expiresIn: '1w' }
+        )
+        
+        const emailResult = await AnnounceMailer.confirmCreateAnnounce({
+            firstname: req.user.firstname,
+            lastname: req.user.lastname,
+            email: req.user.email,
+            confirmUrl: `${config.frontend}/announces/confirm?token=${token}`,
+            token
+        })
+        
+        return res.json({
+            success: true,
+            message: 'Ad created successfully',
+            data: {
+                document,
+                userInsertion,
+                emailResult
+            },
+        })
     } catch (err) {
         next(err)
+    }
+}
+
+const updateAnnounce = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError())
+    
+    const allowedFieldsUpdatesSet = [
+        'title',
+        'showCellPhone',
+        'visible',
+        'description',
+        'price',
+        'vehicleFunctionType',
+        'vehicleFunctionUse',
+        'vehicleGeneralState',
+        'vehicleFunction',
+        'vehicleEngine.type',
+        'vehicleEngine.gas',
+        'vehicleEngine.cylinder',
+        'power.km',
+        'power.ch',
+        'consumption.mixt',
+        'consumption.city',
+        'consumption.road',
+        'consumption.gkm',
+        'mileage',
+        'equipments',
+        'damages',
+        'doors',
+        'seats',
+        'driverCabins',
+        'bunks',
+        'beds',
+        'bedType',
+        'paint',
+        'materials',
+        'externalColor',
+        'internalColor',
+        'emission',
+        'images',
+        'tags',
+        'address.fullAddress',
+        'address.housenumber',
+        'address.street',
+        'address.postalcode',
+        'address.country',
+        'address.city'
+    ]
+    
+    const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {
+        const value = functions.resolveObjectKey(req.body, key)
+        if (value) return { ...carry, [key]: value }
+        else return carry
+    }, {})
+    
+    try {
+        const doc = await AnnounceModel.updateOne(
+            { slug: req.params.slug },
+            { $set: updatesSet },
+            {
+                returnNewDocument: true,
+                runValidators: true,
+                context: 'query'
+            }
+        )
+        return res.status(200).json({ success: true, data: doc })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const confirmAnnounce = async (req, res, next) => {
+    const { token } = req.params
+    try {
+        const decoded = await jwt.verify(token, config.jwt.encryption)
+        if (!decoded) return next('missing email')
+        const { slug } = decoded
+        if (!slug) return next('missing announce slug in token')
+    
+        try{
+            const document = await AnnounceModel.findOneAndUpdate(
+                { slug },
+                { $set: { activated: true } },
+                {
+                    returnNewDocument: true,
+                    runValidators: true,
+            })
+            return res.json({ success: true, data: document })
+    
+        } catch (err) {
+            return next(err)
+        }
+        
+    } catch (err) {
+        return next(Errors.AlreadyActivated('Activation token expired'))
     }
 }
 
@@ -155,11 +402,7 @@ const uploadImages = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     if (!req.announce) return next(Errors.NotFoundError('no announce found'))
     
-    const announce = req.announce;
-    
-    if (req.uploadedFiles && req.uploadedFiles.featured_image && req.uploadedFiles.featured_image.length !== 0) {
-        announce.featuredImg = req.uploadedFiles.featured_image[0]
-    }
+    const announce = req.announce
     
     if (req.uploadedFiles && req.uploadedFiles.images && req.uploadedFiles.images.length !== 0) {
         if (!announce.images) announce.images = []
@@ -174,4 +417,43 @@ const uploadImages = async (req, res, next) => {
     }
 }
 
-module.exports = { getAnnouncesLegacy, getAnnounces, getAnnouncesByUser, getBySlug, getBySlugAndNext, createAnnounce, uploadImages }
+const toggleUserLike = async (req, res, next) => {
+    const { announce_id: announceId } = req.params
+    if (!req.user) return next(Errors.UnAuthorizedError())
+    
+    try {
+        const announce = await AnnounceModel.findById(announceId)
+        if (!announce) return next('announce not found')
+        
+        const foundUser = announce.likes.find(like => like.user.toString() === req.user.id.toString())
+        
+        if (!foundUser) {
+            announce.likes.push({
+                user: req.user.id
+            })
+        } else {
+            const index = announce.likes.findIndex(like => like.user === req.user.id)
+            announce.likes.splice(index, 1)
+        }
+        
+        const doc = await announce.save()
+        return res.json({ success: true, message: 'like added successfully', data: doc.likes.length })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+module.exports = {
+    getAnnounces,
+    getAnnouncesAll,
+    getAnnouncesByUser,
+    getByIdAndNext,
+    getAnnounceBySlug,
+    getBySlugAndNext,
+    createAnnounce,
+    updateAnnounce,
+    confirmAnnounce,
+    uploadImages,
+    toggleUserLike
+}
+

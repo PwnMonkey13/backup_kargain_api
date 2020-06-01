@@ -1,17 +1,19 @@
-const userModel = require('./user.model')
-const announceModel = require('./announce.model')
-const vehiclesMakes = require('./vehicles/vehicleMake.models')
-const vehiclesModels = require('./vehicles/vehicleModel.models')
-const mediaModel = require('./media.s3.model')
-const commentModel = require('./comment.model')
+const User = require('./user.model')
+const Announce = require('./announce.model')
+const VehiclesMakesModels = require('./vehicles/vehicleMake.models')
+const VehiclesModelModels = require('./vehicles/vehicleModel.models')
+const Media = require('./media.s3.model')
+const Comment = require('./comment.model')
+const UserConfig = require('./user.config.model')
 
 module.exports = {
-  User: userModel,
-  Media: mediaModel,
-  Comment: commentModel,
-  Announce: announceModel,
+  User,
+  UserConfig,
+  Media,
+  Comment,
+  Announce,
   Vehicles: {
-    Models: { ...vehiclesModels },
-    Makes: { ...vehiclesMakes }
+    Makes: { ...VehiclesMakesModels },
+    Models: { ...VehiclesModelModels },
   }
 }
