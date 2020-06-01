@@ -1,12 +1,9 @@
-const cors = require('cors')
 const path = require('path')
 const helmet = require('helmet')
 const express = require('express')
 const passport = require('passport')
 const bodyParser = require('body-parser')
-const session = require('express-session')
 const cookieParser = require('cookie-parser')
-// const cookieSession = require('cookie-session')
 const fileUpload = require('express-fileupload')
 const config = require('./config/config')
 const routes = require('./routes')
@@ -19,18 +16,14 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, '../', 'public')))
 app.set('trust proxy', 1) // trust first proxy
 
-app.use(passport.initialize({ session: false }))
-// app.use(passport.inistialize());
-// app.use(passport.session());
-
 // enable files upload
 app.use(fileUpload({
     createParentPath: true
 }))
 
 app.use((req, res, next) => {
-    if(!req.headers.origin){
-        req.headers.origin = req.protocol + '://' + req.get('host');
+    if (!req.headers.origin) {
+        req.headers.origin = req.protocol + '://' + req.get('host')
     }
     next()
 })
