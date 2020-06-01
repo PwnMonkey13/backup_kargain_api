@@ -1,23 +1,100 @@
-
 const router = require('express').Router()
-const passportAuth = require('../middlewares/passport')
-const auth = require('../middlewares/auth')
+const cors = require('cors')
+const corsMiddleware = require('../middlewares/cors.middleware')
+const rolesMiddleware = require('../middlewares/roles.middleware')
+const passportMiddleware = require('../middlewares/passport')
+const authMiddleware = require('../middlewares/auth.middleware')
 const usersController = require('../controllers/users.controller')
-
-// router.use(passportAuth.authenticate('jwt', { session: false }));
+const uploadController = require('../controllers/upload.s3.controller')
 
 router.get('/',
-  // auth.requireAdmin,
-  usersController.getUsers)
-// users?page=${page}&size=${size}
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('readAny', 'profile'),
+    usersController.getUsersAdminAction
+)
 
-router.get('/:username', usersController.getUser)
+router.get('/username/:username',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth,
+    usersController.getUserByUsername
+)
 
-router.put('/:username',
-  passportAuth.authenticate('jwt', { session: false }),
-  // auth.requireAdminOrSelf,
-  usersController.updateUser)
+router.options('/save', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/save',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    usersController.saveAuthedUser
+)
 
-router.delete('/:uid', usersController.deleteUser)
+router.options('/save/username/:username', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/save/username/:username',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    //TODO resrict admin privilege
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    usersController.saveUserByUsername
+)
+
+router.options('/update', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/update',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    usersController.updateUser
+)
+
+router.options('/upload/avatar', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/upload/avatar',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    uploadController.postObjects,
+    usersController.uploadAvatar
+)
+
+router.options('/favorite/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/favorite/:announce_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    usersController.addFavoriteAnnounceAction
+)
+
+router.options('/unfavorite/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/unfavorite/:announce_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    usersController.rmFavoriteAnnounceAction
+)
+
+router.options('/follow/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/follow/:user_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    usersController.followUserAction
+)
+
+router.options('/unfollow/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/unfollow/:user_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    usersController.unFollowUserAction
+)
+
+router.delete('/:uid',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('deleteAny', 'profile'),
+    usersController.deleteUser
+)
+
+//admin only
+router.options('/update/config/:uid', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/update/config/:uid',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    // rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    usersController.updateUserConfig
+)
 
 module.exports = router

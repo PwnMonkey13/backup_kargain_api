@@ -4,29 +4,28 @@ const crypto = require('crypto')
 const utils = require('../utils/functions')
 const Errors = require('../utils/Errors')
 const { uuid } = require('uuidv4')
+const LikeSchema = require('../schemas/like.schema')
+const UserConfigModel = require('./user.config.model')
 
 const UserSchema = new mongoose.Schema({
-    
-    role_id: {
-        type: Number,
-        enum: [10, 20, 35]
-    },
     
     firstname: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        get: v => utils.capitalizeWords(v)
     },
     
     lastname: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        get: v => utils.capitalizeWords(v)
     },
     
     username: {
         type: String,
-        trim: true
+        trim: true,
     },
     
     email: {
@@ -38,13 +37,20 @@ const UserSchema = new mongoose.Schema({
     
     role: {
         type: String,
-        enum: ['Client', 'Admin'],
-        default: 'Client'
+        enum: ['basic', 'admin'],
+        default: 'basic'
     },
     
     pro: {
         type: Boolean,
         default: false
+    },
+    
+    //pro features
+    company : {
+        name : String,
+        siren : String,
+        owner : String,
     },
     
     phone: {
@@ -62,24 +68,41 @@ const UserSchema = new mongoose.Schema({
         facebook: String
     },
     
+    location: {
+        coordinates: {
+            type: [Number],
+            default: [0, 0], //long, lat
+        },
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point',
+        },
+    },
+    
+    countrySelect: {
+        label: String,
+        value: String
+    },
+    
     address: {
-        type: String,
-        trim: true
-    },
-    
-    postalcode: {
-        type: String,
-        trim: true
-    },
-    
-    city: {
-        type: String,
-        trim: true
-    },
-    
-    country: {
-        type: String,
-        trim: true
+        housenumber: Number,
+        street: {
+            type: String,
+            trim: true
+        },
+        postalcode: {
+            type: String,
+            trim: true
+        },
+        city: {
+            type: String,
+            trim: true
+        },
+        fullAddress: {
+            type: String,
+            trim: true
+        }
     },
     
     password: {
@@ -108,24 +131,32 @@ const UserSchema = new mongoose.Schema({
     
     avatar: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'media'
+        ref: 'Media',
+        autopopulate : true
     },
     
-    followers: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ],
+    avatarUrl: String,
     
-    followings: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ]
+    garage: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Announce',
+    }],
     
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Announce',
+    }],
+    
+    followers: [LikeSchema],
+    followings: [LikeSchema],
+    
+    config: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ConfigUser',
+    }
 }, {
+    timestamps: true,
+    strict: false,
     toObject: {
         virtuals: true,
         transform: function (doc, ret) {
@@ -134,27 +165,49 @@ const UserSchema = new mongoose.Schema({
     toJSON: {
         virtuals: true,
         transform: function (doc, ret) {
+            delete ret.role
+            delete ret.pro
             delete ret.password
         }
     }
 })
 
+UserSchema.index({
+    '$**': 'text'
+})
+
+UserSchema.plugin(require('mongoose-autopopulate'))
+
 UserSchema.post('init', function (doc) {
     console.log('%s has been initialized from the db', doc._id)
 })
 
+UserSchema.post('save', async function (doc, next) {
+    let config = null;
+    if (!doc.config) {
+        config = new UserConfigModel({
+            user: doc._id,
+            garageLengthAllowed: doc.pro ? 100 : 5,
+        })
+        const configDoc = await config.save()
+        doc.config = configDoc._id
+        await doc.save()
+    } else {
+        config = await UserConfigModel.findById(doc.config)
+        if(config) await config.save()
+        else next("missing config")
+    }
+    next()
+})
+
 // Handler **must** take 3 parameters: the error that occurred, the document
-UserSchema.post('save', function (err, doc, next) {
+UserSchema.post('save', async function (err, doc, next) {
     if (err) {
         if (err.name === 'MongoError' && err.code === 11000) {
             throw Errors.Error('duplicate user')
         } else return next(err)
     }
     next()
-})
-
-UserSchema.post('save', function (doc) {
-    console.log('%s has been saved', doc._id)
 })
 
 UserSchema.post('remove', function (doc) {
@@ -165,14 +218,13 @@ UserSchema.post('remove', function (doc) {
 UserSchema.pre('save', async function (next) {
     const user = this
     try {
-        const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`)
-        user.username = `${fullname}-${uuid().substr(0, 6)}`
-        user.password = await hashPassword(user.password)
-    
-        if(this.isNew){
-            const md5 = crypto.createHash('md5').update(this.email).digest('hex')
-            user.avatarPic = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
+        if (this.isNew) {
+            const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`)
+            user.username = `${fullname}-${uuid().substr(0, 6)}`
+            user.password = await hashPassword(user.password)
         }
+        const md5 = crypto.createHash('md5').update(this.email).digest('hex')
+        user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
         next()
     } catch (err) {
         next(err)
@@ -184,9 +236,7 @@ UserSchema.statics.hashPassword = (password, salt) => hashPassword(password, sal
 const hashPassword = (password, saltRounds = 10) => bcrypt.hash(password, saltRounds)
 
 UserSchema.statics.findByEmail = async function (email) {
-    const user = await this.model('User').findOne({ email }).exec()
-    if (!user) throw new Error('user not found')
-    else return user
+    return await this.model('User').findOne({ email }).exec()
 }
 
 UserSchema.statics.confirmUser = async function (email) {
@@ -202,13 +252,12 @@ UserSchema.statics.resetPassword = async function (email, password) {
     const user = await this.model('User').findByEmail(email)
     const areIdentical = await user.comparePassword(password)
     if (areIdentical) throw new Error('Password are identical')
-    user.password = password
+    user.password = await hashPassword(password)
     return await user.save()
 }
 
 UserSchema.methods.comparePassword = async function (password) {
-    const user = this
-    return await bcrypt.compare(password, user.password)
+    return await bcrypt.compare(password, this.password)
 }
 
 UserSchema.virtual('id').get(function () {
@@ -216,23 +265,20 @@ UserSchema.virtual('id').get(function () {
     return user._id
 })
 
-UserSchema.virtual('avatarUrl').get(function () {
-    // Load picture from profile
-    // if (this.avatar) return this.avatar.location
-    const md5 = crypto.createHash('md5').update(this.email).digest('hex')
-    return 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
+UserSchema.virtual('isPro').get(function () {
+    const user = this
+    return user.pro === true
+})
+
+//TODO refacto w permissions
+UserSchema.virtual('isAdmin').get(function () {
+    const user = this
+    return user.role === 'admin'
 })
 
 UserSchema.virtual('fullname').get(function () {
     const user = this
     return `${user.firstname} ${user.lastname}`
-})
-
-UserSchema.virtual('fullAddress').get(function () {
-    const user = this
-    if (!user.address) return null
-    const address = user.address.toObject()
-    return Object.keys(address).reduce((carry, key) => [...carry, address[key]], []).join(', ')
 })
 
 UserSchema.virtual('twitter_url').get(function () {
@@ -246,7 +292,6 @@ UserSchema.virtual('facebook_url').get(function () {
         return 'http://facebook.com/' + encodeURIComponent(this.socials.facebook)
     }
 })
-
 
 // Export mongoose model
 module.exports = mongoose.model('User', UserSchema)
