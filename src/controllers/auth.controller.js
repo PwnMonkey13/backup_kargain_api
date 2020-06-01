@@ -18,11 +18,12 @@ const LoginValidation = (req, res, next) => {
 }
 
 const loginAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('unknown user'))
+    
     const user = req.user
     const expirationTimeSeconds = Date.now() + 1000 * 60 * 60 * 24 * 10
     const token = jwt.sign({
-            exp: Math.floor(expirationTimeSeconds/1000), // 10days (seconds)
+            exp: Math.floor(expirationTimeSeconds / 1000), // 10days (seconds)
             uid: user._id
         },
         config.jwt.encryption)
@@ -36,7 +37,17 @@ const loginAction = async (req, res, next) => {
             // secure: true,
             // sameSite: true,
         }
-    ).json({ success: true, data: { user, exp : Math.floor(expirationTimeSeconds/1000) } })
+    ).json({ success: true, data: { user, exp: Math.floor(expirationTimeSeconds / 1000) } })
+}
+
+const logoutAction = async (req, res, next) => {
+    req.logout()
+    return res.cookie('token',
+        null, {
+            maxAge: 0,
+            httpOnly: true
+        }
+    ).json({ success: true, data: { msg: 'cookie destroyed' } })
 }
 
 const registerAction = async (req, res, next) => {
@@ -89,15 +100,24 @@ const registerProAction = async (req, res, next) => {
             confirmUrl: `${config.frontend}/auth/confirm-email/${token}`
         })
         
-        return res.json({ success: true, message: 'User signed up successfully', data: document, emailResult })
+        return res.json({
+            success: true,
+            message: 'User signed up successfully',
+            data: {
+                document,
+                emailResult
+            }
+        })
     } catch (err) {
         next(err)
     }
 }
 
 const authorizeAction = async (req, res) => {
-    const cookies = req.cookies;
-    return res.json({ success: true, data: { isLoggedIn: true, user: req.user, cookies } })
+    return res.json({
+        success: true,
+        data: req.user
+    })
 }
 
 const confirmEmailAction = async (req, res, next) => {
@@ -160,6 +180,7 @@ const resetPasswordAction = async (req, res, next) => {
 module.exports = {
     LoginValidation,
     loginAction,
+    logoutAction,
     registerAction,
     registerProAction,
     authorizeAction,

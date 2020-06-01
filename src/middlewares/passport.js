@@ -2,10 +2,12 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const JwtStrategy = require('passport-jwt').Strategy
 const CookieStrategy = require('passport-cookie').Strategy
+const CustomStrategy = require('passport-custom').Strategy
 const ExtractJwt = require('passport-jwt').ExtractJwt
 const jwt = require('jsonwebtoken')
 const config = require('../config/config')
 const User = require('../models').User
+const Errors = require('../utils/Errors')
 
 /**
  * Called when user is added into the session.
@@ -46,13 +48,12 @@ passport.use(new LocalStrategy({
     }, async function (req, email, password, done) {
         try {
             const user = await User.findByEmail(email)
-            if (!user) { return done(null, false) }
-            if (!await user.comparePassword(password)) {
-                return done(null, false)
+            if (!user || !await user.comparePassword(password)) {
+                return done(Errors.UnAuthorizedError('unknown user or invalid password'))
             }
             return done(null, user)
         } catch (err) {
-            return done(null, err)
+            return done(err)
         }
     }
 ))
@@ -68,15 +69,26 @@ passport.use(new JwtStrategy(opts, (jwtPayload, done) => {
     } else return done(null, 'invalid user')
 }))
 
+passport.use('bypassAuth', new CustomStrategy(async function (req, callback) {
+    try {
+        const token = req?.signedCookies?.['token'] ?? req?.cookies?.['token'] ?? null
+        if (!token) callback(null)
+        callback(null, {})
+        
+        // const decoded = await jwt.verify(token, config.jwt.encryption)
+        // if (!decoded || !decoded.uid) return callback('invalid token')
+        // const user = await User.findById(decoded.uid)
+        // callback(null, user);
+    } catch (err) {
+        return callback(err)
+    }
+}))
+
 // Setting up Cookie based login strategy
 passport.use(new CookieStrategy(async (token, done) => {
-    console.log("token")
-    console.log(token)
     try {
-        const raw = await jwt.decode(token);
-        console.log(raw)
         const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded || !decoded.uid) return done('missing uid')
+        if (!decoded || !decoded.uid) return done('invalid token')
         const user = await User.findById(decoded.uid)
         if (!user) return done('unknown user, try again')
         else return done(null, user)

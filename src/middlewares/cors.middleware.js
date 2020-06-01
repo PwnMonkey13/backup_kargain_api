@@ -1,4 +1,4 @@
-const CONFIG = require('./config')
+const CONFIG = require('../config/config')
 const Errors = require('../utils/Errors')
 
 function corsOptions (allowCredentials = false, enableAllOrigin = false) {
@@ -20,6 +20,6 @@ const authedCors = corsOptions(true)
 
 const wideCors = corsOptions(true, true)
 
-const clientCors = corsOptions()
+const clientCors = corsOptions(false, false)
 
 module.exports = { clientCors, authedCors, wideCors }

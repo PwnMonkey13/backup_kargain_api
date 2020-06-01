@@ -1,30 +1,58 @@
 const cors = require('cors')
-const corsMiddleware = require('../config/cors')
 const router = require('express').Router()
+const corsMiddleware = require('../middlewares/cors.middleware')
+const authMiddleware = require('../middlewares/auth.middleware')
+const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
-const passportAuth = require('../middlewares/passport')
 
-router.options('/login', cors(corsMiddleware.authedCors)) // enable pre-flights
-
+router.options('/login', cors(corsMiddleware.wideCors))
 router.post('/login',
-    cors(corsMiddleware.authedCors),
+    cors(corsMiddleware.wideCors),
     authController.LoginValidation,
-    passportAuth.authenticate('local', { session: false }),
-    authController.loginAction)
+    passportMiddleware.authenticate('local', { session: false }),
+    authController.loginAction
+)
 
-router.post('/register', authController.registerAction)
+router.options('/register', cors(corsMiddleware.wideCors))
+router.post('/register',
+    cors(corsMiddleware.wideCors),
+    authController.registerAction
+)
 
-router.post('/register-pro', authController.registerProAction)
+router.options('/register-pro', cors(corsMiddleware.wideCors))
+router.post('/register-pro',
+    cors(corsMiddleware.wideCors),
+    authController.registerProAction
+)
 
-router.get('/authorizeSSR',
+router.get('/authorize',
     cors(corsMiddleware.authedCors),
-    passportAuth.authenticate('cookie', { session: false }),
-    authController.authorizeAction)
+    authMiddleware.byPassAuth,
+    authController.authorizeAction
+)
 
-router.get('/confirm-email', authController.confirmEmailAction)
+router.options('/logout', cors(corsMiddleware.wideCors))
+router.post('/logout',
+    cors(corsMiddleware.authedCors),
+    authController.logoutAction
+)
 
-router.post('/forgot-password', authController.forgotPasswordAction)
+router.options('/confirm-email', cors(corsMiddleware.wideCors))
+router.get('/confirm-email',
+    cors(corsMiddleware.wideCors),
+    authController.confirmEmailAction
+)
 
-router.post('/reset-password', authController.resetPasswordAction)
+router.options('/forgot-password', cors(corsMiddleware.wideCors))
+router.post('/forgot-password',
+    cors(corsMiddleware.wideCors),
+    authController.forgotPasswordAction
+)
+
+router.options('/reset-password', cors(corsMiddleware.wideCors))
+router.post('/reset-password',
+    cors(corsMiddleware.wideCors),
+    authController.resetPasswordAction
+)
 
 module.exports = router

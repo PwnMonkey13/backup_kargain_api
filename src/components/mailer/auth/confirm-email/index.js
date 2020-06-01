@@ -16,13 +16,13 @@ const sendConfirmEmail = async params => {
         },
         To: [
           {
-            Email: 'giraudo.nicolas13@gmail.com',
+            Email: params.email,
             Name: `${params.lastname} ${params.firstname}`
           }
         ],
         TemplateID: 1336296,
         TemplateLanguage: true,
-        Subject: 'Activation Mail Kargain',
+        Subject: 'Email confirmation Kargain',
         URLTags: `token=${params.token}`,
         Variables: {
           // link_activation: params.confirmUrl
