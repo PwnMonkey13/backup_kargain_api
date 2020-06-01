@@ -1,19 +1,43 @@
 const express = require('express')
-const routes = express.Router()
+const router = express.Router()
 const cors = require('cors')
-const wideCors = require('../config/cors').wideCors
+const rolesMiddleware = require('../middlewares/roles.middleware')
+const corsMiddleware = require('../middlewares/cors.middleware')
+const passportMiddleware = require('../middlewares/passport')
 const carsController = require('../controllers/vehicles/cars.controller')
 const internalVehicleController = require('../controllers/vehicles/internal.vehicles.controller')
 
-routes.get('/cars', cors(wideCors), carsController.getData)
-
-routes.post('/internal/:type/makes', internalVehicleController.createMakes)
+router.get('/cars',
+    cors(),
+    carsController.getDataAction
+)
 
 // type : ["buses", "scooters", "campers", "motorcycles", "trucks"];
-routes.get('/internal/:type/makes', internalVehicleController.getMakes)
+router.get('/internal/:type/makes',
+    cors(),
+    internalVehicleController.getMakes
+)
 
-routes.get('/internal/:type/:make/models', internalVehicleController.getModelsByMake)
+router.get('/internal/:type/:make/models',
+    cors(),
+    internalVehicleController.getModelsByMake
+)
 
-routes.get('/del/:key', carsController.delCacheKey)
+//admin only
 
-module.exports = routes
+router.options('/internal/:type/makes', cors(corsMiddleware.wideCors)) // enable pre-flights
+router.post('/internal/:type/makes',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    internalVehicleController.createMakes
+)
+
+router.get('/del/:key',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    carsController.delCacheKey
+)
+
+module.exports = router
