@@ -1,15 +1,14 @@
 const express = require('express')
 const app = express.Router()
 const cors = require('cors')
-const passportAuth = require('../middlewares/passport')
-const AuthMiddleware = require('../middlewares/auth')
-const corsMiddleware = require('../config/cors')
+const passportMiddleware = require('../middlewares/passport')
+const corsMiddleware = require('../middlewares/cors.middleware')
 const uploadController = require('../controllers/upload.s3.controller')
 
 app.get('/config',
     cors(corsMiddleware.authedCors),
-    passportAuth.authenticate('cookie', { session: false }),
-    AuthMiddleware.requireAdminOrSelf,
+    passportMiddleware.authenticate('cookie', { session: false }),
+   //TODO ADMIN
     uploadController.getS3Config
 )
 

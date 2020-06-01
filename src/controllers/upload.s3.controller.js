@@ -28,11 +28,10 @@ const postObjects = async (req, res, next) => {
     const typeDir = req.body.typeDir
     const dir = typeDir ? `${baseDir}/${typeDir}` : `${baseDir}`
     const enableHash = req.body.enableHash || true
-    const allowedFileNames = ['images', 'featured_image']
+    const allowedFileNames = ['images', 'avatar']
     
     // see https://attacomsian.com/blog/uploading-files-nodejs-express
     if (!req.files) return next()
-    if (!req.announce) return next()
     
     const files = Object.keys(req.files)
     .filter(key => allowedFileNames.includes(key))
