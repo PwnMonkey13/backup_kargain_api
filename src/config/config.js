@@ -1,10 +1,26 @@
 require('dotenv').config()
 
-let env
-let config
+const isProd = process.env.NODE_ENV === 'production'
+const env = isProd ? "prod" : "dev"
+const api = isProd ? "https://kargain-api.now.sh/api" : "http://localhost:8080/api"
+const frontend = isProd ? "https://kargain.web.app" : "http://localhost:3000";
+const providers = ['google', 'facebook']
+const callbacks = providers.map(provider => `${api}/auth/${provider}/callback`)
+const [googleURL, facebookURL] = callbacks
 
-const domains = { local: 'http://localhost:3000', prod: 'https://kargain.web.app' }
-const global = {
+const db = isProd ? {
+    mongo_location: process.env.MONGODB_URI_PROD,
+    name: process.env.DB_NAME_PROD || 'kargain'
+} : {
+    mongo_location: process.env.MONGODB_URI_DEV,
+    name: process.env.DB_NAME_DEV || 'kargain'
+}
+
+module.exports = {
+    isProd,
+    env,
+    frontend,
+    db,
     api_path: '/api',
     whileListDomains: [
         'http://localhost:8080',
@@ -31,6 +47,19 @@ const global = {
         databasesCar: {
             API_URL: 'https://databases.one/api',
             API_TOKEN: '2bc401d0b2c3f47eb29ca4946'
+        }
+    },
+    oauth: {
+        facebook: {
+            clientID: "3103914796332638",
+            clientSecret: "f24da17a2d60ed378fcdd4975742bec7",
+            profileFields: ['id', 'emails', 'name', 'picture.width(250)'],
+            callbackURL: facebookURL
+        },
+        google: {
+            clientID : "",
+            clientSecret : "",
+            callbackURL: googleURL
         }
     },
     aws: {
@@ -88,40 +117,8 @@ const global = {
         password: 'rKkUtAfAdwdYeQPnSr9BWrhiHa7KzqOw'
     },
     port: parseInt(process.env.PORT) || 8080,
-    env: process.env.NODE_ENV || 'development',
     jwt: {
         encryption: process.env.JWT_ENCRYPTION || 'changeme',
         expiration: process.env.JWT_EXPIRATION || 60 * 60 * 24 * 30
     }
 }
-
-const dev = {
-    frontend: domains.local,
-    db: {
-        // mongo_location: 'mongodb://' + CONFIG.db.host + ':' + CONFIG.db.port + '/' + CONFIG.db.name;
-        mongo_location: process.env.MONGODB_URI_DEV,
-        name: process.env.DB_NAME_DEV || 'kargain'
-    }
-}
-
-const prod = {
-    frontend: domains.prod,
-    db: {
-        mongo_location: process.env.MONGODB_URI_PROD,
-        name: process.env.DB_NAME_PROD || 'kargain'
-    }
-}
-
-switch (global.env) {
-    case 'development' || 'dev':
-    default :
-        env = 'dev'
-        config = dev
-        break
-    case 'production' || 'prod':
-        env = 'prod'
-        config = prod
-        break
-}
-
-module.exports = { ...global, ...config, env, isDev: env === 'dev' }
