@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
-const app = require('./src/app')
-const config = require('./src/config/config')
+const app = require('./app')
+const config = require('./config/config')
 
 mongoose.Promise = global.Promise // set mongo up to use promises
 

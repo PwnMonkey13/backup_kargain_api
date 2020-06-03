@@ -11,13 +11,13 @@
         "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept"
       },
       "src": "/.*",
-      "dest": "/index.js"
+      "dest": "dist/index.js"
     }
   ],
   "builds": [
     {
-      "src": "index.js",
-      "use": "@now/node-server"
+      "src": "dist/index.js",
+      "use": "@now/node"
     }
   ]
 }
