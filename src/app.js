@@ -4,7 +4,6 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
-const passport = require('./middlewares/passport')
 const config = require('./config/config')
 const routes = require('./routes')
 const app = express()
@@ -15,8 +14,6 @@ app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, '../', 'public')))
 app.set('trust proxy', 1) // trust first proxy
-
-app.use(passport.initialize())
 
 // enable files upload
 app.use(fileUpload({
@@ -38,6 +35,10 @@ app.get('/db', function (req, res, next) {
     return res.end(config.db.mongo_location)
 })
 
+app.get('/env', function (req, res, next) {
+    return res.end(config.env)
+})
+
 app.use(config.api_path, routes)
 
 app.get('*', function (req, res, next) {
@@ -52,9 +53,8 @@ app.use(function (err, req, res, next) {
     const error = {
         code,
         name: err.name || 'Error',
-        message: !config.isDev && code === 500 ? 'Something failed on server' : isError ? err.message : err
+        message: config.isProd && code === 500 ? 'Something failed on server' : isError ? err.message : err
     }
-    console.log(error)
     return res.json({ success: false, error })
 })
 

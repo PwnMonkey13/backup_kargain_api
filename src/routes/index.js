@@ -22,7 +22,7 @@ router.use('/uploads', uploadS3Routes)
 router.use('/comments', commentsRoutes)
 router.use('/search', searchRoutes)
 
-if (CONFIG.isDev) {
+if (!CONFIG.isProd) {
     router.use('/dev', devRoutes)
 }
 

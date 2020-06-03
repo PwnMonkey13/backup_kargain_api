@@ -1,7 +1,7 @@
 require('dotenv').config()
 
-const isProd = process.env.NODE_ENV === 'production'
-const env = isProd ? "prod" : "dev"
+const env = process.env.NODE_ENV || "development"
+const isProd = env === 'production'
 const api = isProd ? "https://kargain-api.now.sh/api" : "http://localhost:8080/api"
 const frontend = isProd ? "https://kargain.web.app" : "http://localhost:3000";
 const providers = ['google', 'facebook']
