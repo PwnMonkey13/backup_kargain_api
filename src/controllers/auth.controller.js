@@ -9,7 +9,17 @@ const { uuid } = require('uuidv4')
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 const PASSWORD_REGEX = /^(?=.*\d).{4,8}$/
 
-const LoginValidation = (req, res, next) => {
+const findUserByEmailMiddleware = async (req, res, next) => {
+    if (!req.body.email) return next(Errors.NotFoundError('missing email'))
+    try {
+        req.user = await User.findByEmail(req.body.email)
+        next()
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const loginValidation = (req, res, next) => {
     const { email, password } = req.body
     if (!email || !password) return next('missing parameters')
     if (!EMAIL_REGEX.test(email)) return next('email is not valid')
@@ -58,21 +68,10 @@ const registerAction = async (req, res, next) => {
     
     const user = new User(req.body)
     
-    const token = jwt.sign({
-            email
-        }, config.jwt.encryption, { expiresIn: '1h' }
-    )
-    
     try {
-        const document = await user.save()
-        const emailResult = await authMailer.confirmAccount({
-            firstname: document.firstname,
-            lastname: document.lastname,
-            email: document.email,
-            token,
-            confirmUrl: `${config.frontend}/auth/confirm-email/${token}`
-        })
-        return res.json({ success: true, msg: 'User signed up successfully', emailResult, token })
+        req.user = await user.save()
+        next()
+        
     } catch (err) {
         next(err)
     }
@@ -84,33 +83,57 @@ const registerProAction = async (req, res, next) => {
     if (!EMAIL_REGEX.test(email)) return res.status(400).json({ success: false, msg: 'email is not valid' })
     if (!PASSWORD_REGEX.test(password)) return next('password invalid (must length 4 - 8 and include 1 number at least')
     
-    const user = new User(req.body)
-    
-    const token = jwt.sign({
-            email
-        }, config.jwt.encryption, { expiresIn: '1h' }
-    )
+    const user = new User({
+        ...req.body,
+        pro: true
+    })
     
     try {
-        const document = await user.save()
-        const emailResult = await authMailer.confirmAccount({
-            firstname: document.firstname,
-            lastname: document.lastname,
-            email: document.email,
-            confirmUrl: `${config.frontend}/auth/confirm-email/${token}`
-        })
+        req.user = await user.save()
+        next()
         
-        return res.json({
-            success: true,
-            message: 'User signed up successfully',
-            data: {
-                document,
-                emailResult
-            }
-        })
     } catch (err) {
         next(err)
     }
+}
+
+const confirmEmailTokenAction = async (req, res, next) => {
+    const { token } = req.params
+    try {
+        const decoded = await jwt.verify(token, config.jwt.encryption)
+        if (!decoded.email) return next(Errors.UnAuthorizedError())
+        try {
+            const updated = await User.confirmUserEmail(decoded.email)
+            return res.json({
+                success: true,
+                data: updated
+            })
+        } catch (err) {
+            return next(err)
+        }
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const sendEmailActivation = async (req, res, next) => {
+    if (!req.user) return next(Errors.NotFoundError('missing user to activate'))
+    
+    const token = jwt.sign({ email: req.user.email },
+        config.jwt.encryption,
+        { expiresIn: '1h' }
+    )
+    
+    await authMailer.confirmAccount({
+        firstname: req.user.firstname,
+        lastname: req.user.lastname,
+        email: req.user.email,
+        link: token ? `${config.frontend}/auth/confirm-account?token=${token}` : null
+    })
+    
+    return res.json({
+        success: true,
+    })
 }
 
 const authorizeAction = async (req, res) => {
@@ -118,24 +141,6 @@ const authorizeAction = async (req, res) => {
         success: true,
         data: req.user
     })
-}
-
-const confirmEmailAction = async (req, res, next) => {
-    const { token } = req.query
-    try {
-        const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded) return next('missing email')
-        const { email } = decoded
-        if (!email) return next('missing email in token')
-        try {
-            const updated = await User.confirmUser(email)
-            return res.json({ success: true, msg: 'User confirmed successfully', data: updated })
-        } catch (err) {
-            return next(err)
-        }
-    } catch (err) {
-        return next(Errors.ExpiredTokenError('jwt expired'))
-    }
 }
 
 const forgotPasswordAction = async (req, res, next) => {
@@ -154,11 +159,13 @@ const forgotPasswordAction = async (req, res, next) => {
             firstname: document.firstname,
             lastname: document.lastname,
             email: document.email,
-            link: `${config.frontend}/auth/confirm-email/${token}`,
-            token
+            link: token ? `${config.frontend}/auth/confirm-email/${token}` : null
         })
         
-        return res.json({ success: true, data: { emailResult } })
+        return res.json({
+            success: true,
+            data: emailResult
+        })
     } catch (err) {
         next(err)
     }
@@ -171,20 +178,25 @@ const resetPasswordAction = async (req, res, next) => {
         if (!decoded) return next('missing email')
         const { email } = decoded
         const updated = await User.resetPassword(email, password)
-        return res.json({ success: true, msg: 'User password updated successfully', data: updated })
+        return res.json({
+            success: true,
+            data: updated
+        })
     } catch (err) {
         next(err)
     }
 }
 
 module.exports = {
-    LoginValidation,
+    findUserByEmailMiddleware,
+    loginValidation,
     loginAction,
     logoutAction,
     registerAction,
     registerProAction,
     authorizeAction,
-    confirmEmailAction,
+    confirmEmailTokenAction,
+    sendEmailActivation,
     forgotPasswordAction,
     resetPasswordAction
 }

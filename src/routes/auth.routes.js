@@ -8,7 +8,7 @@ const authController = require('../controllers/auth.controller')
 router.options('/login', cors(corsMiddleware.wideCors))
 router.post('/login',
     cors(corsMiddleware.wideCors),
-    authController.LoginValidation,
+    authController.loginValidation,
     passportMiddleware.authenticate('local', { session: false }),
     authController.loginAction
 )
@@ -16,13 +16,28 @@ router.post('/login',
 router.options('/register', cors(corsMiddleware.wideCors))
 router.post('/register',
     cors(corsMiddleware.wideCors),
-    authController.registerAction
+    authController.registerAction,
+    authController.sendEmailActivation
 )
 
 router.options('/register-pro', cors(corsMiddleware.wideCors))
 router.post('/register-pro',
     cors(corsMiddleware.wideCors),
-    authController.registerProAction
+    authController.registerProAction,
+    authController.sendEmailActivation
+)
+
+router.options('/ask-email-activation', cors(corsMiddleware.wideCors))
+router.post('/ask-email-activation',
+    cors(corsMiddleware.wideCors),
+    authController.findUserByEmailMiddleware,
+    authController.sendEmailActivation
+)
+
+router.options('/confirm-account/:token', cors(corsMiddleware.wideCors))
+router.put('/confirm-account/:token',
+    cors(corsMiddleware.wideCors),
+    authController.confirmEmailTokenAction
 )
 
 router.get('/authorize',
@@ -35,12 +50,6 @@ router.options('/logout', cors(corsMiddleware.wideCors))
 router.post('/logout',
     cors(corsMiddleware.authedCors),
     authController.logoutAction
-)
-
-router.options('/confirm-email', cors(corsMiddleware.wideCors))
-router.get('/confirm-email',
-    cors(corsMiddleware.wideCors),
-    authController.confirmEmailAction
 )
 
 router.options('/forgot-password', cors(corsMiddleware.wideCors))

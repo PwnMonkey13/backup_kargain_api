@@ -239,10 +239,10 @@ UserSchema.statics.findByEmail = async function (email) {
     return await this.model('User').findOne({ email }).exec()
 }
 
-UserSchema.statics.confirmUser = async function (email) {
+UserSchema.statics.confirmUserEmail = async function (email) {
     const user = await this.model('User').findOne({ email }).exec()
     if (!user) throw new Error('user not found')
-    if (user.activated && user.email_validated) { throw new Error('user already activated') }
+    // if (user.activated && user.email_validated) { throw new Error('user already activated') }
     user.activated = true
     user.email_validated = true
     return await user.save()

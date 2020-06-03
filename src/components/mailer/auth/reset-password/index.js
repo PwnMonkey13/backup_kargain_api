@@ -2,41 +2,39 @@ const CONFIG = require('../../../../config/config')
 const mailer = require('../../../../utils/mailer')
 
 const sendConfirmEmail = async params => {
-  if (!params.email) throw new Error('missing email')
-  if (!params.lastname) throw new Error('missing lastname')
-  if (!params.firstname) throw new Error('missing firstname')
-  if (!params.token) throw new Error('missing confirmUrl')
-
-  const message = {
-    Messages: [
-      {
-        From: {
-          Email: CONFIG.mailer.from.email,
-          Name: CONFIG.mailer.from.name
-        },
-        To: [
-          {
-            Email: params.email,
-            Name: `${params.lastname} ${params.firstname}`
-          }
-        ],
-        TemplateID: 1337110,
-        TemplateLanguage: true,
-        Subject: 'Reset Password Kargain',
-        URLTags: `token=${params.token}`,
-        Variables: {
-          // link_activation: params.confirmUrl
-        }
-        // "HTMLPart": template,
-      }
-    ]
-  }
-
-  try {
-    return await mailer.sendMailJet(message)
-  } catch (err) {
-    throw err
-  }
+    if (!params.email) throw new Error('missing email')
+    if (!params.lastname) throw new Error('missing lastname')
+    if (!params.firstname) throw new Error('missing firstname')
+    if (!params.link) throw new Error('missing reset link')
+    
+    const message = {
+        Messages: [
+            {
+                From: {
+                    Email: CONFIG.mailer.from.email,
+                    Name: CONFIG.mailer.from.name
+                },
+                To: [
+                    {
+                        Email: params.email,
+                        Name: `${params.lastname} ${params.firstname}`
+                    }
+                ],
+                TemplateID: 1337110,
+                TemplateLanguage: true,
+                Subject: 'Reset Password Kargain',
+                Variables: {
+                    reset_link: params.link
+                }
+            }
+        ]
+    }
+    
+    try {
+        return await mailer.sendMailJet(message)
+    } catch (err) {
+        throw err
+    }
 }
 
 module.exports = sendConfirmEmail
