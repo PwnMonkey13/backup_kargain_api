@@ -5,6 +5,13 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
 
+router.options('/sso-register', cors(corsMiddleware.wideCors))
+router.post('/sso-register',
+    cors(corsMiddleware.wideCors),
+    authController.ssoRegister,
+    authController.loginAction
+)
+
 router.options('/login', cors(corsMiddleware.wideCors))
 router.post('/login',
     cors(corsMiddleware.wideCors),
@@ -17,7 +24,7 @@ router.options('/register', cors(corsMiddleware.wideCors))
 router.post('/register',
     cors(corsMiddleware.wideCors),
     authController.registerAction,
-    authController.sendEmailActivation
+    // authController.sendEmailActivation
 )
 
 router.options('/register-pro', cors(corsMiddleware.wideCors))

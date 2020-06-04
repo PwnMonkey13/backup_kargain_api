@@ -88,13 +88,4 @@ router.delete('/:uid',
     usersController.deleteUser
 )
 
-//admin only
-router.options('/update/config/:uid', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.put('/update/config/:uid',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    // rolesMiddleware.grantAccess('updateOwn', 'profile'),
-    usersController.updateUserConfig
-)
-
 module.exports = router

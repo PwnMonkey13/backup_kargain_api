@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models').User
+const { uuid } = require('uuidv4')
+const pwdGenerator = require('generate-password')
 const config = require('../config/config')
 const authMailer = require('../components/mailer').auth
 const Errors = require('../utils/Errors')
-const { uuid } = require('uuidv4')
+const User = require('../models').User
 
 // Constants
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -27,6 +28,29 @@ const loginValidation = (req, res, next) => {
     else next()
 }
 
+const ssoRegister = async (req, res, next) => {
+    const data = req.body
+    
+    try {
+        const user = await User.findByEmail(data.email)
+        if (!user) {
+            const pwd = pwdGenerator.generate({ length: 16 })
+            const newUser = new User({
+                ...data,
+                sso: true,
+                password: pwd,
+                clear_password: pwd,
+            })
+            req.user = await newUser.save()
+        } else {
+            req.user = user
+        }
+        next()
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const loginAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('unknown user'))
     
@@ -36,7 +60,8 @@ const loginAction = async (req, res, next) => {
             exp: Math.floor(expirationTimeSeconds / 1000), // 10days (seconds)
             uid: user._id
         },
-        config.jwt.encryption)
+        config.jwt.encryption
+    )
     
     // Adds a new cookie to the response
     return res.cookie('token',
@@ -47,7 +72,10 @@ const loginAction = async (req, res, next) => {
             // secure: true,
             // sameSite: true,
         }
-    ).json({ success: true, data: { user, exp: Math.floor(expirationTimeSeconds / 1000) } })
+    ).json({
+        success: true,
+        data: user,
+    })
 }
 
 const logoutAction = async (req, res, next) => {
@@ -69,11 +97,11 @@ const registerAction = async (req, res, next) => {
     const user = new User(req.body)
     
     try {
-        req.user = await user.save()
-        next()
+        const doc = await user.save()
+        return res.json({ success: true, user, doc })
         
     } catch (err) {
-        next(err)
+        return res.json({ success: false, err })
     }
 }
 
@@ -190,6 +218,7 @@ const resetPasswordAction = async (req, res, next) => {
 module.exports = {
     findUserByEmailMiddleware,
     loginValidation,
+    ssoRegister,
     loginAction,
     logoutAction,
     registerAction,

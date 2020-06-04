@@ -2,11 +2,9 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const utils = require('../utils/functions')
-const Errors = require('../utils/Errors')
 const { uuid } = require('uuidv4')
 const LikeSchema = require('../schemas/like.schema')
-const UserConfigModel = require('./user.config.model')
-
+const UserConfigSchema = require('../schemas/user.config.schema')
 const UserSchema = new mongoose.Schema({
     
     firstname: {
@@ -23,6 +21,7 @@ const UserSchema = new mongoose.Schema({
         get: v => utils.capitalizeWords(v)
     },
     
+    //generated
     username: {
         type: String,
         trim: true,
@@ -47,10 +46,10 @@ const UserSchema = new mongoose.Schema({
     },
     
     //pro features
-    company : {
-        name : String,
-        siren : String,
-        owner : String,
+    company: {
+        name: String,
+        siren: String,
+        owner: String,
     },
     
     phone: {
@@ -61,11 +60,6 @@ const UserSchema = new mongoose.Schema({
     about: {
         type: String,
         trim: true
-    },
-    
-    socials: {
-        twitter: String,
-        facebook: String
     },
     
     location: {
@@ -105,15 +99,12 @@ const UserSchema = new mongoose.Schema({
         }
     },
     
+    clear_password: String,
+    
     password: {
         type: String,
         trim: true,
         required: true
-    },
-    
-    clear_password: {
-        type: String,
-        trim: true
     },
     
     salt: String,
@@ -132,7 +123,7 @@ const UserSchema = new mongoose.Schema({
     avatar: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Media',
-        autopopulate : true
+        autopopulate: true
     },
     
     avatarUrl: String,
@@ -150,10 +141,17 @@ const UserSchema = new mongoose.Schema({
     followers: [LikeSchema],
     followings: [LikeSchema],
     
-    config: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'ConfigUser',
-    }
+    sso: Boolean,
+    
+    facebookProvider: {
+        type: {
+            id: String,
+            token: String
+        },
+        select: false
+    },
+    
+    config: UserConfigSchema
 }, {
     timestamps: true,
     strict: false,
@@ -182,33 +180,14 @@ UserSchema.post('init', function (doc) {
     console.log('%s has been initialized from the db', doc._id)
 })
 
-UserSchema.post('save', async function (doc, next) {
-    let config = null;
-    if (!doc.config) {
-        config = new UserConfigModel({
-            user: doc._id,
-            garageLengthAllowed: doc.pro ? 100 : 5,
-        })
-        const configDoc = await config.save()
-        doc.config = configDoc._id
-        await doc.save()
-    } else {
-        config = await UserConfigModel.findById(doc.config)
-        if(config) await config.save()
-        else next("missing config")
-    }
-    next()
-})
-
-// Handler **must** take 3 parameters: the error that occurred, the document
-UserSchema.post('save', async function (err, doc, next) {
-    if (err) {
-        if (err.name === 'MongoError' && err.code === 11000) {
-            throw Errors.Error('duplicate user')
-        } else return next(err)
-    }
-    next()
-})
+// UserSchema.post('save', async function (err, doc, next) {
+//     if (err) {
+//         if (err.name === 'MongoError' && err.code === 11000) {
+//             throw Errors.Error('duplicate user')
+//         } else return next(err)
+//     }
+//     next()
+// })
 
 UserSchema.post('remove', function (doc) {
     console.log('%s has been removed', doc._id)
@@ -223,8 +202,15 @@ UserSchema.pre('save', async function (next) {
             user.username = `${fullname}-${uuid().substr(0, 6)}`
             user.password = await hashPassword(user.password)
         }
-        const md5 = crypto.createHash('md5').update(this.email).digest('hex')
-        user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
+        
+        if (!user.avatarUrl) {
+            const md5 = crypto.createHash('md5').update(this.email).digest('hex')
+            user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
+        }
+        
+        this.config = {
+            garageLengthAllowed: user.pro ? 100 : 5,
+        }
         next()
     } catch (err) {
         next(err)
@@ -279,18 +265,6 @@ UserSchema.virtual('isAdmin').get(function () {
 UserSchema.virtual('fullname').get(function () {
     const user = this
     return `${user.firstname} ${user.lastname}`
-})
-
-UserSchema.virtual('twitter_url').get(function () {
-    if (this.socials.twitter) {
-        return 'http://twitter.com/' + encodeURIComponent(this.socials.twitter)
-    }
-})
-
-UserSchema.virtual('facebook_url').get(function () {
-    if (this.socials.facebook) {
-        return 'http://facebook.com/' + encodeURIComponent(this.socials.facebook)
-    }
 })
 
 // Export mongoose model

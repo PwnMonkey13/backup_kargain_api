@@ -1,6 +1,5 @@
 const UserModel = require('../models').User
 const AnnounceModel = require('../models').Announce
-const UserConfigModel = require('../models').UserConfig
 const functions = require('../utils/functions')
 const Errors = require('../utils/Errors')
 
@@ -47,7 +46,6 @@ const getUserByUsername = async (req, res, next) => {
     
     try {
         const user = await UserModel.findOne({ username })
-        .populate('config')
         .populate({
             path : 'favorites',
             populate : 'comments',
@@ -99,15 +97,17 @@ const updateUser = async (req, res, next) => {
         'lastname',
         'about',
         'phone',
+        'company.name',
+        'company.siren',
+        'company.owner',
+        'countrySelect',
         'socials.facebook',
         'socials.twitter',
         'address.fullAddress',
         'address.housenumber',
         'address.street',
         'address.postalcode',
-        'address.country',
         'address.city',
-        'tags'
     ]
     
     const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {
@@ -307,39 +307,6 @@ const unFollowUserAction = async (req, res, next) => {
     }
 }
 
-const updateUserConfig = async (req, res, next) => {
-    const user = await UserModel.findById(req.params.uid)
-    //TODO check admin privilege
-    if (!user) return next(Errors.NotFoundError('missing user'))
-    
-    const allowedFieldsUpdatesSet = [
-        'garageLengthAllowed',
-        'announceTagsMaxLength',
-    ]
-    
-    try {
-        const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {
-            const value = functions.resolveObjectKey(req.body, key)
-            if (value) return { ...carry, [key]: value }
-            else return carry
-        }, {})
-        
-        console.log(updatesSet)
-        
-        const doc = await UserConfigModel.updateOne(
-            { _id: user.config },
-            { $set: updatesSet },
-            {
-                returnNewDocument: true,
-                runValidators: true
-            }
-        )
-        return res.status(200).json({ success: true, data: doc })
-    } catch (err) {
-        return next(err)
-    }
-}
-
 module.exports = {
     getUsersAdminAction,
     getUserByUsername,
@@ -352,5 +319,4 @@ module.exports = {
     rmFavoriteAnnounceAction,
     followUserAction,
     unFollowUserAction,
-    updateUserConfig
 }

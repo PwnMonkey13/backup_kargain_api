@@ -25,8 +25,8 @@ module.exports = {
     whileListDomains: [
         'http://localhost:8080',
         'http://localhost:3000',
-        'https://kargain-app.now.sh',
-        'https://kargain.web.app'
+        'https://kargain.web.app',
+        'https://kargain-api.now.sh'
     ],
     externalsAPI: {
         vicopo: {
@@ -49,11 +49,15 @@ module.exports = {
             API_TOKEN: '2bc401d0b2c3f47eb29ca4946'
         }
     },
-    oauth: {
+    stripe : {
+        token : "pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd",
+        recovery : 'fxrb-jfcm-bjgz-mogf-zvtc'
+    },
+    sso: {
         facebook: {
             clientID: "3103914796332638",
             clientSecret: "f24da17a2d60ed378fcdd4975742bec7",
-            profileFields: ['id', 'emails', 'name', 'picture.width(250)'],
+            profileFields: "email,id,last_name,first_name,name,picture",
             callbackURL: facebookURL
         },
         google: {
