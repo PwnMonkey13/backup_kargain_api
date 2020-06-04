@@ -1,11 +1,10 @@
-const CONFIG = require('../../../../config/config')
-const mailer = require('../../../../utils/mailer')
+const CONFIG = require('../../../config/config')
+const mailer = require('../../../utils/mailer')
 
-const confirmCreateAnnounce = async params => {
+const rejectedConfirmAnnounce = async params => {
     if (!params.email) throw new Error('missing email')
-    if (!params.lastname) throw new Error('missing lastname')
     if (!params.firstname) throw new Error('missing firstname')
-    if (!params.confirmUrl) throw new Error('missing confirmUrl')
+    if (!params.announce_link) throw new Error('missing announce link')
     
     const message = {
         Messages: [
@@ -20,15 +19,12 @@ const confirmCreateAnnounce = async params => {
                         Name: `${params.lastname} ${params.firstname}`
                     }
                 ],
-                TemplateID: 1472608,
+                Variables : {
+                    announce_link : params.announce_link,
+                },
+                TemplateID: 1481839,
                 TemplateLanguage: true,
-                Subject: 'Kargain new announce confirmation email',
-                URLTags: `token=${params.token}`,
-                Variables: {
-                    activation_link: params.confirmUrl,
-                    firstname : params.firstname
-                }
-                // "HTMLPart": template,
+                Subject: 'Kargain | Announce rejetée',
             }
         ]
     }
@@ -40,4 +36,4 @@ const confirmCreateAnnounce = async params => {
     }
 }
 
-module.exports = confirmCreateAnnounce
+module.exports = rejectedConfirmAnnounce

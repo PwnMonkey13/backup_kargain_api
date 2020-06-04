@@ -51,16 +51,17 @@ const resolveObjectKey = (obj, str) => {
 }
 
 const fetchExternalApi = (url, headers = {}) => {
-    return fetch(url, { headers })
+    return fetch(url, {
+        headers
+    })
     .then(response => response.json())
     .catch(err => {
-            throw err
-        }
-    )
+        throw err
+    })
 }
 
 const capitalizeWords = (str) => {
-    if(!str) return
+    if (!str) return
     return str.replace(/\w\S*/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
     })

@@ -40,7 +40,6 @@ const getUserByUsername = async (req, res, next) => {
     const garageFilters = !self ? {
         activated: true,
         visible: true,
-        published: true,
         status: 'active'
     } : {}
     

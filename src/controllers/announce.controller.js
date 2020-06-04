@@ -46,8 +46,8 @@ const getAnnounces = async (req, res, next) => {
     }, {})
     
     let defaultQuery = {
-        published: true,
         visible: true,
+        activated : true,
         status: 'active' //enum['deleted', 'archived', 'active']
     }
     
@@ -213,7 +213,6 @@ const getAnnounceBySlug = async (req, res, next) => {
         const displayAd =
             announce.activated &&
             announce.visible &&
-            announce.published &&
             announce.status === 'active'
         
         if (displayAd) return res.json({ success: true, data: announce })
@@ -267,7 +266,7 @@ const createAnnounce = async (req, res, next) => {
         })
         
         const document = await announce.save()
-        const userInsertion = await UserModel.updateOne(
+        await UserModel.updateOne(
             { _id: req.user.id },
             {
                 $addToSet: {
@@ -276,25 +275,23 @@ const createAnnounce = async (req, res, next) => {
             }
         )
         
-        const token = jwt.sign({
-                slug: announce.slug
-            }, config.jwt.encryption, { expiresIn: '1w' }
-        )
-        
         const emailResult = await AnnounceMailer.confirmCreateAnnounce({
+            email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
-            email: req.user.email,
-            confirmUrl: `${config.frontend}/announces/confirm?token=${token}`,
-            token
+            announce_link : `${config.frontend}/slug/${document.slug}`,
+            featured_img_link : document.images?.[0]?.location ?? "https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG",
+            manufacturer : {
+                make : document?.manufacturer?.make?.label,
+                model : document?.manufacturer?.model?.label,
+                generation : document?.manufacturer?.generation?.label,
+            }
         })
         
         return res.json({
             success: true,
-            message: 'Ad created successfully',
             data: {
                 document,
-                userInsertion,
                 emailResult
             },
         })
@@ -371,28 +368,61 @@ const updateAnnounce = async (req, res, next) => {
     }
 }
 
-const confirmAnnounce = async (req, res, next) => {
-    const { token } = req.params
-    try {
-        const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded) return next('missing email')
-        const { slug } = decoded
-        if (!slug) return next('missing announce slug in token')
+const confirmAnnounceAdmin = async (req, res, next) => {
+    const { slug, approve } = req.params
+    const approved = approve ?? true
+    if (!slug) return next('missing announce slug in token')
     
-        try{
-            const document = await AnnounceModel.findOneAndUpdate(
-                { slug },
-                { $set: { activated: true } },
-                {
-                    returnNewDocument: true,
-                    runValidators: true,
-            })
-            return res.json({ success: true, data: document })
-    
-        } catch (err) {
-            return next(err)
+    try{
+        const updates = {
+            $set: {
+                activated: approved,
+                status : approved ? 'active' : 'rejected'
+            }
         }
         
+        const document = await AnnounceModel.findOneAndUpdate(
+            { slug },
+            updates,
+            {
+                returnNewDocument: true,
+                runValidators: true,
+        })
+    
+        let emailResult = null
+        if(approved){
+            //send activation success mail to announce owner
+            emailResult = await AnnounceMailer.successConfirmAnnounce({
+                email: document.user.email,
+                firstname: document.user.firstname,
+                lastname: document.user.lastname,
+                announce_link : `${config.frontend}/slug/${document.slug}`,
+                featured_img_link : document.images?.[0]?.location ?? "https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG",
+                manufacturer : {
+                    make : document?.manufacturer?.make?.label,
+                    model : document?.manufacturer?.model?.label,
+                    generation : document?.manufacturer?.generation?.label,
+                }
+            })
+        } else{
+            //send rejected activation mail to announce owner
+            emailResult = await AnnounceMailer.rejectedConfirmAnnounce({
+                email: document.user.email,
+                firstname: document.user.firstname,
+                lastname: document.user.lastname,
+                announce_link : `${config.frontend}/slug/${document.slug}`,
+            })
+        }
+       
+        return res.json({
+            success: true,
+            data: {
+                document,
+                emailResult
+            },
+        })
+        
+        return res.json({ success: true, data: document })
     } catch (err) {
         return next(Errors.AlreadyActivated('Activation token expired'))
     }
@@ -452,7 +482,7 @@ module.exports = {
     getBySlugAndNext,
     createAnnounce,
     updateAnnounce,
-    confirmAnnounce,
+    confirmAnnounceAdmin,
     uploadImages,
     toggleUserLike
 }

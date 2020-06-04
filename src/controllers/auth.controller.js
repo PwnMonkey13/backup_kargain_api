@@ -187,7 +187,8 @@ const forgotPasswordAction = async (req, res, next) => {
             firstname: document.firstname,
             lastname: document.lastname,
             email: document.email,
-            link: token ? `${config.frontend}/auth/confirm-email/${token}` : null
+            report_link : `${config.frontend}/auth/report`,
+            reset_link: token ? `${config.frontend}/auth/confirm-email/${token}` : null
         })
         
         return res.json({

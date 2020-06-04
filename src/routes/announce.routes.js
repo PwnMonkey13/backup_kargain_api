@@ -3,6 +3,7 @@ const cors = require('cors')
 const corsMiddleware = require('../middlewares/cors.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const authMiddleware = require('../middlewares/auth.middleware')
+const rolesMiddleware = require('../middlewares/roles.middleware')
 const announceController = require('../controllers/announce.controller')
 const uploadController = require('../controllers/upload.s3.controller')
 
@@ -41,13 +42,6 @@ router.put('/update/:slug',
     announceController.updateAnnounce
 )
 
-router.options('/confirm/:token', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.put('/confirm/:token',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.confirmAnnounce
-)
-
 router.options('/toggleLike/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/toggleLike/:announce_id',
     cors(corsMiddleware.authedCors),
@@ -62,6 +56,16 @@ router.post('/upload/:slug',
     announceController.getBySlugAndNext,
     uploadController.postObjects,
     announceController.uploadImages
+)
+
+//ADMIN
+
+router.options('/confirm/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/confirm/:slug',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateAny', 'announce'),
+    announceController.confirmAnnounceAdmin
 )
 
 module.exports = router

@@ -34,14 +34,9 @@ const AnnounceSchema = new mongoose.Schema({
         default: true,
     },
     
-    published: {
-        type: Boolean,
-        default: false,
-    },
-    
     status: {
         type: String,
-        enum: ['deleted', 'archived', 'active'],
+        enum: ['rejected', 'deleted', 'archived', 'active'],
         default: 'active'
     },
     

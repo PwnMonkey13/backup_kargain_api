@@ -5,7 +5,8 @@ const sendConfirmEmail = async params => {
     if (!params.email) throw new Error('missing email')
     if (!params.lastname) throw new Error('missing lastname')
     if (!params.firstname) throw new Error('missing firstname')
-    if (!params.link) throw new Error('missing reset link')
+    if (!params.reset_link) throw new Error('missing reset link')
+    if (!params.report_link) throw new Error('missing report link')
     
     const message = {
         Messages: [
@@ -24,7 +25,8 @@ const sendConfirmEmail = async params => {
                 TemplateLanguage: true,
                 Subject: 'Reset Password Kargain',
                 Variables: {
-                    reset_link: params.link
+                    report_link: params.report_link,
+                    reset_link: params.reset_link
                 }
             }
         ]
