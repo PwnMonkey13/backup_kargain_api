@@ -278,12 +278,12 @@ exports.createAnnounceAction = async (req, res, next) => {
             email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
-            announce_link : `${config.frontend}/slug/${document.slug}`,
-            featured_img_link : document.images?.[0]?.location ?? "https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG",
-            manufacturer : {
-                make : document?.manufacturer?.make?.label,
-                model : document?.manufacturer?.model?.label,
-                generation : document?.manufacturer?.generation?.label,
+            announce_link: `${config.frontend}/slug/${document.slug}`,
+            featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
+            manufacturer: {
+                make: document?.manufacturer?.make?.label,
+                model: document?.manufacturer?.model?.label,
+                generation: document?.manufacturer?.generation?.label,
             }
         })
         
@@ -386,33 +386,33 @@ exports.confirmAnnounceAdminAction = async (req, res, next) => {
             {
                 returnNewDocument: true,
                 runValidators: true,
-        })
-    
+            })
+        
         let emailResult = null
-        if(approved){
+        if (approved) {
             //send activation success mail to announce owner
             emailResult = await AnnounceMailer.successConfirmAnnounce({
                 email: document.user.email,
                 firstname: document.user.firstname,
                 lastname: document.user.lastname,
-                announce_link : `${config.frontend}/slug/${document.slug}`,
-                featured_img_link : document.images?.[0]?.location ?? "https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG",
-                manufacturer : {
-                    make : document?.manufacturer?.make?.label,
-                    model : document?.manufacturer?.model?.label,
-                    generation : document?.manufacturer?.generation?.label,
+                announce_link: `${config.frontend}/slug/${document.slug}`,
+                featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
+                manufacturer: {
+                    make: document?.manufacturer?.make?.label,
+                    model: document?.manufacturer?.model?.label,
+                    generation: document?.manufacturer?.generation?.label,
                 }
             })
-        } else{
+        } else {
             //send rejected activation mail to announce owner
             emailResult = await AnnounceMailer.rejectedConfirmAnnounce({
                 email: document.user.email,
                 firstname: document.user.firstname,
                 lastname: document.user.lastname,
-                announce_link : `${config.frontend}/slug/${document.slug}`,
+                announce_link: `${config.frontend}/slug/${document.slug}`,
             })
         }
-       
+        
         return res.json({
             success: true,
             data: {
@@ -446,27 +446,54 @@ exports.uploadImagesAction = async (req, res, next) => {
     }
 }
 
-const toggleUserLike = async (req, res, next) => {
-    const { announce_id: announceId } = req.params
+exports.addUserLikeActionAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError())
-    
+    const { announce_id } = req.params
     try {
-        const announce = await AnnounceModel.findById(announceId)
-        if (!announce) return next('announce not found')
-        
-        const foundUser = announce.likes.find(like => like.user.toString() === req.user.id.toString())
-        
-        if (!foundUser) {
-            announce.likes.push({
-                user: req.user.id
-            })
-        } else {
-            const index = announce.likes.findIndex(like => like.user === req.user.id)
-            announce.likes.splice(index, 1)
-        }
-        
-        const doc = await announce.save()
-        return res.json({ success: true, message: 'like added successfully', data: doc.likes.length })
+        const insertionLike = await AnnounceModel.updateOne(
+            { _id: announce_id },
+            { $addToSet: { likes: req.user.id } },
+            { runValidators: true }
+        )
+        const insertionFavorite = await UserModel.updateOne(
+            { _id: req.user.id },
+            { $addToSet: { favorites: announce_id } },
+            { runValidators: true }
+        )
+        return res.json({
+            success: true,
+            message: 'like added successfully',
+            data: {
+                insertionLike,
+                insertionFavorite
+            }
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+exports.removeUserLikeActionAction = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError())
+    const { announce_id } = req.params
+    try {
+        const suppressionLike = await AnnounceModel.updateOne(
+            { _id: announce_id },
+            { $pull: { likes: req.user.id } },
+            { runValidators: true }
+        )
+        const suppressionFavorite = await UserModel.updateOne(
+            { _id: req.user.id },
+            { $pull: { favorites: announce_id } },
+            { runValidators: true }
+        )
+        return res.json({
+            success: true,
+            data: {
+                suppressionLike,
+                suppressionFavorite
+            }
+        })
     } catch (err) {
         return next(err)
     }

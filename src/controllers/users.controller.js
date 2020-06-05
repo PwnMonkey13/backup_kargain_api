@@ -52,7 +52,7 @@ const getUserByUsername = async (req, res, next) => {
         })
         .populate({
             path: 'garage',
-            populate : 'comments',
+            populate : 'user comments',
             match: garageFilters
         })
         

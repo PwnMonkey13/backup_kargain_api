@@ -53,20 +53,6 @@ router.post('/upload/avatar',
     usersController.uploadAvatar
 )
 
-router.options('/favorite/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.post('/favorite/:announce_id',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    usersController.addFavoriteAnnounceAction
-)
-
-router.options('/unfavorite/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.post('/unfavorite/:announce_id',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    usersController.rmFavoriteAnnounceAction
-)
-
 router.options('/follow/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/follow/:user_id',
     cors(corsMiddleware.authedCors),

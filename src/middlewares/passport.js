@@ -1,6 +1,7 @@
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
-const { JwtStrategy, ExtractJwt } = require('passport-jwt')
+const JwtStrategy = require('passport-jwt').Strategy
+const ExtractJwt = require('passport-jwt').ExtractJwt
 const CookieStrategy = require('passport-cookie').Strategy
 const jwt = require('jsonwebtoken')
 const config = require('../config/config')
