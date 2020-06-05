@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken')
 const config = require('../config/config')
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
@@ -9,7 +8,7 @@ const announcesSorterMapper = require('../utils/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
 const DEFAULT_RESULTS_PER_PAGE = 10
 
-const getAnnounces = async (req, res, next) => {
+exports.getAnnouncesAction = async (req, res, next) => {
     const { coordinates, enableGeocoding, radius } = req.query
     let size = DEFAULT_RESULTS_PER_PAGE
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
@@ -47,7 +46,7 @@ const getAnnounces = async (req, res, next) => {
     
     let defaultQuery = {
         visible: true,
-        activated : true,
+        activated: true,
         status: 'active' //enum['deleted', 'archived', 'active']
     }
     
@@ -146,7 +145,7 @@ const getAnnounces = async (req, res, next) => {
     }
 }
 
-const getAnnouncesAll = async (req, res, next) => {
+exports.getAnnouncesAllAction = async (req, res, next) => {
     try {
         const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
         let size = 5
@@ -182,7 +181,7 @@ const getAnnouncesAll = async (req, res, next) => {
     }
 }
 
-const getAnnouncesByUser = async (req, res, next) => {
+exports.getAnnouncesByUserAction = async (req, res, next) => {
     const uid = req.params.uid
     const user = await UserModel.findById(uid)
     if (!user) return next('No user found')
@@ -191,10 +190,10 @@ const getAnnouncesByUser = async (req, res, next) => {
     else return res.status(400).json({ success: false, msg: 'no announces found', uid })
 }
 
-const getAnnounceBySlug = async (req, res, next) => {
+exports.getAnnounceBySlugAction = async (req, res, next) => {
     try {
         const announce = await AnnounceModel
-        .findOne({  slug: req.params.slug })
+        .findOne({ slug: req.params.slug })
         .populate('user')
         .populate('comments')
         
@@ -223,7 +222,7 @@ const getAnnounceBySlug = async (req, res, next) => {
     }
 }
 
-const getByIdAndNext = (method = 'GET') => async (req, res, next) => {
+exports.getByIdAndNextAction = (method = 'GET') => async (req, res, next) => {
     let announceId = method === 'GET' ? req.params.announce_id : req.body.announce_id
     
     try {
@@ -238,7 +237,7 @@ const getByIdAndNext = (method = 'GET') => async (req, res, next) => {
     }
 }
 
-const getBySlugAndNext = async (req, res, next) => {
+exports.getBySlugAndNextAction = async (req, res, next) => {
     try {
         const announce = await AnnounceModel.findOne({ slug: req.params.slug })
         if (announce) {
@@ -251,7 +250,7 @@ const getBySlugAndNext = async (req, res, next) => {
     }
 }
 
-const createAnnounce = async (req, res, next) => {
+exports.createAnnounceAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const max = req.user.config.garageLengthAllowed ?? 5
     
@@ -300,7 +299,7 @@ const createAnnounce = async (req, res, next) => {
     }
 }
 
-const updateAnnounce = async (req, res, next) => {
+exports.updateAnnounceAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError())
     
     const allowedFieldsUpdatesSet = [
@@ -368,16 +367,16 @@ const updateAnnounce = async (req, res, next) => {
     }
 }
 
-const confirmAnnounceAdmin = async (req, res, next) => {
+exports.confirmAnnounceAdminAction = async (req, res, next) => {
     const { slug, approve } = req.params
     const approved = approve ?? true
     if (!slug) return next('missing announce slug in token')
     
-    try{
+    try {
         const updates = {
             $set: {
                 activated: approved,
-                status : approved ? 'active' : 'rejected'
+                status: approved ? 'active' : 'rejected'
             }
         }
         
@@ -428,7 +427,7 @@ const confirmAnnounceAdmin = async (req, res, next) => {
     }
 }
 
-const uploadImages = async (req, res, next) => {
+exports.uploadImagesAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     if (!req.announce) return next(Errors.NotFoundError('no announce found'))
     
@@ -472,18 +471,3 @@ const toggleUserLike = async (req, res, next) => {
         return next(err)
     }
 }
-
-module.exports = {
-    getAnnounces,
-    getAnnouncesAll,
-    getAnnouncesByUser,
-    getByIdAndNext,
-    getAnnounceBySlug,
-    getBySlugAndNext,
-    createAnnounce,
-    updateAnnounce,
-    confirmAnnounceAdmin,
-    uploadImages,
-    toggleUserLike
-}
-

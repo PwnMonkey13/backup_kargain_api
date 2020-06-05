@@ -9,53 +9,60 @@ const uploadController = require('../controllers/upload.s3.controller')
 
 router.get('/',
     cors(),
-    announceController.getAnnounces
+    announceController.getAnnouncesAction
 )
 
 router.get('/all',
     cors(),
-    announceController.getAnnouncesAll
+    announceController.getAnnouncesAllAction
 )
 
 router.get('/user/:uid',
     cors(),
-    announceController.getAnnouncesByUser
+    announceController.getAnnouncesByUserAction
 )
 
 router.get('/slug/:slug',
     cors(corsMiddleware.authedCors),
     authMiddleware.byPassAuth,
-    announceController.getAnnounceBySlug
+    announceController.getAnnounceBySlugAction
 )
 
 router.options('/', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.createAnnounce
+    announceController.createAnnounceAction
 )
 
 router.options('/update/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/update/:slug',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.updateAnnounce
+    announceController.updateAnnounceAction
 )
 
-router.options('/toggleLike/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.put('/toggleLike/:announce_id',
+router.options('/addLike/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/addLike/:announce_id',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.toggleUserLike
+    announceController.addUserLikeActionAction
+)
+
+router.options('/removeLike/:announce_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/removeLike/:announce_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    announceController.removeUserLikeActionAction
 )
 
 router.options('/upload/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/upload/:slug',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.getBySlugAndNext,
+    announceController.getBySlugAndNextAction,
     uploadController.postObjects,
-    announceController.uploadImages
+    announceController.uploadImagesAction
 )
 
 //ADMIN
@@ -65,7 +72,7 @@ router.put('/confirm/:slug',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'announce'),
-    announceController.confirmAnnounceAdmin
+    announceController.confirmAnnounceAdminAction
 )
 
 module.exports = router
