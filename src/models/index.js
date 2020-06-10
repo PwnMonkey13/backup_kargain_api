@@ -4,14 +4,14 @@ const VehiclesMakesModels = require('./vehicles/vehicleMake.models')
 const VehiclesModelModels = require('./vehicles/vehicleModel.models')
 const Media = require('./media.s3.model')
 const Comment = require('./comment.model')
-const UserConfig = require('./user.config.model')
+const Payment = require('./payment.model')
 
 module.exports = {
   User,
-  UserConfig,
   Media,
   Comment,
   Announce,
+  Payment,
   Vehicles: {
     Makes: { ...VehiclesMakesModels },
     Models: { ...VehiclesModelModels },

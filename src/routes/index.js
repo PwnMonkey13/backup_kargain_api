@@ -11,6 +11,7 @@ const devRoutes = require('./dev.routes')
 const uploadS3Routes = require('./upload.s3.routes')
 const commentsRoutes = require('./comments.routes')
 const searchRoutes = require('./search.routes')
+const paymentsRoutes = require('./payments.routes')
 
 router.use('/auth', authRoutes)
 router.use('/users', usersRoutes)
@@ -21,6 +22,7 @@ router.use('/places', placesRoutes)
 router.use('/uploads', uploadS3Routes)
 router.use('/comments', commentsRoutes)
 router.use('/search', searchRoutes)
+router.use('/payments', paymentsRoutes)
 
 if (!CONFIG.isProd) {
     router.use('/dev', devRoutes)
