@@ -97,9 +97,9 @@ const registerAction = async (req, res, next) => {
     const user = new User(req.body)
     
     try {
-        const doc = await user.save()
-        return res.json({ success: true, user, doc })
-        
+        req.user = await user.save()
+        next()
+
     } catch (err) {
         return res.json({ success: false, err })
     }
@@ -129,7 +129,7 @@ const confirmEmailTokenAction = async (req, res, next) => {
     const { token } = req.params
     try {
         const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded.email) return next(Errors.UnAuthorizedError())
+        if (!decoded.email) return next(Errors.UnAuthorizedError('missing user'))
         try {
             const updated = await User.confirmUserEmail(decoded.email)
             return res.json({
@@ -187,8 +187,8 @@ const forgotPasswordAction = async (req, res, next) => {
             firstname: document.firstname,
             lastname: document.lastname,
             email: document.email,
-            report_link : `${config.frontend}/auth/report`,
-            reset_link: token ? `${config.frontend}/auth/confirm-email/${token}` : null
+            report_link: `${config.frontend}/auth/report`,
+            reset_link: token ? `${config.frontend}/auth/reset-password?token=${token}` : null
         })
         
         return res.json({

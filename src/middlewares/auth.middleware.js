@@ -10,8 +10,9 @@ const byPassAuth = async (req, res, next) => {
         const decoded = await jwt.verify(token, config.jwt.encryption)
         if (!decoded || !decoded.uid) return next('invalid token')
         const user = await User.findById(decoded.uid)
-        if(!user) return next(Errors.UnAuthorizedError('unknown user'))
-        req.user = user
+        if (user) {
+            req.user = user
+        }
         next()
     } catch (err) {
         return next(err)

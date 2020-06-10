@@ -24,7 +24,7 @@ router.options('/register', cors(corsMiddleware.wideCors))
 router.post('/register',
     cors(corsMiddleware.wideCors),
     authController.registerAction,
-    // authController.sendEmailActivation
+    authController.sendEmailActivation
 )
 
 router.options('/register-pro', cors(corsMiddleware.wideCors))

@@ -99,8 +99,6 @@ const UserSchema = new mongoose.Schema({
         }
     },
     
-    clear_password: String,
-    
     password: {
         type: String,
         trim: true,
@@ -163,7 +161,6 @@ const UserSchema = new mongoose.Schema({
     toJSON: {
         virtuals: true,
         transform: function (doc, ret) {
-            delete ret.role
             delete ret.pro
             delete ret.password
         }
@@ -180,14 +177,14 @@ UserSchema.post('init', function (doc) {
     console.log('%s has been initialized from the db', doc._id)
 })
 
-// UserSchema.post('save', async function (err, doc, next) {
-//     if (err) {
-//         if (err.name === 'MongoError' && err.code === 11000) {
-//             throw Errors.Error('duplicate user')
-//         } else return next(err)
-//     }
-//     next()
-// })
+UserSchema.post('save', async function (err, doc, next) {
+    if (err) {
+        if (err.name === 'MongoError' && err.code === 11000) {
+            throw Errors.Error('duplicate user')
+        } else return next(err)
+    }
+    next()
+})
 
 UserSchema.post('remove', function (doc) {
     console.log('%s has been removed', doc._id)
@@ -208,7 +205,7 @@ UserSchema.pre('save', async function (next) {
             user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
         }
         
-        this.config = {
+        user.config = {
             garageLengthAllowed: user.pro ? 100 : 5,
         }
         next()

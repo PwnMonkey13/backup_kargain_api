@@ -16,10 +16,10 @@ function corsOptions (allowCredentials = false, enableAllOrigin = false) {
     }
 }
 
+const clientCors = corsOptions()
+
 const authedCors = corsOptions(true)
 
 const wideCors = corsOptions(true, true)
-
-const clientCors = corsOptions(false, false)
 
 module.exports = { clientCors, authedCors, wideCors }
