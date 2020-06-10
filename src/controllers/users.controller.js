@@ -4,33 +4,37 @@ const functions = require('../utils/functions')
 const Errors = require('../utils/Errors')
 
 const getUsersAdminAction = async (req, res, next) => {
+    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    let size = 50
+    
+    let sorters = {
+        createdAt: -1
+    }
+    
+    if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
+        size = parseInt(req.query.size)
+    }
+    
+    const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
+    
     try {
-        const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
-        const sort = (req.query.sort) ? { [req.query.sort]: 1 } : {}
-        let size = 10
-        
-        if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
-            size = parseInt(req.query.size)
-        }
-        
-        const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
-        
-        const rows = await UserModel.find().skip(skip).sort(sort).limit(size)
         const total = await UserModel.estimatedDocumentCount().exec()
+        const rows = await UserModel
+        .find({}, '-location -favorites')
+        .skip(skip)
+        .sort(sorters)
+        .limit(size)
         
         const data = {
             page: page,
             pages: Math.ceil(total / size),
             total,
             size: size,
-            sort: req.params.sort,
             rows,
-            user: req.user
         }
-        
         return res.json({ success: true, data })
-    } catch (e) {
-        next(e)
+    } catch (err) {
+        return next(err)
     }
 }
 
@@ -46,13 +50,13 @@ const getUserByUsername = async (req, res, next) => {
     try {
         const user = await UserModel.findOne({ username })
         .populate({
-            path : 'favorites',
-            populate : 'comments',
+            path: 'favorites',
+            populate: 'comments',
             match: garageFilters
         })
         .populate({
             path: 'garage',
-            populate : 'user comments',
+            populate: 'user comments',
             match: garageFilters
         })
         
@@ -68,7 +72,7 @@ const getUserByUsername = async (req, res, next) => {
 }
 
 const saveAuthedUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     try {
         const doc = await req.user.save()
         return res.status(200).json({ success: true, data: doc })
@@ -89,7 +93,7 @@ const saveUserByUsername = async (req, res, next) => {
 }
 
 const updateUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const allowedFieldsUpdatesSet = [
         'firstname',
@@ -135,7 +139,7 @@ const updateUser = async (req, res, next) => {
 }
 
 const uploadAvatar = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     req.user.avatar = req.uploadedFiles?.avatar?.[0]
     
     try {
@@ -154,7 +158,7 @@ const deleteUser = async (req, res, next) => {
 }
 
 const addFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
     
@@ -187,7 +191,7 @@ const addFavoriteAnnounceAction = async (req, res, next) => {
 }
 
 const rmFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
     if (!announce) return next('can\'t find matching announce')
@@ -217,7 +221,7 @@ const rmFavoriteAnnounceAction = async (req, res, next) => {
 
 const followUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     if (req.user.id.toString() === userId) return next('can\'t like yourself')
     
     try {
@@ -262,7 +266,7 @@ const followUserAction = async (req, res, next) => {
 
 const unFollowUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     if (req.user.id.toString() === userId) return next('can\'t like yourself')
     
     try {

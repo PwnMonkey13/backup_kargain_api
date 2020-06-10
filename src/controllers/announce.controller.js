@@ -8,6 +8,51 @@ const announcesSorterMapper = require('../utils/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
 const DEFAULT_RESULTS_PER_PAGE = 10
 
+exports.getAnnouncesAdminAction = async (req, res, next) => {
+    const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    let size = 50
+    
+    let sorters = {
+        createdAt: -1
+    }
+    
+    if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
+        size = parseInt(req.query.size)
+    }
+    
+    const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
+    
+    try {
+        const rows = await AnnounceModel
+        .find({}, '-damages')
+        .skip(skip)
+        .sort(sorters)
+        .limit(size)
+        .populate({
+            path: 'user',
+            select: '-followings -followers -favorites -garage'
+        })
+        
+        const total = await AnnounceModel
+        .find()
+        .skip(skip)
+        .limit(size)
+        .count()
+        
+        const data = {
+            pages: Math.ceil(total / size),
+            page,
+            total,
+            size,
+            rows
+        }
+        
+        return res.json({ success: true, data })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 exports.getAnnouncesAction = async (req, res, next) => {
     const { coordinates, enableGeocoding, radius } = req.query
     let size = DEFAULT_RESULTS_PER_PAGE
@@ -145,42 +190,6 @@ exports.getAnnouncesAction = async (req, res, next) => {
     }
 }
 
-exports.getAnnouncesAllAction = async (req, res, next) => {
-    try {
-        const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
-        let size = 5
-        const sorters = { createdAt: -1 }
-        
-        if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
-            size = parseInt(req.query.size)
-        }
-        const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
-        
-        const query = {}
-        
-        const rows = await AnnounceModel
-        .find(query)
-        .skip(skip)
-        .sort(sorters)
-        .limit(size)
-        .populate('user')
-        
-        const total = await AnnounceModel.estimatedDocumentCount().exec()
-        
-        const data = {
-            page: page,
-            pages: Math.ceil(total / size),
-            total,
-            size: size,
-            rows
-        }
-        
-        return res.json({ success: true, data })
-    } catch (e) {
-        throw e
-    }
-}
-
 exports.getAnnouncesByUserAction = async (req, res, next) => {
     const uid = req.params.uid
     const user = await UserModel.findById(uid)
@@ -198,7 +207,7 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
         .populate('comments')
         
         if (!announce) return next(Errors.NotFoundError('no announce found'))
-        
+    
         if (req.user) {
             if (req.user.role === 'admin') {
                 return res.json({ success: true, data: announce })
@@ -278,7 +287,7 @@ exports.createAnnounceAction = async (req, res, next) => {
             email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
-            announce_link: `${config.frontend}/slug/${document.slug}`,
+            announce_link: `${config.frontend}/announces/${document.slug}`,
             featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
             manufacturer: {
                 make: document?.manufacturer?.make?.label,
@@ -300,7 +309,7 @@ exports.createAnnounceAction = async (req, res, next) => {
 }
 
 exports.updateAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const allowedFieldsUpdatesSet = [
         'title',
@@ -355,6 +364,24 @@ exports.updateAnnounceAction = async (req, res, next) => {
         const doc = await AnnounceModel.updateOne(
             { slug: req.params.slug },
             { $set: updatesSet },
+            {
+                returnNewDocument: true,
+                runValidators: true,
+                context: 'query'
+            }
+        )
+        return res.status(200).json({ success: true, data: doc })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+exports.removeAnnounceAction = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    try {
+        const doc = await AnnounceModel.updateOne(
+            { slug: req.params.slug },
+            { $set: { status : "deleted" } },
             {
                 returnNewDocument: true,
                 runValidators: true,
@@ -447,7 +474,7 @@ exports.uploadImagesAction = async (req, res, next) => {
 }
 
 exports.addUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const { announce_id } = req.params
     try {
         const insertionLike = await AnnounceModel.updateOne(
@@ -474,7 +501,7 @@ exports.addUserLikeActionAction = async (req, res, next) => {
 }
 
 exports.removeUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const { announce_id } = req.params
     try {
         const suppressionLike = await AnnounceModel.updateOne(

@@ -13,7 +13,7 @@ const getCommentsByAnnounce = async (req, res, next) => {
 }
 
 const createComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { announce_id, message } = req.body
     const announce = await AnnounceModel.findById(announce_id).exec()
@@ -42,7 +42,7 @@ const createComment = async (req, res, next) => {
 }
 
 const enableComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id } = req.params
     const update = await CommentModel.findOneAndUpdate({ _id: comment_id }, { enabled: true }).exec()
@@ -50,7 +50,7 @@ const enableComment = async (req, res, next) => {
 }
 
 const disableComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id } = req.params
     const update = await CommentModel.findOneAndUpdate({ _id: comment_id }, { enabled: false }).exec()
@@ -58,7 +58,7 @@ const disableComment = async (req, res, next) => {
 }
 
 const removeComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id } = req.params
     const document = await CommentModel.findOneAndDelete({ _id: comment_id }).exec()
@@ -66,7 +66,7 @@ const removeComment = async (req, res, next) => {
 }
 
 const createCommentResponse = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id: commentId, message } = req.body
     const comment = await CommentModel.findById(commentId).exec()
@@ -99,7 +99,7 @@ const createCommentResponse = async (req, res, next) => {
 }
 
 const createCommentLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id: commentId } = req.params
     const comment = await CommentModel.findById(commentId).exec()
@@ -116,7 +116,7 @@ const createCommentLike = async (req, res, next) => {
 }
 
 const removeCommentLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id: commentId, likeIndex } = req.params
     const comment = await CommentModel.findById(commentId).exec()
@@ -130,7 +130,7 @@ const removeCommentLike = async (req, res, next) => {
 }
 
 const createCommentResponseLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id: commentId, responseIndex } = req.params
     const comment = await CommentModel.findById(commentId).exec()
@@ -148,7 +148,7 @@ const createCommentResponseLike = async (req, res, next) => {
 }
 
 const removeCommentResponseLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError())
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
     const { comment_id: commentId, responseIndex, likeIndex } = req.params
     const comment = await CommentModel.findById(commentId).exec()

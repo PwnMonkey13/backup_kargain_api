@@ -7,7 +7,8 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const usersController = require('../controllers/users.controller')
 const uploadController = require('../controllers/upload.s3.controller')
 
-router.get('/',
+//admin
+router.get('/all',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('readAny', 'profile'),
@@ -32,7 +33,7 @@ router.options('/save/username/:username', cors(corsMiddleware.authedCors)) // e
 router.put('/save/username/:username',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    //TODO resrict admin privilege
+    //TODO restrict admin privilege
     rolesMiddleware.grantAccess('updateOwn', 'profile'),
     usersController.saveUserByUsername
 )
