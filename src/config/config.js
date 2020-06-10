@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-const env = process.env.NODE_ENV || "development"
+const env = process.env.NODE_ENV || "production"
 const isProd = env === 'production'
 const api = isProd ? "https://kargain-api.now.sh/api" : "http://localhost:8080/api"
 const frontend = isProd ? "https://kargain.web.app" : "http://localhost:3000";
@@ -10,10 +10,8 @@ const [googleURL, facebookURL] = callbacks
 
 const db = isProd ? {
     mongo_location: process.env.MONGODB_URI_PROD,
-    name: process.env.DB_NAME_PROD || 'kargain'
 } : {
-    mongo_location: process.env.MONGODB_URI_DEV,
-    name: process.env.DB_NAME_DEV || 'kargain'
+    mongo_location: process.env.MONGODB_URI_DEV || "mongodb://localhost:27017/kargain"
 }
 
 module.exports = {
@@ -25,6 +23,7 @@ module.exports = {
     whileListDomains: [
         'http://localhost:8080',
         'http://localhost:3000',
+        'http://localhost:5000',
         'https://kargain.web.app',
         'https://kargain-api.now.sh'
     ],
@@ -122,7 +121,7 @@ module.exports = {
     },
     port: parseInt(process.env.PORT) || 8080,
     jwt: {
-        encryption: process.env.JWT_ENCRYPTION || 'changeme',
+        encryption: process.env.JWT_ENCRYPTION || 'MyS3cr3tK3Y',
         expiration: process.env.JWT_EXPIRATION || 60 * 60 * 24 * 30
     }
 }

@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "env": {
-    "MONGODB_URI_PROD": "@mongodb_uri_prod"
-  },
   "routes": [
     {
       "headers": {

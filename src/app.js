@@ -3,10 +3,37 @@ const helmet = require('helmet')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+const listEndpoints = require('express-list-endpoints')
 const fileUpload = require('express-fileupload')
 const config = require('./config/config')
 const routes = require('./routes')
 const app = express()
+
+function print (path, layer) {
+    if (layer.route) {
+        layer.route.stack.forEach(print.bind(null, path.concat(split(layer.route.path))))
+    } else if (layer.name === 'router' && layer.handle.stack) {
+        layer.handle.stack.forEach(print.bind(null, path.concat(split(layer.regexp))))
+    } else if (layer.method) {
+        console.log('%s /%s', layer.method.toUpperCase(), path.concat(split(layer.regexp)).filter(Boolean).join('/'))
+    }
+}
+
+function split (thing) {
+    if (typeof thing === 'string') {
+        return thing.split('/')
+    } else if (thing.fast_slash) {
+        return ''
+    } else {
+        var match = thing.toString()
+        .replace('\\/?', '')
+        .replace('(?=\\/|$)', '$')
+        .match(/^\/\^((?:\\[.*+?^${}()|[\]\\\/]|[^.*+?^${}()|[\]\\\/])*)\$\//)
+        return match
+            ? match[1].replace(/\\(.)/g, '$1').split('/')
+            : '<complex:' + thing.toString() + '>'
+    }
+}
 
 app.use(helmet())
 app.use(bodyParser.json())
@@ -35,8 +62,13 @@ app.get('/db', function (req, res, next) {
     return res.end(config.db.mongo_location)
 })
 
-app.get('/env', function (req, res, next) {
-    return res.end(config.env)
+app.get('/config', function (req, res, next) {
+    return res.json({
+        success: true,
+        data: {
+            config
+        }
+    })
 })
 
 app.use(config.api_path, routes)
@@ -53,7 +85,7 @@ app.use(function (err, req, res, next) {
     const error = {
         code,
         name: err.name || 'Error',
-        message: config.isProd && code === 500 ? 'Something failed on server' : isError ? err.message : err
+        message: config.isProd ? 'Something failed on server' : isError ? err.message : err
     }
     return res.json({ success: false, error })
 })
