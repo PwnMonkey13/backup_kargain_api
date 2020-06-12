@@ -74,6 +74,7 @@ module.exports = {
         }
     },
     mailer: {
+        contactForm : 'contactform@kargain.com',
         from: {
             name: 'Contact Kargain',
             // email : 'contact@kargain.com'

@@ -1,7 +1,11 @@
 const UserModel = require('../models').User
 const AnnounceModel = require('../models').Announce
+const NewsletterSubscriber = require('../models').NewsletterSubscriber
+const ContactMessage = require('../models').ContactMessage
+const usersMailer = require('../components/mailer').users
 const functions = require('../utils/functions')
 const Errors = require('../utils/Errors')
+const moment = require('moment')
 
 const getUsersAdminAction = async (req, res, next) => {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
@@ -310,6 +314,49 @@ const unFollowUserAction = async (req, res, next) => {
     }
 }
 
+const subscribeNewsletter = async (req, res, next) => {
+    const email = req.body.email
+    if (!email) return next(Errors.NotFoundError('missing email'))
+    
+    try {
+        const doc = await NewsletterSubscriber.updateOne({ email }, {
+            email: req.body.email,
+            active: req.body.active ?? true
+        }, { upsert: true })
+        return res.json({ success: true, data: doc })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const contact = async (req, res, next) => {
+    const { email, subject, message } = req.body
+    if (!email) return next(Errors.NotFoundError('missing email'))
+    
+    try {
+        const post = new ContactMessage({
+            email,
+            subject,
+            message
+        })
+        
+        const doc = await post.save()
+        const date = moment(doc.createdAt).format('YYYY-MM-DD-HH-MM')
+        await usersMailer.contactFormToAdmin({
+            email,
+            subject,
+            message,
+            date
+        })
+        
+        return res.json({
+            success: true
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 module.exports = {
     getUsersAdminAction,
     getUserByUsername,
@@ -322,4 +369,6 @@ module.exports = {
     rmFavoriteAnnounceAction,
     followUserAction,
     unFollowUserAction,
+    subscribeNewsletter,
+    contact
 }

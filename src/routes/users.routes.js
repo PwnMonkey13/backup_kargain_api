@@ -68,6 +68,18 @@ router.post('/unfollow/:user_id',
     usersController.unFollowUserAction
 )
 
+router.options('/newsletter', cors(corsMiddleware.clientCors)) // enable pre-flights
+router.put('/newsletter',
+    cors(corsMiddleware.clientCors),
+    usersController.subscribeNewsletter
+)
+
+router.options('/contact', cors(corsMiddleware.clientCors)) // enable pre-flights
+router.post('/contact',
+    cors(corsMiddleware.clientCors),
+    usersController.contact
+)
+
 router.delete('/:uid',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
