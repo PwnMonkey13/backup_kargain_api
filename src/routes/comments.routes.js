@@ -13,23 +13,25 @@ routes.get('/:announce_id',
     commentController.getCommentsByAnnounce
 )
 
-routes.options('/', cors(corsMiddleware.wideCors)) // enable pre-flights
+routes.options('/', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.post('/',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     commentController.createComment
 )
 
-routes.put('/enable/:comment_id',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    commentController.enableComment
-)
-
+routes.options('/disable/:comment_id', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.put('/disable/:comment_id',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     commentController.disableComment
+)
+
+routes.options('/enable/:comment_id', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.put('/enable/:comment_id',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    commentController.enableComment
 )
 
 routes.options('/like/:comment_id', cors(corsMiddleware.authedCors)) // enable pre-flights
@@ -53,14 +55,14 @@ routes.post('/response',
     commentController.createCommentResponse
 )
 
-routes.options('/response', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.options('/response/like/:comment_id/:responseIndex', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.put('/response/like/:comment_id/:responseIndex',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     commentController.createCommentResponseLike
 )
 
-routes.options('/response', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.options('/response/unlike/:comment_id/:responseIndex/:likeIndex', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.put('/response/unlike/:comment_id/:responseIndex/:likeIndex',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),

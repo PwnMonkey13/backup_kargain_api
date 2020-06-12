@@ -8,24 +8,24 @@ const carsController = require('../controllers/vehicles/cars.controller')
 const internalVehicleController = require('../controllers/vehicles/internal.vehicles.controller')
 
 router.get('/cars',
-    cors(),
+    cors(corsMiddleware.clientCors),
     carsController.getDataAction
 )
 
 // type : ["buses", "scooters", "campers", "motorcycles", "trucks"];
 router.get('/internal/:type/makes',
-    cors(),
+    cors(corsMiddleware.clientCors),
     internalVehicleController.getMakes
 )
 
 router.get('/internal/:type/:make/models',
-    cors(),
+    cors(corsMiddleware.clientCors),
     internalVehicleController.getModelsByMake
 )
 
 //admin only
 
-router.options('/internal/:type/makes', cors(corsMiddleware.wideCors)) // enable pre-flights
+router.options('/internal/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/internal/:type/makes',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),

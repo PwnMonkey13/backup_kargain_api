@@ -5,45 +5,45 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
 
-router.options('/sso-register', cors(corsMiddleware.wideCors))
+router.options('/sso-register', cors(corsMiddleware.clientCors))
 router.post('/sso-register',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.ssoRegister,
     authController.loginAction
 )
 
-router.options('/login', cors(corsMiddleware.wideCors))
+router.options('/login', cors(corsMiddleware.authedCors))
 router.post('/login',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.authedCors),
     authController.loginValidation,
     passportMiddleware.authenticate('local', { session: false }),
     authController.loginAction
 )
 
-router.options('/register', cors(corsMiddleware.wideCors))
+router.options('/register', cors(corsMiddleware.clientCors))
 router.post('/register',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.registerAction,
     authController.sendEmailActivation
 )
 
-router.options('/register-pro', cors(corsMiddleware.wideCors))
+router.options('/register-pro', cors(corsMiddleware.clientCors))
 router.post('/register-pro',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.registerProAction,
     authController.sendEmailActivation
 )
 
-router.options('/ask-email-activation', cors(corsMiddleware.wideCors))
+router.options('/ask-email-activation', cors(corsMiddleware.clientCors))
 router.post('/ask-email-activation',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.findUserByEmailMiddleware,
     authController.sendEmailActivation
 )
 
-router.options('/confirm-account/:token', cors(corsMiddleware.wideCors))
+router.options('/confirm-account/:token', cors(corsMiddleware.clientCors))
 router.put('/confirm-account/:token',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.confirmEmailTokenAction
 )
 
@@ -53,21 +53,21 @@ router.get('/authorize',
     authController.authorizeAction
 )
 
-router.options('/logout', cors(corsMiddleware.wideCors))
+router.options('/logout', cors(corsMiddleware.authedCors))
 router.post('/logout',
     cors(corsMiddleware.authedCors),
     authController.logoutAction
 )
 
-router.options('/forgot-password', cors(corsMiddleware.wideCors))
+router.options('/forgot-password', cors(corsMiddleware.clientCors))
 router.post('/forgot-password',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.forgotPasswordAction
 )
 
-router.options('/reset-password', cors(corsMiddleware.wideCors))
+router.options('/reset-password', cors(corsMiddleware.clientCors))
 router.post('/reset-password',
-    cors(corsMiddleware.wideCors),
+    cors(corsMiddleware.clientCors),
     authController.resetPasswordAction
 )
 

@@ -5,9 +5,15 @@ const corsMiddleware = require('../middlewares/cors.middleware')
 const PlacesController = require('../controllers/places.controller')
 
 // https://api-adresse.data.gouv.fr/
-routes.get('/adresses-gouv', cors(corsMiddleware.wideCors), PlacesController.fetchGouvAdressesAPI)
+routes.get('/adresses-gouv',
+    cors(corsMiddleware.authedCors),
+    PlacesController.fetchGouvAdressesAPI
+)
 
-routes.get('/vicopo/:query', cors(corsMiddleware.wideCors), PlacesController.fetchVicopoAPI)
+routes.get('/vicopo/:query',
+    cors(corsMiddleware.authedCors),
+    PlacesController.fetchVicopoAPI
+)
 
 // https://geo.api.gouv.fr
 // routes.get('/communes', cors(corsConfig(false, true)), AdresseGouvController.fetchCities)
