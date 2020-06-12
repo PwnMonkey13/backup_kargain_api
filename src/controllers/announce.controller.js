@@ -35,9 +35,7 @@ exports.getAnnouncesAdminAction = async (req, res, next) => {
         
         const total = await AnnounceModel
         .find()
-        .skip(skip)
-        .limit(size)
-        .count()
+        .estimatedDocumentCount()
         
         const data = {
             pages: Math.ceil(total / size),
@@ -170,9 +168,7 @@ exports.getAnnouncesAction = async (req, res, next) => {
         
         const total = await AnnounceModel
         .find(query)
-        .skip(skip)
-        .limit(size)
-        .count()
+        .estimatedDocumentCount()
         
         const data = {
             query,

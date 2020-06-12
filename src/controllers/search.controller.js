@@ -26,9 +26,7 @@ const proceedSearchAction = async (req, res, next) => {
     
         const total = await AnnounceModel
         .find(query)
-        .skip(skip)
-        .limit(size)
-        .count()
+        .estimatedDocumentCount()
         
         const users = await UserModel
         .find(query,
