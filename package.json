@@ -43,6 +43,7 @@
 		"jsonwebtoken": "^8.5.1",
 		"jwt-decode": "^2.2.0",
 		"mailchimp-api-v3": "^1.14.0",
+		"moment": "^2.26.0",
 		"mongoose": "^5.9.17",
 		"mongoose-autopopulate": "^0.12.2",
 		"mongoose-explain": "^0.2.2",
