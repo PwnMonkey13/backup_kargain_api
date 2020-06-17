@@ -1,9 +1,9 @@
 require('dotenv').config()
 
-const env = process.env.NODE_ENV || "production"
+const env = process.env.NODE_ENV || 'production'
 const isProd = env === 'production'
-const api = isProd ? "https://kargain-api.now.sh/api" : "http://localhost:8080/api"
-const frontend = isProd ? "https://kargain.web.app" : "http://localhost:3000";
+const api = isProd ? 'https://kargain-api.now.sh/api' : 'http://localhost:8080/api'
+const frontend = isProd ? 'https://kargain.web.app' : 'http://localhost:3000'
 const providers = ['google', 'facebook']
 const callbacks = providers.map(provider => `${api}/auth/${provider}/callback`)
 const [googleURL, facebookURL] = callbacks
@@ -11,7 +11,7 @@ const [googleURL, facebookURL] = callbacks
 const db = isProd ? {
     mongo_location: process.env.MONGODB_URI_PROD,
 } : {
-    mongo_location: process.env.MONGODB_URI_DEV || "mongodb://localhost:27017/kargain"
+    mongo_location: process.env.MONGODB_URI_DEV || 'mongodb://localhost:27017/kargain'
 }
 
 module.exports = {
@@ -48,20 +48,23 @@ module.exports = {
             API_TOKEN: '2bc401d0b2c3f47eb29ca4946'
         }
     },
-    stripe : {
-        token : "pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd",
-        recovery : 'fxrb-jfcm-bjgz-mogf-zvtc'
+    stripe: {
+        token: 'pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd',
+        recovery: 'fxrb-jfcm-bjgz-mogf-zvtc'
+    },
+    messenger: {
+        token: 'EAAJHGZAf9eZAEBACXZCVAQE621nb7GOs2hFFQu9jHEVWvNue91IiYySbj6ExZC3JxBBdeUvtH5ohJNrxZAjtvZCB9NodTZAA10cueHZBiPEoYtyJVfvophzJsnU4rKZB3bTGxqZBBzA7GvWLCuzoSZBjH2ds8B8JlmEfQE3BkQAOMF7TLOJGxs1GVX6hm3FMZCWtqEQZD'
     },
     sso: {
         facebook: {
-            clientID: "3103914796332638",
-            clientSecret: "f24da17a2d60ed378fcdd4975742bec7",
-            profileFields: "email,id,last_name,first_name,name,picture",
+            clientID: '3103914796332638',
+            clientSecret: 'f24da17a2d60ed378fcdd4975742bec7',
+            profileFields: 'email,id,last_name,first_name,name,picture',
             callbackURL: facebookURL
         },
         google: {
-            clientID : "",
-            clientSecret : "",
+            clientID: '',
+            clientSecret: '',
             callbackURL: googleURL
         }
     },
@@ -74,7 +77,7 @@ module.exports = {
         }
     },
     mailer: {
-        contactForm : 'contactform@kargain.com',
+        contactForm: 'contactform@kargain.com',
         from: {
             name: 'Contact Kargain',
             // email : 'contact@kargain.com'

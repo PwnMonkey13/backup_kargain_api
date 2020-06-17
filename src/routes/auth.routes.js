@@ -5,9 +5,9 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
 
-router.options('/sso-register', cors(corsMiddleware.clientCors))
+router.options('/sso-register', cors(corsMiddleware.authedCors))
 router.post('/sso-register',
-    cors(corsMiddleware.clientCors),
+    cors(corsMiddleware.authedCors),
     authController.ssoRegister,
     authController.loginAction
 )

@@ -243,26 +243,25 @@ const followUserAction = async (req, res, next) => {
             }
         )
         
-        if (insertion) {
-            const doc = await UserModel.updateOne(
-                { _id: userId },
-                {
-                    $addToSet: {
-                        followings: {
-                            user: userId
-                        }
+        if (!insertion) return next('user not found')
+        const doc = await UserModel.updateOne(
+            { _id: req.user.id },
+            {
+                $addToSet: {
+                    followings: {
+                        user: userId
                     }
-                })
-            
-            return res.json({
-                success: true,
-                message: 'follower added successfully',
-                data: {
-                    doc,
-                    insertion
                 }
             })
-        } else throw ('user not found')
+        
+        return res.json({
+            success: true,
+            message: 'follower added successfully',
+            data: {
+                doc,
+                insertion
+            }
+        })
     } catch (err) {
         return next(err)
     }
@@ -288,27 +287,26 @@ const unFollowUserAction = async (req, res, next) => {
             }
         )
         
-        if (suppression) {
-            const doc = await UserModel.updateOne(
-                { _id: req.user.id },
-                {
-                    $pull: {
-                        followings: {
-                            user: userId
-                        }
+        if (!suppression) return next('user not found')
+        const doc = await UserModel.updateOne(
+            { _id: req.user.id },
+            {
+                $pull: {
+                    followings: {
+                        user: userId
                     }
                 }
-            )
-            
-            return res.json({
-                success: true,
-                message: 'follower deleted successfully',
-                data: {
-                    doc,
-                    suppression
-                }
-            })
-        } else throw ('user not found')
+            }
+        )
+        
+        return res.json({
+            success: true,
+            message: 'follower deleted successfully',
+            data: {
+                doc,
+                suppression
+            }
+        })
     } catch (err) {
         return next(err)
     }
