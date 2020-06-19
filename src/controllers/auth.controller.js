@@ -99,9 +99,8 @@ const registerAction = async (req, res, next) => {
     try {
         req.user = await user.save()
         next()
-
     } catch (err) {
-        return res.json({ success: false, err })
+        return next(err)
     }
 }
 
@@ -130,15 +129,11 @@ const confirmEmailTokenAction = async (req, res, next) => {
     try {
         const decoded = await jwt.verify(token, config.jwt.encryption)
         if (!decoded.email) return next(Errors.UnAuthorizedError('missing user'))
-        try {
-            const updated = await User.confirmUserEmail(decoded.email)
-            return res.json({
-                success: true,
-                data: updated
-            })
-        } catch (err) {
-            return next(err)
-        }
+        const updated = await User.confirmUserEmail(decoded.email)
+        return res.json({
+            success: true,
+            data: updated
+        })
     } catch (err) {
         return next(err)
     }

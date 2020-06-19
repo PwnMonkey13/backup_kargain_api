@@ -203,7 +203,7 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
         .populate('comments')
         
         if (!announce) return next(Errors.NotFoundError('no announce found'))
-    
+        
         if (req.user) {
             if (req.user.role === 'admin') {
                 return res.json({ success: true, data: announce })
@@ -294,10 +294,7 @@ exports.createAnnounceAction = async (req, res, next) => {
         
         return res.json({
             success: true,
-            data: {
-                document,
-                emailResult
-            },
+            data: document
         })
     } catch (err) {
         next(err)
@@ -377,7 +374,7 @@ exports.removeAnnounceAction = async (req, res, next) => {
     try {
         const doc = await AnnounceModel.updateOne(
             { slug: req.params.slug },
-            { $set: { status : "deleted" } },
+            { $set: { status: 'deleted' } },
             {
                 returnNewDocument: true,
                 runValidators: true,

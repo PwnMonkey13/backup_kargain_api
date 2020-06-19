@@ -9,9 +9,8 @@
 	"license": "GNU",
 	"scripts": {
 		"start": "cross-env NODE_ENV=development nodemon src",
+		"start:prod": "nodemon src",
 		"build": "rimraf dist && babel src -d dist",
-		"webpack": "rimraf dist && webpack",
-		"webpack:dev": "rimraf dist && webpack-dev-server",
 		"prod": "cross-env NODE_ENV=production yarn run build && nodemon dist",
 		"deploy": "yarn run build && vercel --prod",
 		"eslint": "eslint ./src",

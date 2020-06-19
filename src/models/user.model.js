@@ -1,8 +1,9 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
-const utils = require('../utils/functions')
 const { uuid } = require('uuidv4')
+const utils = require('../utils/functions')
+const Errors = require('../utils/Errors')
 const LikeSchema = require('../schemas/like.schema')
 const UserConfigSchema = require('../schemas/user.config.schema')
 const UserSchema = new mongoose.Schema({
@@ -177,15 +178,6 @@ UserSchema.post('init', function (doc) {
     console.log('%s has been initialized from the db', doc._id)
 })
 
-UserSchema.post('save', async function (err, doc, next) {
-    if (err) {
-        if (err.name === 'MongoError' && err.code === 11000) {
-            throw Errors.Error('duplicate user')
-        } else return next(err)
-    }
-    next()
-})
-
 UserSchema.post('remove', function (doc) {
     console.log('%s has been removed', doc._id)
 })
@@ -194,6 +186,7 @@ UserSchema.post('remove', function (doc) {
 UserSchema.pre('save', async function (next) {
     const user = this
     try {
+        console.log(this.isNew)
         if (this.isNew) {
             const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`)
             user.username = `${fullname}-${uuid().substr(0, 6)}`
@@ -212,6 +205,15 @@ UserSchema.pre('save', async function (next) {
     } catch (err) {
         next(err)
     }
+})
+
+UserSchema.post('save', async function (err, doc, next) {
+    if (err) {
+        if (err.name === 'MongoError' && err.code === 11000) {
+             return next(Errors.DuplicateError('duplicate user'))
+        } else return next(err)
+    }
+    next()
 })
 
 UserSchema.statics.hashPassword = (password, salt) => hashPassword(password, salt)

@@ -58,9 +58,9 @@ app.use(function (err, req, res, next) {
     const error = {
         code,
         name: err.name || 'Error',
-        message: config.isProd ? 'Something failed on server' : isError ? err.message : err
+        message: isError ? err.message : err
     }
-    return res.json({ success: false, error })
+    return res.json({ success: false, isProd : config.isProd, isError, error })
 })
 
 module.exports = app
