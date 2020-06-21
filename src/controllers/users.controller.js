@@ -50,7 +50,6 @@ const getUserByUsername = async (req, res, next) => {
         visible: true,
         status: 'active'
     } : {}
-    
     try {
         const user = await UserModel.findOne({ username })
         .populate({
@@ -63,6 +62,7 @@ const getUserByUsername = async (req, res, next) => {
             populate: 'user comments',
             match: garageFilters
         })
+        console.log(user)
         
         if (!user) return next(Errors.NotFoundError('user not found'))
         

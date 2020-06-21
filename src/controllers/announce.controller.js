@@ -279,7 +279,7 @@ exports.createAnnounceAction = async (req, res, next) => {
             }
         )
         
-        const emailResult = await AnnounceMailer.confirmCreateAnnounce({
+        await AnnounceMailer.confirmCreateAnnounce({
             email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
@@ -415,7 +415,7 @@ exports.confirmAnnounceAdminAction = async (req, res, next) => {
                 email: document.user.email,
                 firstname: document.user.firstname,
                 lastname: document.user.lastname,
-                announce_link: `${config.frontend}/slug/${document.slug}`,
+                announce_link: `${config.frontend}/announces/${document.slug}`,
                 featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
                 manufacturer: {
                     make: document?.manufacturer?.make?.label,
@@ -429,7 +429,7 @@ exports.confirmAnnounceAdminAction = async (req, res, next) => {
                 email: document.user.email,
                 firstname: document.user.firstname,
                 lastname: document.user.lastname,
-                announce_link: `${config.frontend}/slug/${document.slug}`,
+                announce_link: `${config.frontend}/announces/${document.slug}`,
             })
         }
         
