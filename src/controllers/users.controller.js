@@ -24,7 +24,12 @@ const getUsersAdminAction = async (req, res, next) => {
     try {
         const total = await UserModel.estimatedDocumentCount().exec()
         const rows = await UserModel
-        .find({}, '-location -favorites')
+        .find({
+            $or: [
+                { removed: false },
+                { removed: { $exists: false } }
+            ]
+        }, '-location -favorites')
         .skip(skip)
         .sort(sorters)
         .limit(size)
@@ -44,14 +49,25 @@ const getUsersAdminAction = async (req, res, next) => {
 
 const getUserByUsername = async (req, res, next) => {
     const username = req.params.username
-    const self = req.user && req.user.username === username
-    const garageFilters = !self ? {
+    const isSelf = req.user?.username === username
+    const isAdmin = req.user?.isAdmin
+    
+    const garageFilters = (!isSelf || !isAdmin) ? {
         activated: true,
         visible: true,
         status: 'active'
     } : {}
+    
     try {
-        const user = await UserModel.findOne({ username })
+        const user = await UserModel
+        .findOne({
+                username,
+                $or: [
+                    { removed: false },
+                    { removed: { $exists: false } }
+                ]
+            }
+        )
         .populate({
             path: 'favorites',
             populate: 'comments',
@@ -62,13 +78,16 @@ const getUserByUsername = async (req, res, next) => {
             populate: 'user comments',
             match: garageFilters
         })
-        console.log(user)
         
         if (!user) return next(Errors.NotFoundError('user not found'))
         
         return res.json({
             success: true,
-            data: user
+            data: {
+                user,
+                isAdmin,
+                isSelf
+            }
         })
     } catch (err) {
         next(err)
@@ -155,10 +174,15 @@ const uploadAvatar = async (req, res, next) => {
 }
 
 const deleteUser = async (req, res, next) => {
-    const uid = req.params.uid
-    UserModel.deleteOne({ _id: uid }).then(document => {
-        return res.json({ success: true, data: document })
-    }).catch(next)
+    try {
+        const doc = await UserModel.updateOne(
+            { username: req.params.username },
+            { removed: true }
+        )
+        return res.json({ success: true, data: doc })
+    } catch (err) {
+        return next(err)
+    }
 }
 
 const addFavoriteAnnounceAction = async (req, res, next) => {
