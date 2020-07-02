@@ -9,11 +9,6 @@ const vehicleModelSchema = (type) => {
       required: true
     },
 
-    make: {
-      type: String,
-      trim: true
-    },
-
     model_id: {
       type: String,
       trim: true,

@@ -24,13 +24,26 @@ router.get('/internal/:type/:make/models',
 )
 
 //admin only
-
 router.options('/internal/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/internal/:type/makes',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateOwn', 'profile'),
     internalVehicleController.createMakes
+)
+
+router.get('/internal/:type/models',
+    cors(corsMiddleware.clientCors),
+    internalVehicleController.getModels
+)
+
+//admin only
+router.options('/internal/:type/models', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/internal/:type/models',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    internalVehicleController.createModels
 )
 
 router.get('/del/:key',
