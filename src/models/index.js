@@ -5,8 +5,9 @@ const VehiclesModelModels = require('./vehicles/vehicleModel.models')
 const Media = require('./media.s3.model')
 const Comment = require('./comment.model')
 const Payment = require('./payment.model')
-const NewsletterSubscriber = require('./newsletterSubscriber.model')
-const ContactMessage = require('./contactMessage.model')
+const NewsletterSubscriber = require('./newsletter.subscriber.model')
+const ContactMessage = require('./contact.message.model')
+const Conversation = require('./conversations.model')
 
 module.exports = {
   User,
@@ -14,6 +15,7 @@ module.exports = {
   Comment,
   Announce,
   Payment,
+  Conversation,
   NewsletterSubscriber,
   ContactMessage,
   Vehicles: {

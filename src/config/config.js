@@ -3,7 +3,7 @@ require('dotenv').config()
 const env = process.env.NODE_ENV || 'production'
 const isProd = env === 'production'
 const api = isProd ? 'https://kargain-api.now.sh/api' : 'http://localhost:8080/api'
-const frontend = isProd ? 'https://kargain.web.app' : 'http://localhost:3000'
+const frontend = isProd ? 'https://kargain.com' : 'http://localhost:3000'
 const providers = ['google', 'facebook']
 const callbacks = providers.map(provider => `${api}/auth/${provider}/callback`)
 const [googleURL, facebookURL] = callbacks
@@ -19,11 +19,12 @@ module.exports = {
     env,
     frontend,
     db,
-    api_path: '/api',
+    api_path: '/v1',
     whileListDomains: [
         'http://localhost:8080',
         'http://localhost:3000',
         'http://localhost:5000',
+        'https://kargain.com',
         'https://kargain.web.app',
         'https://kargain-api.now.sh'
     ],
