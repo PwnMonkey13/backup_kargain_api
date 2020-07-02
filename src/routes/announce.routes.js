@@ -7,6 +7,14 @@ const rolesMiddleware = require('../middlewares/roles.middleware')
 const announceController = require('../controllers/announce.controller')
 const uploadController = require('../controllers/upload.s3.controller')
 
+router.get('/find',
+    announceController.find
+)
+
+router.get('/cron',
+    announceController.cron
+)
+
 //admin
 router.get('/all',
     cors(corsMiddleware.authedCors),
@@ -33,6 +41,13 @@ router.get('/slug/:slug',
 
 router.options('/', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    announceController.createAnnounceAction
+)
+
+router.options('/test', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/test',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     announceController.createAnnounceAction

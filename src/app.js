@@ -4,6 +4,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
+const corsMiddleware = require('./middlewares/cors.middleware')
 const config = require('./config/config')
 const routes = require('./routes')
 const app = express()
@@ -27,21 +28,11 @@ app.use((req, res, next) => {
     next()
 })
 
+//CRON JOBS
+require("./components/cron/announces/updateAfterTwoMonths");
+
 app.get('/', function (req, res, next) {
     return res.end('api live')
-})
-
-app.get('/db', function (req, res, next) {
-    return res.end(config.db.mongo_location)
-})
-
-app.get('/config', function (req, res, next) {
-    return res.json({
-        success: true,
-        data: {
-            config
-        }
-    })
 })
 
 app.use(config.api_path, routes)
@@ -60,7 +51,7 @@ app.use(function (err, req, res, next) {
         name: err.name || 'Error',
         message: isError ? err.message : err
     }
-    return res.json({ success: false, isProd : config.isProd, isError, error })
+    return res.json({ success: false, isProd: config.isProd, isError, error })
 })
 
 module.exports = app

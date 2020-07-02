@@ -3,10 +3,61 @@ const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
 const Errors = require('../utils/Errors')
 const functions = require('../utils/functions')
+const moment = require('moment')
 const announcesFiltersMapper = require('../utils/announcesFiltersMapper')
 const announcesSorterMapper = require('../utils/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
 const DEFAULT_RESULTS_PER_PAGE = 10
+
+exports.cron = async (req, res, next) => {
+    const twoMonthsAgo = moment().subtract(1, 'months')
+    
+    try {
+        const docs = await AnnounceModel.find({
+            visible: false,
+            'createdAt': {
+                $lt: twoMonthsAgo.toDate()
+            }
+        }).populate('user')
+        
+        await Promise.all(docs.map(async (doc) => {
+            doc.visible = false
+            await doc.save()
+            return doc
+        }))
+        
+        const emails = docs.map(doc => doc?.user?.email).filter(email => email != null)
+        
+        const emailsResults = await Promise.all(docs.map(async (doc) => {
+            return await AnnounceMailer.informDisabledAnnounce({
+                email: doc?.user?.email,
+                announce_title: doc.title,
+                announce_link: `${config.frontend}/announces/${doc.slug}`,
+                announce_creation_date: moment(doc.createdAt).format('dddd, MMMM Do YYYY, h:mm:ss a')
+            })
+        }))
+        
+        return res.status(400).json({ docs, emails, emailsResults })
+        
+    } catch (err) {
+        return next(err)
+    }
+}
+
+exports.find = async (req, res, next) => {
+    const twoMonthsAgo = moment().subtract(1, 'months')
+    const docs = await AnnounceModel.find({
+        visible: true,
+        'createdAt': {
+            $lte: twoMonthsAgo.toDate()
+        }
+    }, {
+        visible: false,
+    }, {
+        ret
+    })
+    return res.status(400).json({ len: docs.length, docs })
+}
 
 exports.getAnnouncesAdminAction = async (req, res, next) => {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
@@ -201,40 +252,39 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
         .findOne({ slug: req.params.slug })
         .populate('user')
         .populate('comments')
+        .populate(
+            {
+                path: 'likes',
+                populate: {
+                    path: 'user',
+                    // select: 'firstname lastname username avatar avatarUrl, email role pro'
+                },
+            })
         
-        if (!announce) return next(Errors.NotFoundError('no announce found'))
-        
-        if (req.user) {
-            if (req.user.role === 'admin') {
-                return res.json({ success: true, data: announce })
-            }
-            
-            if (req.user.id.toString() === announce.user.id.toString()) {
-                return res.json({ success: true, data: announce })
-            }
-        }
-        
-        const displayAd =
-            announce.activated &&
-            announce.visible &&
-            announce.status === 'active'
-        
-        if (displayAd) return res.json({ success: true, data: announce })
-        
-        return next(Errors.NotFoundError('no announce found'))
-    } catch (err) {
-        return next(err)
-    }
-}
-
-exports.getByIdAndNextAction = (method = 'GET') => async (req, res, next) => {
-    let announceId = method === 'GET' ? req.params.announce_id : req.body.announce_id
-    
-    try {
-        const announce = await AnnounceModel.findById(announceId)
         if (announce) {
-            req.announce = announce
-            return next()
+            const isSelf = req?.user.id.toString() === announce.user.id.toString()
+            const isAdmin = req?.user?.isAdmin
+            
+            if (isAdmin || isSelf) return res.json({
+                success: true,
+                data: {
+                    announce,
+                    isSelf,
+                    isAdmin
+                }
+            })
+            
+            const displayAd =
+                announce.activated &&
+                announce.visible &&
+                announce.status === 'active'
+            
+            if (displayAd) return res.json({
+                success: true,
+                data: {
+                    announce,
+                }
+            })
         }
         return next(Errors.NotFoundError('no announce found'))
     } catch (err) {
@@ -259,14 +309,15 @@ exports.createAnnounceAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     const max = req.user.config.garageLengthAllowed ?? 5
     
-    if (req.user.garage.length > max) {
-        return next('max announces limit reached')
-    }
+    //automatically disable announce
+    const disable = req.user.garage.length >= req.user.config.garageLengthAllowed
     
     try {
         const announce = new AnnounceModel({
             ...req.body,
-            user: req.user
+            user: req.user,
+            activated: false,
+            visible: disable
         })
         
         const document = await announce.save()
@@ -472,7 +523,7 @@ exports.addUserLikeActionAction = async (req, res, next) => {
     try {
         const insertionLike = await AnnounceModel.updateOne(
             { _id: announce_id },
-            { $addToSet: { likes: req.user.id } },
+            { $addToSet: { likes: { user: req.user.id } } },
             { runValidators: true }
         )
         const insertionFavorite = await UserModel.updateOne(

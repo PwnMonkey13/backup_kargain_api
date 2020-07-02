@@ -17,18 +17,18 @@ const AnnounceSchema = new mongoose.Schema({
         required: true
     },
     
-    //options
-    
     showCellPhone: {
         type: Boolean,
         default: true,
     },
     
+    //need admin validation
     activated : {
         type : Boolean,
         default : false
     },
     
+    //draft mode
     visible: {
         type: Boolean,
         default: true,
@@ -341,6 +341,10 @@ AnnounceSchema.pre('save', function (next) {
     }
     next()
 })
+
+AnnounceSchema.post("update", function(doc) {
+    console.log('Update finished.');
+});
 
 AnnounceSchema.statics.findByUser = async function (uid) {
     return await this.model('Announce').find({ user: uid }).exec()

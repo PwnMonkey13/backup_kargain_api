@@ -1,9 +1,11 @@
 const confirmCreateAnnounce = require('./confirm-create')
 const successConfirmAnnounce = require('./success-confirm')
 const rejectedConfirmAnnounce = require('./rejected-confirm')
+const informDisabledAnnounce = require('./inform-disable-announce')
 
 module.exports = {
     confirmCreateAnnounce,
     successConfirmAnnounce,
-    rejectedConfirmAnnounce
+    rejectedConfirmAnnounce,
+    informDisabledAnnounce
 }
