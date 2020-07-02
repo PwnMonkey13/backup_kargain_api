@@ -16,9 +16,9 @@ function corsOptions (allowCredentials = false, enableAllOrigin = false) {
     }
 }
 
-const clientCors = corsOptions()
+const clientCors = corsOptions(false, true)
 
-const authedCors = corsOptions(true)
+const authedCors = corsOptions(true, true)
 
 const authedWideCors = corsOptions(true, true)
 
