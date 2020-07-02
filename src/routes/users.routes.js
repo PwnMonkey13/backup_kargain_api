@@ -80,7 +80,7 @@ router.post('/contact',
     usersController.contact
 )
 
-router.delete('/:uid',
+router.delete('/:username',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('deleteAny', 'profile'),

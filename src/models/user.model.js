@@ -5,7 +5,6 @@ const { uuid } = require('uuidv4')
 const utils = require('../utils/functions')
 const Errors = require('../utils/Errors')
 const LikeSchema = require('../schemas/like.schema')
-const UserConfigSchema = require('../schemas/user.config.schema')
 const UserSchema = new mongoose.Schema({
     
     firstname: {
@@ -33,6 +32,27 @@ const UserSchema = new mongoose.Schema({
         trim: true,
         unique: true,
         required: true
+    },
+    
+    password: {
+        type: String,
+        trim: true,
+        required: true
+    },
+    
+    salt: String,
+    pass_reset: String,
+    removed: {
+        type: Boolean,
+        default: false
+    },
+    activated: {
+        type: Boolean,
+        default: false
+    },
+    email_validated: {
+        type: Boolean,
+        default: false
     },
     
     role: {
@@ -100,25 +120,6 @@ const UserSchema = new mongoose.Schema({
         }
     },
     
-    password: {
-        type: String,
-        trim: true,
-        required: true
-    },
-    
-    salt: String,
-    pass_reset: String,
-    
-    activated: {
-        type: Boolean,
-        default: false
-    },
-    
-    email_validated: {
-        type: Boolean,
-        default: false
-    },
-    
     avatar: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Media',
@@ -149,8 +150,6 @@ const UserSchema = new mongoose.Schema({
         },
         select: false
     },
-    
-    config: UserConfigSchema
 }, {
     timestamps: true,
     strict: false,
@@ -198,9 +197,6 @@ UserSchema.pre('save', async function (next) {
             user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
         }
         
-        user.config = {
-            garageLengthAllowed: user.pro ? 100 : 5,
-        }
         next()
     } catch (err) {
         next(err)
@@ -210,7 +206,7 @@ UserSchema.pre('save', async function (next) {
 UserSchema.post('save', async function (err, doc, next) {
     if (err) {
         if (err.name === 'MongoError' && err.code === 11000) {
-             return next(Errors.DuplicateError('duplicate user'))
+            return next(Errors.DuplicateError('duplicate user'))
         } else return next(err)
     }
     next()
@@ -253,6 +249,13 @@ UserSchema.virtual('id').get(function () {
 UserSchema.virtual('isPro').get(function () {
     const user = this
     return user.pro === true
+})
+
+UserSchema.virtual('config').get(function () {
+    const user = this
+    return {
+        garageLengthAllowed: user.pro ? 100 : 5
+    }
 })
 
 //TODO refacto w permissions
