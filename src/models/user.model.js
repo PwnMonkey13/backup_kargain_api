@@ -106,7 +106,7 @@ const UserSchema = new mongoose.Schema({
             type: String,
             trim: true
         },
-        postalcode: {
+            postalcode: {
             type: String,
             trim: true
         },
@@ -115,6 +115,10 @@ const UserSchema = new mongoose.Schema({
             trim: true
         },
         fullAddress: {
+            type: String,
+            trim: true
+        },
+        country: {
             type: String,
             trim: true
         }

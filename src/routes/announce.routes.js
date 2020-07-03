@@ -46,13 +46,6 @@ router.post('/',
     announceController.createAnnounceAction
 )
 
-router.options('/test', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.post('/test',
-    cors(corsMiddleware.authedCors),
-    passportMiddleware.authenticate('cookie', { session: false }),
-    announceController.createAnnounceAction
-)
-
 router.options('/update/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/update/:slug',
     cors(corsMiddleware.authedCors),

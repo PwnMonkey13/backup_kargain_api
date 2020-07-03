@@ -52,7 +52,8 @@ const getUserByUsername = async (req, res, next) => {
     const isSelf = req.user?.username === username
     const isAdmin = req.user?.isAdmin
     
-    const garageFilters = (!isSelf || !isAdmin) ? {
+    //means visitor
+    const garageFilters = (!isSelf && !isAdmin) ? {
         activated: true,
         visible: true,
         status: 'active'
@@ -129,11 +130,12 @@ const updateUser = async (req, res, next) => {
         'countrySelect',
         'socials.facebook',
         'socials.twitter',
-        'address.fullAddress',
         'address.housenumber',
         'address.street',
         'address.postalcode',
         'address.city',
+        'address.fullAddress',
+        'address.country',
     ]
     
     const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {

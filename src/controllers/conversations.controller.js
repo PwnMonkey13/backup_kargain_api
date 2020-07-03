@@ -42,7 +42,6 @@ exports.getConversationsByAuthedUser = async (req, res, next) => {
 }
 
 exports.postConversationMessage = async (req, res, next) => {
-    console.log(req.body)
     const { message, recipientId } = req.body
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
@@ -53,18 +52,27 @@ exports.postConversationMessage = async (req, res, next) => {
                 to: recipientId
             },
             {
+                from: req.user.id,
+                to: recipientId,
                 $push: {
                     messages: {
                         from: req.user.id,
                         content: message,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
                     }
                 }
             },
-            { 'new': true })
+            {
+                upsert: true,
+                returnNewDocument: true
+            })
         .populate({
             path: 'to',
             select: 'firstname lastname email'
         })
+        
+        console.log(conversation)
         
         return res.json({
             success: true,
