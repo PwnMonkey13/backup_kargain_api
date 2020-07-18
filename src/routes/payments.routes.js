@@ -11,16 +11,18 @@ routes.get('/secret/:intent_id',
     paymentController.getIntent
 )
 
+routes.options('/create-payment-intent', cors(corsMiddleware.clientCors)) // enable pre-flights
+routes.post('/create-payment-intent',
+    cors(corsMiddleware.clientCors),
+    // passportMiddleware.authenticate('cookie', { session: false }),
+    paymentController.createPaymentIntent
+)
 
-routes.post('/new',
+routes.options('/create-user-subscription', cors(corsMiddleware.authedCors)) // enable pre-flights
+routes.post('/create-user-subscription',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    paymentController.createPayment
+    paymentController.createUserSubscription
 )
-
-routes.post('/charge',
-    paymentController.postCharge
-)
-
 
 module.exports = routes

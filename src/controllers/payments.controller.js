@@ -1,68 +1,101 @@
 const PaymentModel = require('../models').Payment
 const Errors = require('../utils/Errors')
 const config = require('../config/config')
-const stripe = require('stripe')(config.stripe.token);
+const stripe = require('stripe')(config.stripe.test.secret_key)
+
+const calculateOrderAmount = items => {
+    // Replace this constant with a calculation of the order's amount
+    // Calculate the order total on the server to prevent
+    // people from directly manipulating the amount on the client
+    return 1400
+}
 
 exports.getIntent = async (req, res, next) => {
-    const { intent_id } = req.params;
-    
-    try{
+    try {
         const intent = PaymentModel.findOne({ intent_id })
-        return res.json({client_secret: intent.client_secret});
+        return res.json({ client_secret: intent.client_secret })
     } catch (err) {
         return next(err)
     }
 }
 
-exports.createPayment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
-    
-    const { amount, source, receipt_email } = req.body
-    
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'eur',
-        // Verify your integration in this guide by including this parameter
-        metadata: {integration_check: 'accept_a_payment'},
-    });
+const offers = [
+    {
+        maxAnnounces: 10,
+        price: 49.9, //EUR
+        text: 'Vitrine publique ou vitrine location de 10 annonces, vitrine pro de 10 annonces',
+        title: 'announces-10',
+        niceTitle: 'Announces 10'
+    },
+    {
+        maxAnnounces: 20,
+        price: 99.9, //EUR
+        title: 'announces-20',
+        niceTitle: 'Announces 20'
+    },
+    {
+        maxAnnounces: 50,
+        price: 199.9, //EUR
+        text: 'Vitrine publique ou vitrine location de 10 annonces, vitrine pro de 10 annonces',
+        title: 'announces-100',
+        niceTitle: 'Announces 100'
+    },
+]
+
+exports.createPaymentIntent = async (req, res, next) => {
+    const { product } = req.body
+    const offer = offers.find(offer => offer.title === product)
+    if (!offer) return next(Errors.UnAuthorizedError('missing offer'))
+    if (!offer.price) return next(Errors.UnAuthorizedError('missing price'))
     
     try {
-        const announce = new PaymentModel({
-            user: req.user,
-            paymentIntent
+        // Create a PaymentIntent with the order amount and currency
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Number(offer.price) * 10,
+            currency: 'eur',
+            metadata: {
+                integration_check: 'accept_a_payment',
+            },
         })
-        
-        const document = await announce.save()
         
         return res.json({
             success: true,
-            message: 'Ad created successfully',
             data: {
-                document,
-            },
+                clientSecret: paymentIntent.client_secret
+            }
         })
+        
     } catch (err) {
-        next(err)
+        return next(err)
     }
 }
 
-exports.postCharge = async (req, res, next) => {
+exports.createUserSubscription = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    const { payload, offerTitle } = req.body
+    const offer = offers.find(offer => offer.title === offerTitle)
     try {
-        const { amount, source, receipt_email } = req.body
-        
-        const charge = await stripe.charges.create({
-            amount,
-            currency: 'eur',
-            source,
-            receipt_email
+        const payment = new PaymentModel({
+            ...payload,
+            user: req.user,
+            offer: {
+                name: offer.title,
+                title: offer.niceTitle
+            },
         })
         
-        if (!charge) throw new Error('charge unsuccessful')
+        const docPayment = await payment.save()
         
-        return res.status(200).json({
-            success : true,
-            message: 'charge posted successfully',
-            charge
+        req.user.subscription = docPayment.id
+        req.user.hasProPlan = true
+        
+        const docUser = await req.user.save()
+        
+        return res.json({
+            success: true, data: {
+                docPayment,
+                docUser
+            }
         })
     } catch (err) {
         return next(err)

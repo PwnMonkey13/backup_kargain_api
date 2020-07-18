@@ -50,7 +50,10 @@ module.exports = {
         }
     },
     stripe: {
-        token: 'pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd',
+        test: {
+            public_key: 'pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd',
+            secret_key: 'sk_test_51GqJrJEItcAGSRw8je9w61pcgtwbK7Gu7UTKKXIr5V9jH4ETEXwdg6KWTLJse2ARytn3IzAFc599Pr8HCCBgBtps00P78vBBV1'
+        },
         recovery: 'fxrb-jfcm-bjgz-mogf-zvtc'
     },
     messenger: {
