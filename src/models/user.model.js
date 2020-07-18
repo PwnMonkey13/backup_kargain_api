@@ -78,6 +78,18 @@ const UserSchema = new mongoose.Schema({
         trim: true
     },
     
+    //STRIPE
+    subscriptionLog: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment',
+        autopopulate: true
+    },
+    subscriptionOfferTitle: String,
+    hasProPlan: {
+        type: Boolean,
+        default: false
+    },
+    
     about: {
         type: String,
         trim: true
@@ -106,7 +118,7 @@ const UserSchema = new mongoose.Schema({
             type: String,
             trim: true
         },
-            postalcode: {
+        postalcode: {
             type: String,
             trim: true
         },

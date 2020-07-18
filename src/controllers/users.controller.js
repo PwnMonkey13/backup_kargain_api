@@ -75,6 +75,14 @@ const getUserByUsername = async (req, res, next) => {
             match: garageFilters
         })
         .populate({
+            path: 'followers',
+            populate: 'user',
+        })
+        .populate({
+            path: 'followings',
+            populate: 'user',
+        })
+        .populate({
             path: 'garage',
             populate: 'user comments',
             match: garageFilters

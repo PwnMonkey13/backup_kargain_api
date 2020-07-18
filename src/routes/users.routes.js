@@ -17,7 +17,7 @@ router.get('/all',
 
 router.get('/username/:username',
     cors(corsMiddleware.authedCors),
-    authMiddleware.byPassAuth,
+    authMiddleware.byPassAuth(),
     usersController.getUserByUsername
 )
 
