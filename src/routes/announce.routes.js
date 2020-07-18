@@ -24,8 +24,15 @@ router.get('/all',
 )
 
 router.get('/',
-    cors(),
-    announceController.getAnnouncesAction
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth({ populate: 'followings' }),
+    announceController.getAnnouncesAction(true)
+)
+
+router.get('/search',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth(),
+    announceController.getAnnouncesAction()
 )
 
 router.get('/user/:uid',
@@ -35,7 +42,7 @@ router.get('/user/:uid',
 
 router.get('/slug/:slug',
     cors(corsMiddleware.authedCors),
-    authMiddleware.byPassAuth,
+    authMiddleware.byPassAuth(),
     announceController.getAnnounceBySlugAction
 )
 
@@ -85,12 +92,20 @@ router.post('/upload/:slug',
 
 //ADMIN
 
-router.options('/confirm/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.put('/confirm/:slug',
+router.options('/update/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/update/:slug',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'announce'),
-    announceController.confirmAnnounceAdminAction
+    announceController.updateAnnounceAction
+)
+
+router.options('/update-admin/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/update-admin/:slug',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateAny', 'announce'),
+    announceController.updateAdminAnnounceAction
 )
 
 module.exports = router

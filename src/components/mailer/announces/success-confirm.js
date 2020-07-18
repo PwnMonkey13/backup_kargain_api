@@ -4,6 +4,7 @@ const mailer = require('../../../utils/mailer')
 const successConfirmAnnounce = async params => {
     if (!params.email) throw new Error('missing email')
     if (!params.firstname) throw new Error('missing firstname')
+    if (!params.title) throw new Error('missing title')
     if (!params.announce_link) throw new Error('missing announce link')
     
     const message = {
@@ -20,9 +21,7 @@ const successConfirmAnnounce = async params => {
                     }
                 ],
                 Variables : {
-                    manufacturer_make : params?.manufacturer?.make,
-                    manufacturer_model : params?.manufacturer?.model,
-                    manufacturer_generation : params?.manufacturer?.generation,
+                    title : params.title,
                     announce_link : params.announce_link,
                     featured_img_link : params.featured_img_link
                 },

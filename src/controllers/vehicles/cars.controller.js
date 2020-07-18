@@ -35,12 +35,9 @@ const getDataAction = (req, res, next) => {
         })
         else {
             fetchApi(url).then(data => {
-                console.log(data)
                 redisClient.set(url, JSON.stringify(data))
-                console.log('redis new entry')
                 return res.json({ success: true, msg: 'from API', url, data })
             }).catch(err => {
-                console.log(err)
                 return next(err)
             })
         }

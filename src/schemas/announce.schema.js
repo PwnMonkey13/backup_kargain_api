@@ -23,9 +23,9 @@ const AnnounceSchema = new mongoose.Schema({
     },
     
     //need admin validation
-    activated : {
-        type : Boolean,
-        default : false
+    activated: {
+        type: Boolean,
+        default: false
     },
     
     //draft mode
@@ -57,27 +57,21 @@ const AnnounceSchema = new mongoose.Schema({
     price: {
         type: Number,
         default: 0,
-        min : 0,
-        max : 999999
+        min: 0,
+        max: 999999
     },
     
     vinNumber: String,
     
     // sale, rent ...
     adType: {
-        type: {
-            label: String,
-            value: String,
-        },
+        type: String,
         required: true
     },
     
     // car, moto etc ...
     vehicleType: {
-        type: {
-            label: String,
-            value: String,
-        },
+        type: String,
         required: true
     },
     
@@ -142,8 +136,8 @@ const AnnounceSchema = new mongoose.Schema({
     mileage: {
         type: Number,
         default: 0,
-        min : 0,
-        max : 999999
+        min: 0,
+        max: 999999
     },
     
     power: {
@@ -307,7 +301,7 @@ const AnnounceSchema = new mongoose.Schema({
 })
 
 AnnounceSchema.path('tags').validate((arr) => {
-    return arr.length <= 10;
+    return arr.length <= 10
 }, 'too much tags provided')
 
 AnnounceSchema.index({
@@ -342,9 +336,9 @@ AnnounceSchema.pre('save', function (next) {
     next()
 })
 
-AnnounceSchema.post("update", function(doc) {
-    console.log('Update finished.');
-});
+AnnounceSchema.post('update', function (doc) {
+    console.log('Update finished.')
+})
 
 AnnounceSchema.statics.findByUser = async function (uid) {
     return await this.model('Announce').find({ user: uid }).exec()
@@ -358,10 +352,6 @@ AnnounceSchema.virtual('id').get(function () {
 AnnounceSchema.virtual('priceHT').get(function () {
     const announce = this
     return Number(announce.price * 0.8).toFixed(0)
-})
-
-AnnounceSchema.virtual('getAuthor').get(function () {
-    return this.user
 })
 
 module.exports = AnnounceSchema

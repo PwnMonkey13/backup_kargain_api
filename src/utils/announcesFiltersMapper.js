@@ -1,10 +1,10 @@
 module.exports = {
-    ADTYPE: {
-        ref: 'adType.value',
+    TYPE_AD: {
+        ref: 'adType',
         rule: 'strict'
     },
-    VEHICLETYPE: {
-        ref: 'vehicleType.value',
+    VEHICLE_TYPE: {
+        ref: 'vehicleType',
         rule: 'strict'
     },
     FN_USE: {

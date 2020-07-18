@@ -102,8 +102,10 @@ exports.getAnnouncesAdminAction = async (req, res, next) => {
     }
 }
 
-exports.getAnnouncesAction = async (req, res, next) => {
+exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
     const { coordinates, enableGeocoding, radius } = req.query
+    const isAuthenticated = !!req?.user
+    
     let size = DEFAULT_RESULTS_PER_PAGE
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
     let sorters = {
@@ -196,13 +198,20 @@ exports.getAnnouncesAction = async (req, res, next) => {
         }
     }
     
+    if(enableFeed && isAuthenticated) {
+        const followingIds = req.user.followings.map(following => following.user)
+        query = {
+            user: { $in: followingIds },
+            ...query,
+        }
+    }
+    
     try {
         const rows = await AnnounceModel
         .find(query, '-damages')
         .skip(skip)
         .sort(sorters)
         .limit(size)
-        // .lean()
         .populate('images')
         .populate({
             path: 'user',
@@ -438,41 +447,32 @@ exports.removeAnnounceAction = async (req, res, next) => {
     }
 }
 
-exports.confirmAnnounceAdminAction = async (req, res, next) => {
-    const { slug, approve } = req.params
-    const approved = approve ?? true
+exports.updateAdminAnnounceAction = async (req, res, next) => {
+    const { slug } = req.params
+    const activated = Boolean(req.body?.activated)
+    
     if (!slug) return next('missing announce slug in token')
     
     try {
-        const updates = {
-            $set: {
-                activated: approved,
-                status: approved ? 'active' : 'rejected'
-            }
-        }
-        
         const document = await AnnounceModel.findOneAndUpdate(
             { slug },
-            updates,
+            { $set: req.body },
             {
                 returnNewDocument: true,
                 runValidators: true,
             })
+        .populate('user')
         
         let emailResult = null
-        if (approved) {
+        if (activated) {
             //send activation success mail to announce owner
             emailResult = await AnnounceMailer.successConfirmAnnounce({
+                title: document.title,
                 email: document.user.email,
                 firstname: document.user.firstname,
                 lastname: document.user.lastname,
                 announce_link: `${config.frontend}/announces/${document.slug}`,
                 featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
-                manufacturer: {
-                    make: document?.manufacturer?.make?.label,
-                    model: document?.manufacturer?.model?.label,
-                    generation: document?.manufacturer?.generation?.label,
-                }
             })
         } else {
             //send rejected activation mail to announce owner
@@ -488,13 +488,15 @@ exports.confirmAnnounceAdminAction = async (req, res, next) => {
             success: true,
             data: {
                 document,
-                emailResult
+                emailResult,
+                // emailResult: emailResult ? {
+                //     to: document.user.email
+                // } : null
             },
         })
         
-        return res.json({ success: true, data: document })
     } catch (err) {
-        return next(Errors.AlreadyActivated('Activation token expired'))
+        return next(err)
     }
 }
 
