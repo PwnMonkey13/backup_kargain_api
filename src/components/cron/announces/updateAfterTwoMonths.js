@@ -4,7 +4,7 @@ const AnnounceModel = require('../../../models').Announce
 
 cron.schedule('* * * * *', async () => {
     const twoMonthsAgo = moment().subtract(2, 'months')
-    const docs = await AnnounceModel.update({
+    const docs = await AnnounceModel.updateMany({
         visible: true,
         'createdAt': {
             $lte: twoMonthsAgo.toDate()
@@ -12,5 +12,6 @@ cron.schedule('* * * * *', async () => {
     }, {
         visible: false,
     })
+    console.log("cron job")
     console.log(docs)
 })
