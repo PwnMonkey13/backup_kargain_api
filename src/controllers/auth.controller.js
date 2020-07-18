@@ -80,7 +80,8 @@ const loginAction = async (req, res, next) => {
 
 const logoutAction = async (req, res, next) => {
     req.logout()
-    return res.cookie('token',
+    return res
+    .cookie('token',
         null, {
             maxAge: 0,
             httpOnly: true

@@ -49,7 +49,7 @@ router.put('/confirm-account/:token',
 
 router.get('/authorize',
     cors(corsMiddleware.authedCors),
-    authMiddleware.byPassAuth,
+    authMiddleware.byPassAuth(),
     authController.authorizeAction
 )
 
