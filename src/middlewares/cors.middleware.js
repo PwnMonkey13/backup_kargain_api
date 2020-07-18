@@ -22,4 +22,4 @@ const authedCors = corsOptions(true, true)
 
 const authedWideCors = corsOptions(true, true)
 
-module.exports = { clientCors, authedCors, authedWideCors }
+module.exports = { corsOptions, clientCors, authedCors, authedWideCors }
