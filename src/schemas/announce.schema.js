@@ -66,13 +66,27 @@ const AnnounceSchema = new mongoose.Schema({
     // sale, rent ...
     adType: {
         type: String,
-        required: true
+        required: true,
+        enum : ['sale', 'rent']
     },
     
     // car, moto etc ...
     vehicleType: {
         type: String,
-        required: true
+        required: true,
+        enum : ['car', 'moto', 'bus', 'camper', 'utility']
+    },
+    
+    makeRef: {
+        type: String,
+        required: true,
+        enum: ['buses_makes', 'campers_makes', 'cars_makes', 'motorcycles_makes', 'trucks_makes']
+    },
+    
+    modelRef: {
+        type: String,
+        required: true,
+        enum: ['buses_models', 'campers_models', 'cars_models', 'motorcycles_models', 'trucks_models']
     },
     
     // e:g moto => quad, scooter ...
@@ -99,29 +113,31 @@ const AnnounceSchema = new mongoose.Schema({
         value: String
     },
     
-    vehicleEngine: {
-        type: {
-            label: String,
-            value: String
-        },
-        gas: {
-            label: String,
-            value: String
-        },
-        cylinder: {
-            type: { value: String, label: String },
-            trim: true
-        }
+    vehicleEngineType: {
+        label: String,
+        value: String
+    },
+    
+    vehicleEngineGas: {
+        label: String,
+        value: String
+    },
+    
+    vehicleEngineCylinder: {
+        value: String,
+        label: Number
     },
     
     manufacturer: {
         make: {
-            label: String,
-            value: String
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'makeRef',
+            autopopulate: true
         },
         model: {
-            label: String,
-            value: String
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'modelRef',
+            autopopulate: true
         },
         generation: {
             label: String,
@@ -140,34 +156,34 @@ const AnnounceSchema = new mongoose.Schema({
         max: 999999
     },
     
-    power: {
-        km: {
-            type: Number,
-            default: 0
-        },
-        ch: {
-            type: Number,
-            default: 0
-        },
+    powerKm: {
+        type: Number,
+        default: 0
     },
     
-    consumption: {
-        mixt: {
-            type: Number,
-            default: 0
-        },
-        city: {
-            type: Number,
-            default: 0
-        },
-        road: {
-            type: Number,
-            default: 0
-        },
-        gkm: {
-            type: Number,
-            default: 0
-        },
+    powerCh: {
+        type: Number,
+        default: 0
+    },
+    
+    consumptionMixt: {
+        type: Number,
+        default: 0
+    },
+    
+    consumptionCity: {
+        type: Number,
+        default: 0
+    },
+    
+    consumptionRoad: {
+        type: Number,
+        default: 0
+    },
+    
+    consumptionGkm: {
+        type: Number,
+        default: 0
     },
     
     equipments: [

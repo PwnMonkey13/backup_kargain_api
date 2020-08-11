@@ -13,21 +13,19 @@ module.exports = {
     TYPE: {
         ref: 'vehicleTypeSelect.value',
     },
-    MAKE: {
-        ref: 'manufacturer.make.value'
-    },
-    MODEL: {
-        ref: 'manufacturer.model.value'
+    AD_PRICE: {
+        type: 'range',
+        ref: 'price',
     },
     ENGINE_TYPE: {
-        ref : 'vehicleEngine.type.value'
+        ref : 'vehicleEngineType.value'
     },
     ENGINE_GAS: {
-        ref : 'vehicleEngine.gas.value'
+        ref : 'vehicleEngineGas.value'
     },
     CYLINDER: {
         type: 'range',
-        ref: 'vehicleEngine.cylinder',
+        ref: 'vehicleEngineCylinder',
     },
     GENERAL_STATE: {
         ref: 'vehicleGeneralState.value'
@@ -35,22 +33,19 @@ module.exports = {
     ADDRESS_CITY_POSTCODE: {
         ref : 'address.city.postcode'
     },
-    AD_PRICE: {
-        type: 'range',
-        ref: 'price',
-    },
+    
     MILEAGE: {
         type: 'range',
         ref: 'mileage',
     },
     POWER_KW: {
         type: 'range',
-        ref: 'power.kw',
+        ref: 'powerKw',
         maxDisable : 400
     },
     CONSUMPTION_GKM: {
         type: 'range',
-        ref: 'consumption.gkm',
+        ref: 'consumptionGkm',
     },
     DOORS: {
         type: 'range',

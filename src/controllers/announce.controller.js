@@ -7,6 +7,8 @@ const moment = require('moment')
 const announcesFiltersMapper = require('../utils/announcesFiltersMapper')
 const announcesSorterMapper = require('../utils/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
+const modelsMake = require('../models').Vehicles.Makes
+
 const DEFAULT_RESULTS_PER_PAGE = 10
 
 exports.cron = async (req, res, next) => {
@@ -165,7 +167,23 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
                         } else carry[filter.ref]['$lte'] = max
                     }
                 }
-            } else if (typeof filter.value === 'string') {
+            }
+
+            else if (filter.type === 'number') {
+                if(filter.rule === "max") carry[filter.ref]['$gte'] = Number(filter.value)
+                else if(filter.rule === "strict") Number(filter.value)
+                
+                //default behaviour = under maximum default value allowed
+                else carry[filter.ref] = carry[filter.ref]['$lte'] = Number(filter.value)
+            }
+            
+            else if (filter.type === 'array') {
+                carry[filter.ref] = {
+                    $in: filter.value.split(',').map(v => filter.number ? Number(v) : v)
+                }
+            }
+            
+            else {
                 if (filter.rule === 'strict') {
                     carry[filter.ref] = filter.value.toLowerCase()
                 } else {
@@ -175,6 +193,7 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
                     }
                 }
             }
+            
         }
         return carry
     }, defaultQuery)
@@ -199,10 +218,12 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
     }
     
     if(enableFeed && isAuthenticated) {
-        const followingIds = req.user.followings.map(following => following.user)
-        query = {
-            user: { $in: followingIds },
-            ...query,
+        const followingIds = req?.user?.followings ? req.user.followings.map(following => following.user) : []
+        if(followingIds.length !== 0){
+            query = {
+                user: { $in: followingIds },
+                ...query,
+            }
         }
     }
     
@@ -225,19 +246,36 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
                 select: '-followings -followers -favorites -garage'
             }
         })
+    
+        const { MAKE, MODEL } = req.query;
+        
+        const filtered = rows
+        .filter(row => {
+            if(MAKE){
+                if(Array.isArray(MAKE)) return MAKE.include(row.manufacturer?.make?.make_id)
+                return Number(row.manufacturer?.make?.make_id) === Number(MAKE)
+            }
+            return true
+        })
+        .filter(row => {
+            if(MODEL) return row.manufacturer?.model?.model?.search(MODEL)
+            return true
+        })
         
         const total = await AnnounceModel
         .find(query)
-        .estimatedDocumentCount()
+        .count()
         
         const data = {
             query,
             sorters,
+            filters,
             pages: Math.ceil(total / size),
             page,
             total,
             size,
-            rows
+            len : rows.length,
+            rows : filtered
         }
         
         return res.json({ success: true, data })
@@ -271,8 +309,8 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
             })
         
         if (announce) {
-            const isSelf = req?.user.id.toString() === announce.user.id.toString()
-            const isAdmin = req?.user?.isAdmin
+            const isSelf = req.user ? req?.user.id.toString() === announce.user.id.toString() : false
+            const isAdmin = req.user ? req.user.isAdmin : false
             
             if (isAdmin || isSelf) return res.json({
                 success: true,
@@ -316,14 +354,41 @@ exports.getBySlugAndNextAction = async (req, res, next) => {
 
 exports.createAnnounceAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
-    const max = req.user.config.garageLengthAllowed ?? 5
     
     //automatically disable announce
     const disable = req.user.garage.length >= req.user.config.garageLengthAllowed
+    const { vehicleType, manufacturer } = req.body
+    const modelMake = require('../models').Vehicles.Makes[`${vehicleType}s`]
+    const modelModel = require('../models').Vehicles.Models[`${vehicleType}s`]
+    let matchMake = null
+    let matchModel = null
     
     try {
+        if (modelMake && manufacturer?.make?.value){
+            matchMake = await modelMake.findOne({
+                make_id : manufacturer?.make?.value
+            })
+            
+            //TODO avec les trims / generations
+            if(modelModel && manufacturer?.model?.value){
+                matchModel = await modelModel.findOne({
+                    model : {
+                        $regex: manufacturer?.model?.value,
+                        $options: 'i'
+                    }
+                })
+            }
+        }
+        
         const announce = new AnnounceModel({
             ...req.body,
+            makeRef : `${vehicleType}s_makes`,
+            modelRef : `${vehicleType}s_models`,
+            manufacturer : {
+                ...manufacturer,
+                make : matchMake?._id,
+                model : matchModel?._id
+            },
             user: req.user,
             activated: false,
             visible: disable
@@ -374,15 +439,15 @@ exports.updateAnnounceAction = async (req, res, next) => {
         'vehicleFunctionUse',
         'vehicleGeneralState',
         'vehicleFunction',
-        'vehicleEngine.type',
-        'vehicleEngine.gas',
-        'vehicleEngine.cylinder',
-        'power.km',
-        'power.ch',
-        'consumption.mixt',
-        'consumption.city',
-        'consumption.road',
-        'consumption.gkm',
+        'vehicleEngineType',
+        'vehicleEngineGas',
+        'vehicleEngineCylinder',
+        'powerKm',
+        'powerCh',
+        'consumptionMixt',
+        'consumptionCity',
+        'consumptionRoad',
+        'consumptionGkm',
         'mileage',
         'equipments',
         'damages',
