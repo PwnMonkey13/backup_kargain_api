@@ -67,10 +67,9 @@ const loginAction = async (req, res, next) => {
     return res.cookie('token',
         token, {
             expires: new Date(expirationTimeSeconds), // 10days (milliseconds)
-            httpOnly: true
-            // signed: true,
-            // secure: true,
-            // sameSite: true,
+            httpOnly: true,
+            // secure: !!config.isProd,
+            sameSite: false,
         }
     ).json({
         success: true,
