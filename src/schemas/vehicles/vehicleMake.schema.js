@@ -6,6 +6,14 @@ const MakeSchema = new mongoose.Schema({
     trim: true,
     required: true
   },
+  make_id : {
+    type : Number,
+    required: true,
+    unique: true
+  },
+  make_idd: {
+    type : Number,
+  },
   make_ru: {
     type: String,
     trim: true
