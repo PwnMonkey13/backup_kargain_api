@@ -4,7 +4,6 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
-const corsMiddleware = require('./middlewares/cors.middleware')
 const config = require('./config/config')
 const routes = require('./routes')
 const app = express()
@@ -29,7 +28,7 @@ app.use((req, res, next) => {
 })
 
 //CRON JOBS
-require("./components/cron/announces/updateAfterTwoMonths");
+// require("./components/cron/announces/updateAfterTwoMonths");
 
 app.get('/', function (req, res, next) {
     return res.end('api live')
