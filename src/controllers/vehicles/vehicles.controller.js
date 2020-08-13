@@ -1,13 +1,13 @@
 const mongoose = require('mongoose')
 const path = require('path')
 const fs = require('fs')
-const { promisify } = require("util");
+const slugify = require('@sindresorhus/slugify')
+const { promisify } = require("util")
 const redisConfig = require('../../config/redis')
 const utils = require('../../utils/functions')
 const redisClient = redisConfig.redisClient
-const readFileAsync = promisify(fs.readFile);
-const writeFileAsync = promisify(fs.writeFile);
-
+const readFileAsync = promisify(fs.readFile)
+const writeFileAsync = promisify(fs.writeFile)
 const htmlDir = "C:\\Users\\Niko_PC\\Downloads\\cars\\json"
 const debugDir = "C:\\Users\\Niko_PC\\Downloads\\cars"
 
@@ -98,7 +98,7 @@ const bulkCars = async (req, res, next) => {
 }
 
 const createMakes = async (req, res, next) => {
-    const vehicleType = req.params.type
+    const vehicleType = req.params.vehicleType
     const modelMake = require('../../models').Vehicles.Makes[vehicleType]
     if (!modelMake) return next('missing model')
     
@@ -127,7 +127,7 @@ const createMakes = async (req, res, next) => {
 }
 
 const updateMakes = async (req, res, next) => {
-    const vehicleType = req.params.type
+    const vehicleType = req.params.vehicleType
     const modelMake = require('../../models').Vehicles.Makes[vehicleType]
     if (!modelMake) return next('missing model')
     
@@ -140,11 +140,12 @@ const updateMakes = async (req, res, next) => {
                 { _id: doc._id},
                 {
                     "$set": {
-                        "make_id": Number(doc.make_id)
+                        // "make_id": Number(doc.make_id),
+                        "make_slug" : slugify(doc.make)
                     },
-                    "$unset" : {
-                        "make_idd" : 1
-                    }
+                    // "$unset" : {
+                    //     "make_idd" : 1
+                    // }
                 })
         
             return [...acc, updated]
@@ -160,14 +161,13 @@ const updateMakes = async (req, res, next) => {
   }
 }
 
-
 const createModels = async (req, res, next) => {
     const vehicleType = req.params.type
     const modelModel = require('../../models').Vehicles.Models[vehicleType]
     const makeModel = require('../../models').Vehicles.Makes[vehicleType]
     
-    if (!modelModel) return res.json({ success: false, msg: 'missing model' })
-    if (!makeModel) return res.json({ success: false, msg: 'missing model' })
+    if (!modelModel) return next('missing model')
+    if (!makeModel) return next('missing model')
     
     const entries = await req.body.reduce(async (accPromise, entry) => {
         const acc = await accPromise
@@ -194,61 +194,208 @@ const createModels = async (req, res, next) => {
 }
 
 const getMakes = async (req, res, next) => {
-    const vehicleType = req.params.type
-    const currentRoute = req.protocol + '://' + req.get('host') + req.originalUrl
-    const url = utils.buildUrl(currentRoute, req.query)
+    const vehicleType = req.params.vehicleType
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
     const { filter } = req.query
     const query = filter ? { make: { $in: filter.split(',') } } : {}
     
-    const Model = require('../../models').Vehicles.Makes[vehicleType]
-    if (!Model) return next('missing model')
+    try {
+        const cacheKey = `${vehicleType}_makes`
+        const cache = await redisConfig.getCacheKey(cacheKey)
     
-    const cache = await redisConfig.getCacheKey(url)
-    if (cache && cache.length !== 0){
+        if (cache && !forceRewriteCache){
+            return res.json({
+                success: true,
+                msg: 'from redis',
+                hostname: redisClient.address,
+                data: cache
+            })
+        }
+    
+        const makeModel = require('../../models').Vehicles.Makes[vehicleType]
+        if (!makeModel) return next('missing model')
+    
+        const makes = await makeModel.find(query)
+        redisClient.set(cacheKey, JSON.stringify(makes))
         return res.json({
             success: true,
-            msg: 'from redis',
-            hostname: redisClient.address,
-            count: cache.length,
-            data: cache
+            msg: 'from db',
+            data: makes
         })
+    } catch (err){
+        return next(err)
     }
-    
-    const makes = await Model.find(query).exec()
-    redisClient.set(url, JSON.stringify(makes))
-    return res.json({
-        success: true,
-        msg: 'from db',
-        count: makes.length,
-        data: makes,
-    })
 }
 
 const getModelsByMake = async (req, res, next) => {
-    const vehicleType = req.params.type
-    const makeID = req.params.makeID
-    const vehicleMakeModel = require('../../models').Vehicles.Makes[vehicleType]
-    const vehicleModelsModel = require('../../models').Vehicles.Models[vehicleType]
+    const vehicleType = req.params.vehicleType
+    const make = req.query.make;
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
     
-    if (!vehicleMakeModel) return next('missing models model')
-    if (!vehicleModelsModel) return next('missing make model')
+    if (!make) return next('missing make name')
     
-    const currentRoute = req.protocol + '://' + req.get('host') + req.originalUrl
-    const url = utils.buildUrl(currentRoute, req.query)
-    const cache = await redisConfig.getCacheKey(url)
-    if (cache && cache.length !== 0) return res.json({
-        success: true,
-        msg: 'from redis',
-        hostname: redisClient.address,
-        data: cache
-    })
-    const make = await vehicleMakeModel.findOne({ make_id: makeID })
-    if(make){
-        const models = await vehicleModelsModel.find({ make_id: mongoose.Types.ObjectId(make._id) })
-        const data = { make, models }
-        redisClient.set(url, JSON.stringify(data))
-        return res.json({ success: true, msg: 'from db', data })
-    } else return next('missing make')
+    try {
+        const cacheKey = `${vehicleType}_${make}_models`
+        const cache = await redisConfig.getCacheKey(cacheKey)
+    
+        if (cache && !forceRewriteCache){
+            return res.json({
+                success: true,
+                msg: 'from redis',
+                hostname: redisClient.address,
+                data: cache
+            })
+        }
+    
+        const vehicleMakeModel = require('../../models').Vehicles.Makes[vehicleType]
+        const vehicleModelsModel = require('../../models').Vehicles.Models[vehicleType]
+    
+        if (!vehicleMakeModel) return next('missing make model')
+        if (!vehicleModelsModel) return next('missing models model')
+        
+        const makeDoc = await vehicleMakeModel.findOne({ make_slug : slugify(make)})
+        if (!makeDoc) return next('missing make')
+    
+        const models = await vehicleModelsModel.find({ make_id: mongoose.Types.ObjectId(makeDoc._id) })
+        
+        redisClient.set(cacheKey, JSON.stringify(models))
+        return res.json({
+            success: true,
+            msg: 'from db',
+            data : models
+        })
+        
+    } catch (err){
+        return next(err)
+    }
 }
 
-module.exports = { bulkCars, createMakes, updateMakes, createModels, getMakes, getModelsByMake }
+const getCarsModelsByMake = async (req, res, next) => {
+    const make = req.query.make;
+    const carsMakesModel = require('../../models').Vehicles.Makes['cars']
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const cacheKey = `cars_${make}`
+    
+    if (!make) return next('missing make')
+    
+    try{
+        const cache = await redisConfig.getCacheKey(cacheKey)
+    
+        if (cache && !forceRewriteCache){
+            return res.json({
+                success: true,
+                msg: 'from redis',
+                hostname: redisClient.address,
+                data: cache
+            })
+        }
+    
+        const makeDoc = await carsMakesModel.findOne({ make_slug : slugify(make)})
+        if(!makeDoc) return next('missing make')
+        
+        let db = mongoose.connection;
+        const aggregateModels = await db.db.command({
+            distinct: "cars_models",
+            key: "model",
+            query: { make_id : mongoose.Types.ObjectId(makeDoc._id)}
+        })
+    
+        redisClient.set(cacheKey, JSON.stringify(aggregateModels))
+        return res.json({
+            success: true,
+            data : aggregateModels
+        })
+        
+    } catch (err){
+        return next(err)
+    }
+};
+
+const getCarsModelTrims = async (req, res, next) => {
+    const { make, model } = req.query
+    const carsMakesModel = require('../../models').Vehicles.Makes['cars']
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    
+    if (!make) return next('missing make')
+    if (!model) return next('missing model')
+    
+    try {
+        const cacheKey = `cars_${make}_${model}_trims`
+        const cache = await redisConfig.getCacheKey(cacheKey)
+        
+        if (cache && !forceRewriteCache){
+            return res.json({
+                success: true,
+                msg: 'from redis',
+                hostname: redisClient.address,
+                data: cache
+            })
+        }
+        
+        const makeDoc = await carsMakesModel.findOne({ make_slug : slugify(make)})
+        if (!makeDoc) return next('missing make')
+        
+        let db = mongoose.connection;
+        const aggregateTrims = await db.db.command({
+            distinct: "cars_models",
+            key: "trim",
+            query: {
+                make_id : mongoose.Types.ObjectId(makeDoc._id),
+                model : model
+            }
+        })
+        
+        return res.json({
+            success: true,
+            data: aggregateTrims,
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getCarsModelTrimYears = async (req, res, next) => {
+    const { make, model, trim } = req.query
+    const carsModelsModel = require('../../models').Vehicles.Models['cars']
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    
+    if (!make) return next('missing make')
+    if (!model) return next('missing model')
+    
+    try {
+        const cacheKey = `cars_${make}_${model}_${trim}_years`
+        const cache = await redisConfig.getCacheKey(cacheKey)
+    
+        if (cache && !forceRewriteCache){
+            return res.json({
+                success: true,
+                msg: 'from redis',
+                hostname: redisClient.address,
+                data: cache
+            })
+        }
+    
+        const trimsYears = await carsModelsModel.find(
+            {trim},
+            {year : 1})
+        
+        return res.json({
+            success: true,
+            data: trimsYears,
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+module.exports = {
+    bulkCars,
+    createMakes,
+    updateMakes,
+    createModels,
+    getMakes,
+    getModelsByMake,
+    getCarsModelsByMake,
+    getCarsModelTrims,
+    getCarsModelTrimYears
+}
