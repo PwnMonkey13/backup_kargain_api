@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const config = require('../config/config')
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
@@ -7,8 +8,6 @@ const moment = require('moment')
 const announcesFiltersMapper = require('../utils/announcesFiltersMapper')
 const announcesSorterMapper = require('../utils/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
-const modelsMake = require('../models').Vehicles.Makes
-
 const DEFAULT_RESULTS_PER_PAGE = 10
 
 exports.cron = async (req, res, next) => {
@@ -355,44 +354,48 @@ exports.getBySlugAndNextAction = async (req, res, next) => {
 exports.createAnnounceAction = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
     
+    const { vehicleType, manufacturer } = req.body
+    
     //automatically disable announce
     const disable = req.user.garage.length >= req.user.config.garageLengthAllowed
-    const { vehicleType, manufacturer } = req.body
+    
     const modelMake = require('../models').Vehicles.Makes[`${vehicleType}s`]
     const modelModel = require('../models').Vehicles.Models[`${vehicleType}s`]
     let matchMake = null
     let matchModel = null
     
     try {
+    
         if (modelMake && manufacturer?.make?.value){
             matchMake = await modelMake.findOne({
-                make_id : manufacturer?.make?.value
+                _id : mongoose.Types.ObjectId(manufacturer?.make?.value)
             })
-            
-            //TODO avec les trims / generations
-            if(modelModel && manufacturer?.model?.value){
+    
+            if(modelModel && manufacturer?.year?.value){
                 matchModel = await modelModel.findOne({
-                    model : {
-                        $regex: manufacturer?.model?.value,
-                        $options: 'i'
-                    }
+                    _id : mongoose.Types.ObjectId(manufacturer?.year?.value)
                 })
             }
         }
         
-        const announce = new AnnounceModel({
+        let data = {
             ...req.body,
-            makeRef : `${vehicleType}s_makes`,
-            modelRef : `${vehicleType}s_models`,
-            manufacturer : {
-                ...manufacturer,
-                make : matchMake?._id,
-                model : matchModel?._id
-            },
             user: req.user,
             activated: false,
-            visible: disable
-        })
+            visible: disable,
+            makeRef : `${vehicleType}s_makes`,
+            modelRef : `${vehicleType}s_models`,
+            address : {
+                ...req.body.address,
+                housenumber : Number(req.body?.address?.housenumber ?? null)
+            },
+            manufacturer : {
+                make : matchMake?._id,
+                model : matchModel?._id
+            }
+        }
+        
+        const announce = new AnnounceModel(data)
         
         const document = await announce.save()
         await UserModel.updateOne(
@@ -467,7 +470,7 @@ exports.updateAnnounceAction = async (req, res, next) => {
         'address.fullAddress',
         'address.housenumber',
         'address.street',
-        'address.postalcode',
+        'address.postCode',
         'address.country',
         'address.city'
     ]
