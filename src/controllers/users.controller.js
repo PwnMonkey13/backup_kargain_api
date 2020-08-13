@@ -140,7 +140,7 @@ const updateUser = async (req, res, next) => {
         'socials.twitter',
         'address.housenumber',
         'address.street',
-        'address.postalcode',
+        'address.postCode',
         'address.city',
         'address.fullAddress',
         'address.country',
