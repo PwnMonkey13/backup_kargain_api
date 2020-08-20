@@ -156,6 +156,9 @@ const sendEmailActivation = async (req, res, next) => {
     
     return res.json({
         success: true,
+        data : {
+            msg : "User successfully registered"
+        }
     })
 }
 

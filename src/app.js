@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 })
 
 //CRON JOBS
-// require("./components/cron/announces/updateAfterTwoMonths");
+require("./components/cron/announces/updateAfterTwoMonths");
 
 app.get('/', function (req, res, next) {
     return res.end('api live')
