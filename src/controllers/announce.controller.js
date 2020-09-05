@@ -3,62 +3,12 @@ const config = require('../config/config')
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
 const Errors = require('../utils/Errors')
+const Messages = require('../config/messages')
 const functions = require('../utils/functions')
-const moment = require('moment')
-const announcesFiltersMapper = require('../utils/announcesFiltersMapper')
-const announcesSorterMapper = require('../utils/announcesSorterMapper')
+const prepareFilters = require('../components/filters/prepareFilters')
+const announcesSorterMapper = require('../components/filters/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
 const DEFAULT_RESULTS_PER_PAGE = 10
-
-exports.cron = async (req, res, next) => {
-    const twoMonthsAgo = moment().subtract(1, 'months')
-    
-    try {
-        const docs = await AnnounceModel.find({
-            visible: false,
-            'createdAt': {
-                $lt: twoMonthsAgo.toDate()
-            }
-        }).populate('user')
-        
-        await Promise.all(docs.map(async (doc) => {
-            doc.visible = false
-            await doc.save()
-            return doc
-        }))
-        
-        const emails = docs.map(doc => doc?.user?.email).filter(email => email != null)
-        
-        const emailsResults = await Promise.all(docs.map(async (doc) => {
-            return await AnnounceMailer.informDisabledAnnounce({
-                email: doc?.user?.email,
-                announce_title: doc.title,
-                announce_link: `${config.frontend}/announces/${doc.slug}`,
-                announce_creation_date: moment(doc.createdAt).format('dddd, MMMM Do YYYY, h:mm:ss a')
-            })
-        }))
-        
-        return res.status(400).json({ docs, emails, emailsResults })
-        
-    } catch (err) {
-        return next(err)
-    }
-}
-
-exports.find = async (req, res, next) => {
-    const twoMonthsAgo = moment().subtract(1, 'months')
-    const docs = await AnnounceModel.find({
-        visible: true,
-        'createdAt': {
-            $lte: twoMonthsAgo.toDate()
-        }
-    }, {
-        visible: false,
-    }, {
-        ret
-    })
-    return res.status(400).json({ len: docs.length, docs })
-}
 
 exports.getAnnouncesAdminAction = async (req, res, next) => {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
@@ -103,128 +53,98 @@ exports.getAnnouncesAdminAction = async (req, res, next) => {
     }
 }
 
-exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
-    const { coordinates, enableGeocoding, radius } = req.query
-    const isAuthenticated = !!req?.user
-    
-    let size = DEFAULT_RESULTS_PER_PAGE
+exports.filterAnnouncesAction = (fetchProfile = false, fetchFeed = false, returnCount = false) => async (req, res, next) => {
+    const { sort_by, sort_ord } = req.query
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    let size = DEFAULT_RESULTS_PER_PAGE
     let sorters = {
         createdAt: -1
     }
     
-    if (req.query.sort_by) {
-        const sortBy = announcesSorterMapper[req.query.sort_by]
-        const sortOrder = req.query.sort_ord ? req.query.sort_ord === 'ASC' ? 1 : -1 : -1
-        sorters = {
-            [sortBy]: sortOrder,
-            ...sorters
-        }
-    }
-    
-    if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
-        size = parseInt(req.query.size)
+    const qSize = parseInt(req.query.size)
+    if (qSize > 0 && qSize < 500) {
+        size = qSize
     }
     
     const skip = (size * (page - 1) > 0) ? size * (page - 1) : 0
     
-    const filters = Object.keys(announcesFiltersMapper).reduce((carry, key) => {
-        const match = Object.keys(req.query).find(prop => prop === key)
-        if (match) {
-            return {
-                ...carry,
-                [key]: {
-                    ...announcesFiltersMapper[key],
-                    value: req.query[key]
-                }
-            }
-        } else return carry
-    }, {})
-    
-    let defaultQuery = {
-        visible: true,
-        activated: true,
-        status: 'active' //enum['deleted', 'archived', 'active']
-    }
-    
-    let query = Object.keys(filters).reduce((carry, key) => {
-        const filter = filters[key]
-        if (typeof filter === 'object') {
-            
-            if (!carry[filter.ref]) carry[filter.ref] = {}
-            
-            if (filter.type === 'range') {
-                const values = filter.value.split(',')
-                const min = Number(values[0])
-                const max = Number(values[1])
-                
-                if (!filter.disable) {
-                    if (min) carry[filter.ref]['$gte'] = min
-                    if (max) {
-                        if (filter.maxDisable && max < filter.maxDisable) {
-                            carry[filter.ref]['$lte'] = max
-                        } else carry[filter.ref]['$lte'] = max
-                    }
-                }
-            }
-
-            else if (filter.type === 'number') {
-                if(filter.rule === "max") carry[filter.ref]['$gte'] = Number(filter.value)
-                else if(filter.rule === "strict") Number(filter.value)
-                
-                //default behaviour = under maximum default value allowed
-                else carry[filter.ref] = carry[filter.ref]['$lte'] = Number(filter.value)
-            }
-            
-            else if (filter.type === 'array') {
-                carry[filter.ref] = {
-                    $in: filter.value.split(',').map(v => filter.number ? Number(v) : v)
-                }
-            }
-            
-            else {
-                if (filter.rule === 'strict') {
-                    carry[filter.ref] = filter.value.toLowerCase()
-                } else {
-                    carry[filter.ref] = {
-                        $regex: filter.value,
-                        $options: 'i'
-                    }
-                }
-            }
-            
-        }
-        return carry
-    }, defaultQuery)
-    
-    if (enableGeocoding && Array.isArray(coordinates) && radius) {
-        query = {
-            ...query,
-            'location': {
-                $near: {
-                    $geometry:
-                        {
-                            type: 'Point',
-                            coordinates: [
-                                coordinates[0],
-                                coordinates[1]
-                            ]
-                        },
-                    $maxDistance: radius * 1000
-                }
+    //sorter
+    if (sort_by) {
+        const sortBy = announcesSorterMapper[sort_by]
+        const sortOrder = sort_ord ? sort_ord === 'ASC' ? 1 : -1 : -1
+        
+        if(sortBy && sortOrder){
+            sorters = {
+                [sortBy]: sortOrder,
+                ...sorters
             }
         }
     }
     
-    if(enableFeed && isAuthenticated) {
-        const followingIds = req?.user?.followings ? req.user.followings.map(following => following.user) : []
-        if(followingIds.length !== 0){
-            query = {
-                user: { $in: followingIds },
-                ...query,
+    let defaultQuery = {}
+    
+    //fetching single profile
+    const user = req.query?.user?.toString() ?? req?.user?.id?.toString();
+    const isSelf =  user && req?.user?.id?.toString() === user
+    const isPro = Boolean(req.user.isPro || false)
+    
+    if(!isPro) defaultQuery.adType = {
+        $ne : "sale-pro"
+    }
+    
+    if(fetchProfile && user){
+        defaultQuery = {
+            ...defaultQuery,
+            user,
+        }
+        
+        //restrict to published announces
+        if(!isSelf){
+            defaultQuery = {
+                ...defaultQuery,
+                visible: true,
+                activated: true,
+                status: 'active' //enum['deleted', 'archived', 'active']
             }
         }
     }
+    
+    //fetch public announces
+    else{
+        //fetch user feed profiles
+        if(fetchFeed){
+            const followingIds = req?.user?.followings ? req.user.followings.map(following => following.user) : []
+            if(followingIds.length !== 0) {
+                defaultQuery = {
+                    ...defaultQuery,
+                    user: { $in: followingIds },
+                }
+            }
+        }
+        //search in all announces
+        else {
+            defaultQuery = {
+                ...defaultQuery,
+                visible: true,
+                activated: true,
+                status: 'active' //enum['deleted', 'archived', 'active']
+            }
+        }
+    }
+    
+    let query = prepareFilters(req.query, defaultQuery)
+    
+    const { MAKE, MODEL } = req.query;
+    let makesFilter = !Array.isArray(MAKE) ? [MAKE] : MAKE;
+    let modelsFilter = !Array.isArray(MODEL) ? [MODEL] : MODEL;
+    
+    makesFilter = makesFilter
+        .filter(make => typeof make === "string")
+        .map(make => make.toLowerCase())
+    
+    modelsFilter = modelsFilter
+        .filter(model => typeof model === "string")
+        .map(model => model.toLowerCase())
     
     try {
         const rows = await AnnounceModel
@@ -233,6 +153,15 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
         .sort(sorters)
         .limit(size)
         .populate('images')
+        .populate({
+            path: 'manufacturer.make',
+            // match: {
+            //     make_slug : makesFilter
+            // }
+        })
+        .populate({
+            path: 'manufacturer.model',
+        })
         .populate({
             path: 'user',
             select: '-followings -followers -favorites -garage'
@@ -246,35 +175,19 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
             }
         })
     
-        const { MAKE, MODEL } = req.query;
-        
         const filtered = rows
-        .filter(row => {
-            if(MAKE){
-                if(Array.isArray(MAKE)) return MAKE.include(row.manufacturer?.make?.make_id)
-                return Number(row.manufacturer?.make?.make_id) === Number(MAKE)
-            }
-            return true
-        })
-        .filter(row => {
-            if(MODEL) return row.manufacturer?.model?.model?.search(MODEL)
-            return true
-        })
+        .filter(row => makesFilter.length ? makesFilter.includes(row.manufacturer?.make?.make_slug) : true)
+        .filter(row => modelsFilter.length ? modelsFilter.includes(row.manufacturer?.model?.model) : true)
         
-        const total = await AnnounceModel
-        .find(query)
-        .count()
-        
+        const total = await AnnounceModel.find(query).count()
+    
         const data = {
-            query,
-            sorters,
-            filters,
-            pages: Math.ceil(total / size),
             page,
-            total,
             size,
-            len : rows.length,
-            rows : filtered
+            query,
+            pages: Math.ceil(total / size),
+            total : filtered.length,
+            rows : !returnCount ? filtered : null
         }
         
         return res.json({ success: true, data })
@@ -286,10 +199,9 @@ exports.getAnnouncesAction = (enableFeed = false) => async (req, res, next) => {
 exports.getAnnouncesByUserAction = async (req, res, next) => {
     const uid = req.params.uid
     const user = await UserModel.findById(uid)
-    if (!user) return next('No user found')
+    if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
     const announces = await AnnounceModel.findByUser(uid)
-    if (announces) return res.json({ success: true, data: announces })
-    else return res.status(400).json({ success: false, msg: 'no announces found', uid })
+    return res.json({ success: true, data: announces })
 }
 
 exports.getAnnounceBySlugAction = async (req, res, next) => {
@@ -297,15 +209,16 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
         const announce = await AnnounceModel
         .findOne({ slug: req.params.slug })
         .populate('user')
-        .populate('comments')
-        .populate(
-            {
-                path: 'likes',
-                populate: {
-                    path: 'user',
-                    // select: 'firstname lastname username avatar avatarUrl, email role pro'
-                },
-            })
+        .populate({
+            path: 'comments',
+            match: {
+                enabled: true
+            },
+            populate: {
+                path : 'user',
+                select: 'avatarUrl firstname username lastname email'
+            },
+        })
         
         if (announce) {
             const isSelf = req.user ? req?.user.id.toString() === announce.user.id.toString() : false
@@ -332,7 +245,7 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
                 }
             })
         }
-        return next(Errors.NotFoundError('no announce found'))
+        return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     } catch (err) {
         return next(err)
     }
@@ -345,14 +258,14 @@ exports.getBySlugAndNextAction = async (req, res, next) => {
             req.announce = announce
             return next()
         }
-        return next(Errors.NotFoundError('no announce found'))
+        return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     } catch (err) {
         return next(err)
     }
 }
 
 exports.createAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     
     const { vehicleType, manufacturer } = req.body
     
@@ -430,7 +343,7 @@ exports.createAnnounceAction = async (req, res, next) => {
 }
 
 exports.updateAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     
     const allowedFieldsUpdatesSet = [
         'title',
@@ -498,7 +411,7 @@ exports.updateAnnounceAction = async (req, res, next) => {
 }
 
 exports.removeAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     try {
         const doc = await AnnounceModel.updateOne(
             { slug: req.params.slug },
@@ -518,8 +431,7 @@ exports.removeAnnounceAction = async (req, res, next) => {
 exports.updateAdminAnnounceAction = async (req, res, next) => {
     const { slug } = req.params
     const activated = Boolean(req.body?.activated)
-    
-    if (!slug) return next('missing announce slug in token')
+    if (!slug) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     
     try {
         const document = await AnnounceModel.findOneAndUpdate(
@@ -569,8 +481,8 @@ exports.updateAdminAnnounceAction = async (req, res, next) => {
 }
 
 exports.uploadImagesAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
-    if (!req.announce) return next(Errors.NotFoundError('no announce found'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     
     const announce = req.announce
     
@@ -588,7 +500,7 @@ exports.uploadImagesAction = async (req, res, next) => {
 }
 
 exports.addUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     const { announce_id } = req.params
     try {
         const insertionLike = await AnnounceModel.updateOne(
@@ -603,7 +515,6 @@ exports.addUserLikeActionAction = async (req, res, next) => {
         )
         return res.json({
             success: true,
-            message: 'like added successfully',
             data: {
                 insertionLike,
                 insertionFavorite
@@ -615,7 +526,7 @@ exports.addUserLikeActionAction = async (req, res, next) => {
 }
 
 exports.removeUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     const { announce_id } = req.params
     try {
         const suppressionLike = await AnnounceModel.updateOne(

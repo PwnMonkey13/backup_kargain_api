@@ -49,6 +49,9 @@ module.exports = {
             API_TOKEN: '2bc401d0b2c3f47eb29ca4946'
         }
     },
+    logDNA : {
+        apiKey : "b52bb17c0f137749544bce444cbe89f7"
+    },
     stripe: {
         test: {
             public_key: 'pk_test_51GqJrJEItcAGSRw8the6YZdACyYMrHOZsCRKSfNr6tJRlN4L3MpXpUjo7MOpAPvPcpY5WvIxDSwsZRH5JTKU5q9a00dDJhABpd',

@@ -14,7 +14,7 @@ routes.get('/secret/:intent_id',
 routes.options('/create-payment-intent', cors(corsMiddleware.clientCors)) // enable pre-flights
 routes.post('/create-payment-intent',
     cors(corsMiddleware.clientCors),
-    // passportMiddleware.authenticate('cookie', { session: false }),
+    passportMiddleware.authenticate('cookie', { session: false }),
     paymentController.createPaymentIntent
 )
 

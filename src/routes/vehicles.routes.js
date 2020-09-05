@@ -6,25 +6,21 @@ const corsMiddleware = require('../middlewares/cors.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const vehicleController = require('../controllers/vehicles/vehicles.controller')
 
-router.post('/bulk',
-    cors(corsMiddleware.authedCors),
-    vehicleController.bulkCars)
-
 //admin only
-// router.options('/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.options('/:vehicleType/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/:vehicleType/makes',
     cors(corsMiddleware.authedCors),
-    // passportMiddleware.authenticate('cookie', { session: false }),
-    // rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.createMakes
 )
 
 //admin only
-// router.options('/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
-router.put('/:vehicleType/makes',
+router.options('/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/:type/makes',
     cors(corsMiddleware.authedCors),
-    // passportMiddleware.authenticate('cookie', { session: false }),
-    // rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.updateMakes
 )
 
@@ -33,38 +29,38 @@ router.options('/dyn/:vehicleType/models', cors(corsMiddleware.authedCors)) // e
 router.post('/dyn/:vehicleType/models',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-    rolesMiddleware.grantAccess('updateOwn', 'profile'),
+    rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.createModels
 )
 
-// type : ["buses", "scooters", "campers", "motorcycles", "trucks"];
+// type : ["cars", "buses", "scooters", "campers", "motorcycles", "trucks"];
 router.get('/dyn/:vehicleType/makes',
     cors(corsMiddleware.clientCors),
-    vehicleController.getMakes
+    vehicleController.getVehicleTypeMakes
 )
 
 //query : { make : String }
 router.get('/dyn/:vehicleType/models',
     cors(corsMiddleware.clientCors),
-    vehicleController.getModelsByMake
+    vehicleController.getVehicleTypeMakeModels
 )
 
 //query : { make : String }
 router.get('/cars/distinct/make/models',
     cors(corsMiddleware.clientCors),
-    vehicleController.getCarsModelsByMake
+    vehicleController.getCarsMakeModels
 )
 
 //query : { make : String, model : String }
 router.get('/cars/distinct/make/model/trims',
     cors(corsMiddleware.clientCors),
-    vehicleController.getCarsModelTrims
+    vehicleController.getCarsMakeModelTrims
 )
 
-//query : { make : String, model : String, trim : String }
+//query : { make : String, model : String, (trim : String) }
 router.get('/cars/make/model/trim/years',
     cors(corsMiddleware.clientCors),
-    vehicleController.getCarsModelTrimYears
+    vehicleController.getCarsMakeModelTrimYears
 )
 
 module.exports = router

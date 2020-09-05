@@ -285,5 +285,9 @@ UserSchema.virtual('fullname').get(function () {
     return `${user.firstname} ${user.lastname}`
 })
 
+// UserSchema.methods.garageVirtual = async function () {
+//     return await this.model('Announce').find({ user : mongoose.Types.ObjectId(this.id)})
+// }
+
 // Export mongoose model
 module.exports = mongoose.model('User', UserSchema)

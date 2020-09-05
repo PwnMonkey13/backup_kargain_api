@@ -63,11 +63,10 @@ const AnnounceSchema = new mongoose.Schema({
     
     vinNumber: String,
     
-    // sale, rent ...
     adType: {
         type: String,
         required: true,
-        enum : ['sale', 'rent']
+        enum : ['sale', 'sale-pro', 'rent']
     },
     
     // car, moto etc ...
@@ -132,7 +131,7 @@ const AnnounceSchema = new mongoose.Schema({
         make: {
             type: mongoose.Schema.Types.ObjectId,
             refPath: 'makeRef',
-            autopopulate: true
+            // autopopulate: true
         },
         model: {
             type: mongoose.Schema.Types.ObjectId,

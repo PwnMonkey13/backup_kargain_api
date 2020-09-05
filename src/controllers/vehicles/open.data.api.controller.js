@@ -67,16 +67,15 @@ const fetchApi = (url, headers = {}) => {
     return fetch(url, { headers })
     .then(response => {
         if (response.status >= 400) {
-            throw Errors.Error('Bad response from server', 'ExternalCarApiError', response.status)
+            throw Errors.AnonymousError('Bad response from server', 'ExternalCarApiError', response.status)
         }
         return response.json()
     })
     .then(data => {
-        console.log(data)
         if (data.errors > 0){
             const error = data.error[0];
             const msg = databaseOneAPIErrorsMapper(error.code)
-            throw Errors.Error(msg, "ExternalCarApiError", error.code)
+            throw Errors.AnonymousError(msg, "ExternalCarApiError", error.code)
         }
         else return data.result
     })

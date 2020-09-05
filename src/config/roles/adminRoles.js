@@ -13,6 +13,11 @@ const adminPermissions = [
     { role: 'admin', resource: 'comment', action: 'read:any', attributes: '*' },
     { role: 'admin', resource: 'comment', action: 'update:any', attributes: '*' },
     { role: 'admin', resource: 'comment', action: 'delete:any', attributes: '*' },
+    
+    { role: 'admin', resource: 'make', action: 'create:any', attributes: '*' },
+    { role: 'admin', resource: 'make', action: 'read:any', attributes: '*' },
+    { role: 'admin', resource: 'make', action: 'update:any', attributes: '*' },
+    { role: 'admin', resource: 'make', action: 'delete:any', attributes: '*' },
 ]
 
 module.exports = adminPermissions

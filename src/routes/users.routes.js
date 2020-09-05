@@ -46,6 +46,14 @@ router.put('/update',
     usersController.updateUser
 )
 
+router.options('/update-admin/:username', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.put('/update-admin/:username',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    rolesMiddleware.grantAccess('updateAny', 'profile'),
+    usersController.updateAdminUser
+)
+
 router.options('/upload/avatar', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/upload/avatar',
     cors(corsMiddleware.authedCors),

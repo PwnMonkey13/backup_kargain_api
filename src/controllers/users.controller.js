@@ -1,13 +1,14 @@
+const moment = require('moment')
+const Errors = require('../utils/Errors')
+const Messages = require('../config/messages')
+const functions = require('../utils/functions')
 const UserModel = require('../models').User
 const AnnounceModel = require('../models').Announce
 const NewsletterSubscriber = require('../models').NewsletterSubscriber
 const ContactMessage = require('../models').ContactMessage
 const usersMailer = require('../components/mailer').users
-const functions = require('../utils/functions')
-const Errors = require('../utils/Errors')
-const moment = require('moment')
 
-const getUsersAdminAction = async (req, res, next) => {
+exports.getUsersAdminAction = async (req, res, next) => {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
     let size = 50
     
@@ -47,7 +48,7 @@ const getUsersAdminAction = async (req, res, next) => {
     }
 }
 
-const getUserByUsername = async (req, res, next) => {
+exports.getUserByUsername = async (req, res, next) => {
     const username = req.params.username
     const isSelf = req.user?.username === username
     const isAdmin = req.user?.isAdmin
@@ -60,14 +61,12 @@ const getUserByUsername = async (req, res, next) => {
     } : {}
     
     try {
-        const user = await UserModel
-        .findOne({
-                username,
-                $or: [
-                    { removed: false },
-                    { removed: { $exists: false } }
-                ]
-            }
+        const user = await UserModel.findOne({
+            username,
+            $or: [
+                { removed: false },
+                { removed: { $exists: false } }
+            ]}
         )
         .populate({
             path: 'favorites',
@@ -75,12 +74,14 @@ const getUserByUsername = async (req, res, next) => {
             match: garageFilters
         })
         .populate({
-            path: 'followers',
-            populate: 'user',
+            path: 'followers.user',
+            model: 'User',
+            select: 'avatarUrl firstname username lastname email'
         })
         .populate({
-            path: 'followings',
-            populate: 'user',
+            path: 'followings.user',
+            model: 'User',
+            select: 'avatarUrl firstname username lastname email'
         })
         .populate({
             path: 'garage',
@@ -88,14 +89,14 @@ const getUserByUsername = async (req, res, next) => {
             match: garageFilters
         })
         
-        if (!user) return next(Errors.NotFoundError('user not found'))
+        if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
         
         return res.json({
             success: true,
             data: {
-                user,
                 isAdmin,
-                isSelf
+                isSelf,
+                user,
             }
         })
     } catch (err) {
@@ -103,8 +104,8 @@ const getUserByUsername = async (req, res, next) => {
     }
 }
 
-const saveAuthedUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+exports.saveAuthedUser = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     try {
         const doc = await req.user.save()
         return res.status(200).json({ success: true, data: doc })
@@ -113,10 +114,10 @@ const saveAuthedUser = async (req, res, next) => {
     }
 }
 
-const saveUserByUsername = async (req, res, next) => {
+exports.saveUserByUsername = async (req, res, next) => {
     try {
         const user = await UserModel.findOne({ username: req.params.username })
-        if (!user) return next('missing user')
+        if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
         const doc = await user.save()
         return res.status(200).json({ success: true, data: doc })
     } catch (err) {
@@ -124,8 +125,8 @@ const saveUserByUsername = async (req, res, next) => {
     }
 }
 
-const updateUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+exports.updateUser = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     
     const allowedFieldsUpdatesSet = [
         'firstname',
@@ -171,8 +172,32 @@ const updateUser = async (req, res, next) => {
     }
 }
 
-const uploadAvatar = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+exports.updateAdminUser = async (req, res, next) => {
+    const { username } = req.params
+    if (!username) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+    
+    //TODO email notifications
+    try {
+        const doc = await UserModel.updateOne(
+            { username },
+            { $set: req.body },
+            {
+                returnNewDocument: true,
+                runValidators: true
+            }
+        )
+    
+        return res.json({
+            success: true,
+            data: doc
+        })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+exports.uploadAvatar = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     req.user.avatar = req.uploadedFiles?.avatar?.[0]
     
     try {
@@ -183,7 +208,7 @@ const uploadAvatar = async (req, res, next) => {
     }
 }
 
-const deleteUser = async (req, res, next) => {
+exports.deleteUser = async (req, res, next) => {
     try {
         const doc = await UserModel.updateOne(
             { username: req.params.username },
@@ -195,13 +220,13 @@ const deleteUser = async (req, res, next) => {
     }
 }
 
-const addFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+exports.addFavoriteAnnounceAction = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
     
-    if (!announce) return next('can\'t find matching announce')
-    if (req.user.id.toString() === announce.user.toString()) return next('can\'t fave your own announce')
+    if (!announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
+    if (req.user.id.toString() === announce.user.toString()) return next(Errors.Error(Messages.errors.not_allowed))
     
     try {
         const insertion = await UserModel.updateOne(
@@ -220,7 +245,6 @@ const addFavoriteAnnounceAction = async (req, res, next) => {
         
         return res.json({
             success: true,
-            message: 'favorite added successfully',
             data: insertion
         })
     } catch (err) {
@@ -228,11 +252,12 @@ const addFavoriteAnnounceAction = async (req, res, next) => {
     }
 }
 
-const rmFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+exports.rmFavoriteAnnounceAction = async (req, res, next) => {
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
-    if (!announce) return next('can\'t find matching announce')
+    if (!announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     
     try {
         const suppression = await UserModel.updateOne(
@@ -249,7 +274,6 @@ const rmFavoriteAnnounceAction = async (req, res, next) => {
         
         return res.json({
             success: true,
-            message: 'favorite deleted successfully',
             data: suppression
         })
     } catch (err) {
@@ -257,10 +281,10 @@ const rmFavoriteAnnounceAction = async (req, res, next) => {
     }
 }
 
-const followUserAction = async (req, res, next) => {
+exports.followUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
-    if (req.user.id.toString() === userId) return next('can\'t like yourself')
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (req.user.id.toString() === userId) return next(Errors.Error(Messages.errors.not_allowed))
     
     try {
         const insertion = await UserModel.updateOne(
@@ -277,7 +301,7 @@ const followUserAction = async (req, res, next) => {
             }
         )
         
-        if (!insertion) return next('user not found')
+        if (!insertion) return next(Errors.NotFoundError(Messages.errors.user_not_found))
         const doc = await UserModel.updateOne(
             { _id: req.user.id },
             {
@@ -290,7 +314,6 @@ const followUserAction = async (req, res, next) => {
         
         return res.json({
             success: true,
-            message: 'follower added successfully',
             data: {
                 doc,
                 insertion
@@ -301,10 +324,10 @@ const followUserAction = async (req, res, next) => {
     }
 }
 
-const unFollowUserAction = async (req, res, next) => {
+exports.unFollowUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
-    if (req.user.id.toString() === userId) return next('can\'t like yourself')
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (req.user.id.toString() === userId) return next(Errors.Error(Messages.errors.not_allowed))
     
     try {
         const suppression = await UserModel.updateOne(
@@ -321,7 +344,7 @@ const unFollowUserAction = async (req, res, next) => {
             }
         )
         
-        if (!suppression) return next('user not found')
+        if (!suppression) return next(Errors.NotFoundError(Messages.errors.user_not_found))
         const doc = await UserModel.updateOne(
             { _id: req.user.id },
             {
@@ -335,7 +358,6 @@ const unFollowUserAction = async (req, res, next) => {
         
         return res.json({
             success: true,
-            message: 'follower deleted successfully',
             data: {
                 doc,
                 suppression
@@ -346,13 +368,13 @@ const unFollowUserAction = async (req, res, next) => {
     }
 }
 
-const subscribeNewsletter = async (req, res, next) => {
+exports.subscribeNewsletter = async (req, res, next) => {
     const email = req.body.email
-    if (!email) return next(Errors.NotFoundError('missing email'))
+    if (!email) return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))
     
     try {
         const doc = await NewsletterSubscriber.updateOne({ email }, {
-            email: req.body.email,
+            email,
             active: req.body.active ?? true
         }, { upsert: true })
         return res.json({ success: true, data: doc })
@@ -361,9 +383,9 @@ const subscribeNewsletter = async (req, res, next) => {
     }
 }
 
-const contact = async (req, res, next) => {
+exports.contact = async (req, res, next) => {
     const { email, subject, message } = req.body
-    if (!email) return next(Errors.NotFoundError('missing email'))
+    if (!email) return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))
     
     try {
         const post = new ContactMessage({
@@ -387,20 +409,4 @@ const contact = async (req, res, next) => {
     } catch (err) {
         return next(err)
     }
-}
-
-module.exports = {
-    getUsersAdminAction,
-    getUserByUsername,
-    updateUser,
-    uploadAvatar,
-    saveAuthedUser,
-    saveUserByUsername,
-    deleteUser,
-    addFavoriteAnnounceAction,
-    rmFavoriteAnnounceAction,
-    followUserAction,
-    unFollowUserAction,
-    subscribeNewsletter,
-    contact
 }

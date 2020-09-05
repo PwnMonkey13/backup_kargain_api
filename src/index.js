@@ -6,8 +6,7 @@ mongoose.Promise = global.Promise // set mongo up to use promises
 mongoose.set('debug', true);
 
 mongoose.connect(config.db.mongo_location, { useCreateIndex: true, useNewUrlParser: true })
-.catch(err => {
-    console.log(err)
+.catch(() => {
     throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location)
 })
 

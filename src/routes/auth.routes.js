@@ -5,6 +5,12 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
 
+router.get('/authorize',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth(),
+    authController.authorizeAction
+)
+
 router.options('/sso-register', cors(corsMiddleware.authedCors))
 router.post('/sso-register',
     cors(corsMiddleware.authedCors),
@@ -45,12 +51,6 @@ router.options('/confirm-account/:token', cors(corsMiddleware.clientCors))
 router.put('/confirm-account/:token',
     cors(corsMiddleware.clientCors),
     authController.confirmEmailTokenAction
-)
-
-router.get('/authorize',
-    cors(corsMiddleware.authedCors),
-    authMiddleware.byPassAuth(),
-    authController.authorizeAction
 )
 
 router.options('/logout', cors(corsMiddleware.authedCors))

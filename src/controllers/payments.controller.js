@@ -1,17 +1,12 @@
 const PaymentModel = require('../models').Payment
 const Errors = require('../utils/Errors')
+const Messages = require('../config/messages')
 const config = require('../config/config')
 const stripe = require('stripe')(config.stripe.test.secret_key)
 
-const calculateOrderAmount = items => {
-    // Replace this constant with a calculation of the order's amount
-    // Calculate the order total on the server to prevent
-    // people from directly manipulating the amount on the client
-    return 1400
-}
-
 exports.getIntent = async (req, res, next) => {
     try {
+        const { intent_id } = req.params
         const intent = PaymentModel.findOne({ intent_id })
         return res.json({ client_secret: intent.client_secret })
     } catch (err) {
@@ -45,13 +40,12 @@ const offers = [
 exports.createPaymentIntent = async (req, res, next) => {
     const { product } = req.body
     const offer = offers.find(offer => offer.title === product)
-    if (!offer) return next(Errors.UnAuthorizedError('missing offer'))
-    if (!offer.price) return next(Errors.UnAuthorizedError('missing price'))
+    if (!offer) return next(Errors.Error(Messages.errors.missing_offer))
     
     try {
         // Create a PaymentIntent with the order amount and currency
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Number(offer.price) * 10,
+            amount: Number(offer.price || 0) * 10,
             currency: 'eur',
             metadata: {
                 integration_check: 'accept_a_payment',
@@ -71,7 +65,8 @@ exports.createPaymentIntent = async (req, res, next) => {
 }
 
 exports.createUserSubscription = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError('missing user'))
+    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    
     const { payload, offerTitle } = req.body
     const offer = offers.find(offer => offer.title === offerTitle)
     try {

@@ -6,8 +6,6 @@ const usersRoutes = require('./users.routes')
 const announcesRoutes = require('./announce.routes')
 const vehiclesRoutes = require('./vehicles.routes')
 const vinDecoderRoutes = require('./vindecoder.routes')
-const placesRoutes = require('./places.routes')
-const devRoutes = require('./dev.routes')
 const uploadS3Routes = require('./upload.s3.routes')
 const commentsRoutes = require('./comments.routes')
 const paymentsRoutes = require('./payments.routes')
@@ -18,7 +16,6 @@ router.use('/users', usersRoutes)
 router.use('/announces', announcesRoutes)
 router.use('/vehicles', vehiclesRoutes)
 router.use('/vindecoder', vinDecoderRoutes)
-router.use('/places', placesRoutes)
 router.use('/uploads', uploadS3Routes)
 router.use('/comments', commentsRoutes)
 router.use('/payments', paymentsRoutes)
@@ -33,7 +30,6 @@ router.get('/origin', function (req, res, next) {
 })
 
 if (!CONFIG.isProd) {
-    router.use('/dev', devRoutes)
     
     router.get('/db', function (req, res, next) {
         return res.end(config.db.mongo_location)

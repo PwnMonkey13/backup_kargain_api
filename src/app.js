@@ -50,7 +50,7 @@ app.use(function (err, req, res, next) {
         name: err.name || 'Error',
         message: isError ? err.message : err
     }
-    return res.json({ success: false, isProd: config.isProd, isError, error })
+    return res.json({ success: false, error })
 })
 
 module.exports = app

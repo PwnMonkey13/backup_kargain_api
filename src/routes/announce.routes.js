@@ -7,14 +7,6 @@ const rolesMiddleware = require('../middlewares/roles.middleware')
 const announceController = require('../controllers/announce.controller')
 const uploadController = require('../controllers/upload.s3.controller')
 
-router.get('/find',
-    announceController.find
-)
-
-router.get('/cron',
-    announceController.cron
-)
-
 //admin
 router.get('/all',
     cors(corsMiddleware.authedCors),
@@ -26,13 +18,31 @@ router.get('/all',
 router.get('/',
     cors(corsMiddleware.authedCors),
     authMiddleware.byPassAuth({ populate: 'followings' }),
-    announceController.getAnnouncesAction(true)
+    announceController.filterAnnouncesAction(false)
+)
+
+router.get('/profile',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth(),
+    announceController.filterAnnouncesAction(true, false, false)
+)
+
+router.get('/feed',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth(),
+    announceController.filterAnnouncesAction(false, true, false)
 )
 
 router.get('/search',
     cors(corsMiddleware.authedCors),
     authMiddleware.byPassAuth(),
-    announceController.getAnnouncesAction()
+    announceController.filterAnnouncesAction(false, false, false)
+)
+
+router.get('/count',
+    cors(corsMiddleware.authedCors),
+    authMiddleware.byPassAuth(),
+    announceController.filterAnnouncesAction(false, false, true)
 )
 
 router.get('/user/:uid',
