@@ -13,10 +13,24 @@ const DEFAULT_RESULTS_PER_PAGE = 10
 
 exports.getAnnouncesAdminAction = async (req, res, next) => {
     const page = (req.query.page && parseInt(req.query.page) > 0) ? parseInt(req.query.page) : 1
+    const { sort_by, sort_ord } = req.query
     let size = 50
     
     let sorters = {
         createdAt: -1
+    }
+    
+    //sorter
+    if (sort_by) {
+        const sortBy = announcesSorterMapper[sort_by]
+        const sortOrder = sort_ord ? sort_ord === 'ASC' ? 1 : -1 : -1
+        
+        if(sortBy && sortOrder){
+            sorters = {
+                [sortBy]: sortOrder,
+                ...sorters
+            }
+        }
     }
     
     if (req.query.size && parseInt(req.query.size) > 0 && parseInt(req.query.size) < 500) {
@@ -40,6 +54,14 @@ exports.getAnnouncesAdminAction = async (req, res, next) => {
             .populate({
                 path: 'user',
                 select: '-followings -followers -favorites -garage'
+            })
+            .populate({
+                path: 'comments',
+                select: '-announce -responses -likes',
+                populate: {
+                    path: 'user',
+                    select: '-followings -followers -favorites -garage'
+                }
             })
         
         const total = await AnnounceModel
