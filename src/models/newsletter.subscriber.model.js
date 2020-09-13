@@ -12,7 +12,7 @@ const newsletterSubscriber = new mongoose.Schema({
         default : true
     }
 }, {
-    timestamps: true,
+    timestamps: true
 })
 
 // Export mongoose model

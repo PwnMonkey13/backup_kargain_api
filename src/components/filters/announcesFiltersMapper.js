@@ -11,11 +11,11 @@ module.exports = {
         ref: 'vehicleFunctionUse.value'
     },
     TYPE: {
-        ref: 'vehicleTypeSelect.value',
+        ref: 'vehicleTypeSelect.value'
     },
     AD_PRICE: {
         type: 'range',
-        ref: 'price',
+        ref: 'price'
     },
     ENGINE_TYPE: {
         ref : 'vehicleEngineType.value'
@@ -25,7 +25,7 @@ module.exports = {
     },
     CYLINDER: {
         type: 'range',
-        ref: 'vehicleEngineCylinder',
+        ref: 'vehicleEngineCylinder'
     },
     GENERAL_STATE: {
         ref: 'vehicleGeneralState.value'
@@ -36,7 +36,7 @@ module.exports = {
     
     MILEAGE: {
         type: 'range',
-        ref: 'mileage',
+        ref: 'mileage'
     },
     POWER_KW: {
         type: 'range',
@@ -45,31 +45,31 @@ module.exports = {
     },
     CONSUMPTION_GKM: {
         type: 'range',
-        ref: 'consumptionGkm',
+        ref: 'consumptionGkm'
     },
     DOORS: {
         type: 'range',
-        ref: 'doors',
+        ref: 'doors'
     },
     SEATS: {
         type: 'range',
-        ref: 'seats',
+        ref: 'seats'
     },
     BUNKS: {
         type: 'range',
-        ref: 'seats',
+        ref: 'seats'
     },
     DRIVER_CAB: {
         type: 'range',
-        ref: 'driverCabin',
+        ref: 'driverCabin'
     },
     HOURS_USE: {
         type: 'range',
-        ref: 'hoursOfUse',
+        ref: 'hoursOfUse'
     },
     EQUIPMENTS: {
         type: 'array',
-        single: {},
+        single: {}
     },
     BED_TYPE: {
         ref: 'bedType.value'

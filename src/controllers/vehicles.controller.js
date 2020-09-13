@@ -99,8 +99,8 @@ const asyncFilter = async (arr, predicate) => {
 
 exports.createMakes = async (req, res, next) => {
     const vehicleType = req.params.vehicleType
-    const modelMake = require('../../models').Vehicles.Makes[vehicleType]
-    if (!modelMake) return next('missing model')
+    const modelMake = require('../models').Vehicles.Makes[vehicleType]
+    if (!modelMake) {return next('missing model')}
     
     const entries = await asyncFilter(req.body, async (entry) => {
         const match = await modelMake.findOne({ make: entry.make })
@@ -126,10 +126,10 @@ exports.createMakes = async (req, res, next) => {
 
 exports.updateMakes = async (req, res, next) => {
     const vehicleType = req.params.vehicleType
-    const modelMake = require('../../models').Vehicles.Makes[vehicleType]
-    if (!modelMake) return next('missing model')
+    const modelMake = require('../models').Vehicles.Makes[vehicleType]
+    if (!modelMake) {return next('missing model')}
     
-    const makes = await modelMake.find({});
+    const makes = await modelMake.find({})
     
     try{
         const entries = await makes.reduce(async (accPromise, doc) => {
@@ -137,10 +137,10 @@ exports.updateMakes = async (req, res, next) => {
             const updated = await modelMake.updateOne(
                 { _id: doc._id},
                 {
-                    "$set": {
+                    '$set': {
                         // "make_id": Number(doc.make_id),
-                        "make_slug" : slugify(doc.make)
-                    },
+                        'make_slug' : slugify(doc.make)
+                    }
                     // "$unset" : {
                     //     "make_idd" : 1
                     // }
@@ -151,12 +151,12 @@ exports.updateMakes = async (req, res, next) => {
     
         return res.json({
             success: true,
-            entries,
+            entries
         })
     }
-  catch (err){
-    return next(err)
-  }
+    catch (err){
+        return next(err)
+    }
 }
 
 exports.createModels = async (req, res, next) => {
@@ -164,8 +164,8 @@ exports.createModels = async (req, res, next) => {
     const modelModel = require('../../models').Vehicles.Models[vehicleType]
     const makeModel = require('../../models').Vehicles.Makes[vehicleType]
     
-    if (!modelModel) return next('missing model')
-    if (!makeModel) return next('missing model')
+    if (!modelModel) {return next('missing model')}
+    if (!makeModel) {return next('missing model')}
     
     const entries = await req.body.reduce(async (accPromise, entry) => {
         const acc = await accPromise
@@ -181,7 +181,7 @@ exports.createModels = async (req, res, next) => {
             })
             const doc = await newModel.save()
             return [...acc, doc]
-        } else return [...acc, { makeMatch, matchModel }]
+        } else {return [...acc, { makeMatch, matchModel }]}
     }, Promise.resolve([]))
     
     return res.json({
@@ -193,7 +193,7 @@ exports.createModels = async (req, res, next) => {
 
 exports.getVehicleTypeMakes = async (req, res, next) => {
     const vehicleType = req.params.vehicleType
-    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache)
     const { filter } = req.query
     const query = filter ? { make: { $in: filter.split(',') } } : {}
     
@@ -210,8 +210,8 @@ exports.getVehicleTypeMakes = async (req, res, next) => {
             })
         }
     
-        const makeModel = require('../../models').Vehicles.Makes[vehicleType]
-        if (!makeModel) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
+        const makeModel = require('../models').Vehicles.Makes[vehicleType]
+        if (!makeModel) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
     
         const makes = await makeModel.find(query)
         redisClient.set(cacheKey, JSON.stringify(makes))
@@ -226,11 +226,11 @@ exports.getVehicleTypeMakes = async (req, res, next) => {
 }
 
 exports.getVehicleTypeMakeModels = async (req, res, next) => {
-    const make = req.query.make;
+    const make = req.query.make
     const vehicleType = req.params.vehicleType
-    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache)
    
-    if (!make) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
+    if (!make) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
     
     try {
         const cacheKey = `${vehicleType}_${make}_models`
@@ -248,13 +248,14 @@ exports.getVehicleTypeMakeModels = async (req, res, next) => {
         const vehicleMakeModel = require('../../models').Vehicles.Makes[vehicleType]
         const vehicleModelsModel = require('../../models').Vehicles.Models[vehicleType]
         
-        if (!vehicleMakeModel || !vehicleModelsModel) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))
+        if (!vehicleMakeModel || !vehicleModelsModel) {
+            return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))
+        }
         
         const makeDoc = await vehicleMakeModel.findOne({
             make_slug : slugify(make)
         })
         
-        if(!makeDoc) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
         const models = await vehicleModelsModel.find({
             make_id: mongoose.Types.ObjectId(makeDoc._id)
         })
@@ -272,16 +273,16 @@ exports.getVehicleTypeMakeModels = async (req, res, next) => {
 }
 
 exports.getCarsMakeModels = async (req, res, next) => {
-    const make = req.query.make;
-    const carsMakesModel = require('../../models').Vehicles.Makes['cars']
-    let forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const make = req.query.make
+    const carsMakesModel = require('../models').Vehicles.Makes['cars']
+    let forceRewriteCache = Boolean(req.query.forceRewriteCache)
     const cacheKey = `cars_${make}`
     
-    if (!make) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
+    if (!make) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
     
     try{
         const cache = await redisConfig.getCacheKey(cacheKey)
-        if (cache && (!cache instanceof Array) && !forceRewriteCache){
+        if (cache && (!(cache instanceof Array)) && !forceRewriteCache){
             return res.json({
                 success: true,
                 msg: 'from redis',
@@ -294,12 +295,12 @@ exports.getCarsMakeModels = async (req, res, next) => {
             make_slug : slugify(make)
         })
         
-        if(!makeDoc) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
+        if(!makeDoc) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
         
-        let db = mongoose.connection;
+        let db = mongoose.connection
         const aggregateModels = await db.db.command({
-            distinct: "cars_models",
-            key: "model",
+            distinct: 'cars_models',
+            key: 'model',
             query: { make_id : mongoose.Types.ObjectId(makeDoc._id)}
         })
     
@@ -313,21 +314,21 @@ exports.getCarsMakeModels = async (req, res, next) => {
     } catch (err){
         return next(err)
     }
-};
+}
 
 exports.getCarsMakeModelTrims = async (req, res, next) => {
     const { make, model } = req.query
-    if (!make) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
-    if (!model) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))
+    if (!make) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
+    if (!model) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))}
     
-    const carsMakesModel = require('../../models').Vehicles.Makes['cars']
-    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const carsMakesModel = require('../models').Vehicles.Makes['cars']
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache)
    
     try {
         const cacheKey = `cars_${make}_${model}_trims`
         const cache = await redisConfig.getCacheKey(cacheKey)
         
-        if (cache && (!cache instanceof Array) && !forceRewriteCache){
+        if (cache && (!(cache instanceof Array)) && !forceRewriteCache){
             return res.json({
                 success: true,
                 msg: 'from redis',
@@ -340,12 +341,12 @@ exports.getCarsMakeModelTrims = async (req, res, next) => {
             make_slug : slugify(make)
         })
         
-        if (!makeDoc) next(Errors.Error(Messages.errors.missing_vehicle_make))
+        if (!makeDoc) {next(Errors.Error(Messages.errors.missing_vehicle_make))}
         
-        let db = mongoose.connection;
+        let db = mongoose.connection
         const aggregateTrims = await db.db.command({
-            distinct: "cars_models",
-            key: "trim",
+            distinct: 'cars_models',
+            key: 'trim',
             query: {
                 make_id : mongoose.Types.ObjectId(makeDoc._id),
                 model : model
@@ -354,7 +355,7 @@ exports.getCarsMakeModelTrims = async (req, res, next) => {
         
         return res.json({
             success: true,
-            data: aggregateTrims.values,
+            data: aggregateTrims.values
         })
     } catch (err) {
         return next(err)
@@ -363,8 +364,8 @@ exports.getCarsMakeModelTrims = async (req, res, next) => {
 
 exports.getCarsMakeModelTrimYears = async (req, res, next) => {
     const { make, model, trim } = req.query
-    if (!make) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))
-    if (!model) return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))
+    if (!make) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
+    if (!model) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))}
     
     const carsMakesModel = require('../../models').Vehicles.Makes['cars']
     const carsModelsModel = require('../../models').Vehicles.Models['cars']
@@ -387,14 +388,14 @@ exports.getCarsMakeModelTrimYears = async (req, res, next) => {
             make_slug : slugify(make)
         })
     
-        if (!makeDoc) next(Errors.Error(Messages.errors.missing_vehicle_make))
+        if (!makeDoc) {next(Errors.Error(Messages.errors.missing_vehicle_make))}
         
         let query = {
             make_id : mongoose.Types.ObjectId(makeDoc._id),
-            model,
+            model
         }
     
-        if(trim) query.trim = trim;
+        if(trim) {query.trim = trim}
     
         const trimsYears = await carsModelsModel.find(query
             ,{year : 1}
@@ -403,7 +404,7 @@ exports.getCarsMakeModelTrimYears = async (req, res, next) => {
         return res.json({
             success: true,
             query,
-            data: trimsYears,
+            data: trimsYears
         })
     } catch (err) {
         return next(err)

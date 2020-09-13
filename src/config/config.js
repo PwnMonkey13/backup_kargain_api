@@ -1,5 +1,6 @@
 require('dotenv').config()
 
+// eslint-disable-next-line no-undef
 const env = process.env.NODE_ENV || 'production'
 const isProd = env === 'production'
 const api = isProd ? 'https://kargain-api.now.sh/api' : 'http://localhost:8080/api'
@@ -9,8 +10,10 @@ const callbacks = providers.map(provider => `${api}/auth/${provider}/callback`)
 const [googleURL, facebookURL] = callbacks
 
 const db = isProd ? {
-    mongo_location: process.env.MONGODB_URI_PROD,
+    // eslint-disable-next-line no-undef
+    mongo_location: process.env.MONGODB_URI_PROD
 } : {
+    // eslint-disable-next-line no-undef
     mongo_location: process.env.MONGODB_URI_DEV || 'mongodb://localhost:27017/kargain'
 }
 
@@ -50,7 +53,7 @@ module.exports = {
         }
     },
     logDNA : {
-        apiKey : "b52bb17c0f137749544bce444cbe89f7"
+        apiKey : 'b52bb17c0f137749544bce444cbe89f7'
     },
     stripe: {
         test: {

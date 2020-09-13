@@ -6,18 +6,19 @@ exports.getCurrentUserConversations = async (req, res, next) => {
     if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
     
     try {
-        const conversations = await ConversationModel.find()
-        .or([
-            { from: req.user.id},
-            { to: req.user.id}])
-        .populate({
-            path: 'from',
-            select: 'avatarUrl firstname username lastname email'
-        })
-        .populate({
-            path: 'to',
-            select: 'avatarUrl firstname username lastname email'
-        })
+        const conversations = await ConversationModel.find(
+            { $or: [
+                { from: req.user.id },
+                { to: req.user.id }
+            ]})
+            .populate({
+                path: 'from',
+                select: 'avatarUrl firstname username lastname email'
+            })
+            .populate({
+                path: 'to',
+                select: 'avatarUrl firstname username lastname email'
+            })
         
         return res.json({
             success: true,
@@ -29,7 +30,7 @@ exports.getCurrentUserConversations = async (req, res, next) => {
 }
 
 exports.getConversationsWithProfile = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { profileId } = req.params
     
@@ -59,7 +60,7 @@ exports.postConversationMessage = async (req, res, next) => {
     
     try {
         const conversation = await ConversationModel.findOneAndUpdate(
-        { $or: [
+            { $or: [
                 {
                     from: req.user.id,
                     to: recipientId },
@@ -68,27 +69,31 @@ exports.postConversationMessage = async (req, res, next) => {
                     to: req.user.id
                 }
             ]
-        },
-    {
-            from: req.user.id,
-            to: recipientId,
-            $push: {
-                messages: {
-                    from: req.user.id,
-                    content: message,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+            },
+            {
+                from: req.user.id,
+                to: recipientId,
+                $push: {
+                    messages: {
+                        from: req.user.id,
+                        content: message,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }
                 }
-            }
-        },
-{
-            new: true,
-            upsert: true,
-        })
-        .populate({
-            path: 'to',
-            select: 'firstname lastname email'
-        })
+            },
+            {
+                new: true,
+                upsert: true
+            })
+            .populate({
+                path: 'from',
+                select: 'avatarUrl firstname username lastname email'
+            })
+            .populate({
+                path: 'to',
+                select: 'avatarUrl firstname username lastname email'
+            })
         
         return res.json({
             success: true,

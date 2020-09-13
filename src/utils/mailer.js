@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport(mailConfig)
 
 const verify = callback => {
     transporter.verify((err, success) => {
-        if (err) return callback(err)
+        if (err) {return callback(err)}
         callback(null, success)
     })
 }
@@ -33,7 +33,7 @@ const test = callback => {
     }
     
     nodemailer.createTestAccount((err) => {
-        if (err) return callback(err)
+        if (err) {return callback(err)}
         transporter.sendMail(message).then(info => {
             console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info))
             callback(null, info)

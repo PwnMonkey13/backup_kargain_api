@@ -3,14 +3,14 @@ const mongoose = require('mongoose')
 const messageModel = new mongoose.Schema({
     from: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User'
     },
     content: {
         type: String,
-        trim: true,
-    },
+        trim: true
+    }
 }, {
-    timestamps: true,
+    timestamps: true
 })
 
 const conversationModel = new mongoose.Schema({
@@ -24,10 +24,10 @@ const conversationModel = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    messages: [messageModel],
+    messages: [messageModel]
     
 }, {
-    timestamps: true,
+    timestamps: true
 })
 
 // Export mongoose model

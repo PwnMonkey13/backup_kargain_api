@@ -1,11 +1,11 @@
-const Logger = require('logdna');
+const Logger = require('logdna')
 const config = require('../config/config')
 const options = {
-    app : "Kargain API",
-    env: "Development"
-};
+    app : 'Kargain API',
+    env: 'Development'
+}
 
-const logger = Logger.createLogger(config.logDNA.apiKey, options);
+const logger = Logger.createLogger(config.logDNA.apiKey, options)
 
 // logger.log('My Sample Log Line');
 // logger.info('My Sample Log Line');

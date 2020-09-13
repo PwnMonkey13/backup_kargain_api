@@ -6,17 +6,17 @@ const Messages = require('../config/messages')
 exports.getCommentsByAnnounce = async (req, res, next) => {
     const { announce_id } = req.params
     const announce = await AnnounceModel.findById(announce_id).exec()
-    if (!announce) throw Errors.NotFoundError(Messages.errors.announce_not_found)
+    if (!announce) {throw Errors.NotFoundError(Messages.errors.announce_not_found)}
     const comments = await CommentModel.find({ announce: announce_id, enabled: true }).exec()
     return res.json({ success: true, data: comments })
 }
 
 exports.createComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { announce_id, message } = req.body
     const announce = await AnnounceModel.findById(announce_id).exec()
-    if (!announce) throw Errors.NotFoundError(Messages.errors.announce_not_found)
-    if (!message) return next(Messages.errors.comment_is_empty)
+    if (!announce) {throw Errors.NotFoundError(Messages.errors.announce_not_found)}
+    if (!message) {return next(Messages.errors.comment_is_empty)}
     
     try {
         const comment = new CommentModel({
@@ -39,30 +39,30 @@ exports.createComment = async (req, res, next) => {
 }
 
 exports.enableComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id } = req.params
     const update = await CommentModel.findOneAndUpdate(
         { _id: comment_id },
         { enabled: true })
-    .exec()
+        .exec()
     return res.json({ success: true, data: update })
 }
 
 exports.disableComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id } = req.params
     const update = await CommentModel.findOneAndUpdate(
         { _id: comment_id },
         { enabled: false })
-    .exec()
+        .exec()
     return res.json({ success: true, data: update })
 }
 exports.createCommentResponse = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id: commentId, message } = req.body
     const comment = await CommentModel.findById(commentId).exec()
-    if (!comment) return next(Errors.NotFoundError(Messages.errors.comment_not_found))
-    if (!message) return next(Errors.Error(Messages.errors.message_not_found))
+    if (!comment) {return next(Errors.NotFoundError(Messages.errors.comment_not_found))}
+    if (!message) {return next(Errors.Error(Messages.errors.message_not_found))}
     
     try {
         const CommentResponse = {
@@ -70,14 +70,14 @@ exports.createCommentResponse = async (req, res, next) => {
             message
         }
         
-        if (!comment.responses) comment.responses = []
+        if (!comment.responses) {comment.responses = []}
         comment.responses.push(CommentResponse)
         const document = await comment.save()
         
         const populatedComment = await document
-        .populate('user')
-        .populate('responses.user')
-        .execPopulate()
+            .populate('user')
+            .populate('responses.user')
+            .execPopulate()
         
         return res.json({
             success: true,
@@ -90,7 +90,7 @@ exports.createCommentResponse = async (req, res, next) => {
 
 
 exports.removeComment = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id } = req.params
     
     const document = await CommentModel.findOneAndDelete({ _id: comment_id }).exec()
@@ -98,11 +98,11 @@ exports.removeComment = async (req, res, next) => {
 }
 
 exports.createCommentLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id: commentId } = req.params
     const comment = await CommentModel.findById(commentId).exec()
-    if (!comment) return next(Errors.NotFoundError(Messages.errors.comment_not_found))
-    if (!comment.likes) comment.likes = []
+    if (!comment) {return next(Errors.NotFoundError(Messages.errors.comment_not_found))}
+    if (!comment.likes) {comment.likes = []}
     
     comment.likes.push({
         user: req.user.id
@@ -113,11 +113,11 @@ exports.createCommentLike = async (req, res, next) => {
 }
 
 exports.removeCommentLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { comment_id: commentId, likeIndex } = req.params
     const comment = await CommentModel.findById(commentId).exec()
-    if (!comment) return next(Errors.NotFoundError(Messages.errors.comment_not_found))
+    if (!comment) {return next(Errors.NotFoundError(Messages.errors.comment_not_found))}
     comment.likes = comment.likes.slice(0, likeIndex).concat(comment.likes.slice(likeIndex + 1, comment.likes.length))
     
     const document = await comment.save()
@@ -125,14 +125,14 @@ exports.removeCommentLike = async (req, res, next) => {
 }
 
 exports.createCommentResponseLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { comment_id: commentId, responseIndex } = req.params
     const comment = await CommentModel.findById(commentId).exec()
-    if (!comment) return next(Errors.NotFoundError(Messages.errors.comment_not_found))
+    if (!comment) {return next(Errors.NotFoundError(Messages.errors.comment_not_found))}
     
     const response = comment.responses && comment.responses[responseIndex]
-    if (!response) return next(Errors.NotFoundError(Messages.errors.response_not_found))
+    if (!response) {return next(Errors.NotFoundError(Messages.errors.response_not_found))}
     
     response.likes.push({
         user: req.user.id
@@ -143,14 +143,14 @@ exports.createCommentResponseLike = async (req, res, next) => {
 }
 
 exports.removeCommentResponseLike = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { comment_id: commentId, responseIndex, likeIndex } = req.params
     
     const comment = await CommentModel.findById(commentId).exec()
-    if (!comment) return next(Errors.NotFoundError(Messages.errors.comment_not_found))
+    if (!comment) {return next(Errors.NotFoundError(Messages.errors.comment_not_found))}
     
     const response = comment.responses && comment.responses[responseIndex]
-    if (!response) return next(Errors.NotFoundError(Messages.errors.response_not_found))
+    if (!response) {return next(Errors.NotFoundError(Messages.errors.response_not_found))}
     response.likes = response.likes.slice(0, likeIndex).concat(comment.likes.slice(likeIndex + 1, response.likes.length))
     
     const document = await comment.save()

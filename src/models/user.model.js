@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
     //generated
     username: {
         type: String,
-        trim: true,
+        trim: true
     },
     
     email: {
@@ -70,7 +70,7 @@ const UserSchema = new mongoose.Schema({
     company: {
         name: String,
         siren: String,
-        owner: String,
+        owner: String
     },
     
     phone: {
@@ -98,13 +98,13 @@ const UserSchema = new mongoose.Schema({
     location: {
         coordinates: {
             type: [Number],
-            default: [0, 0], //long, lat
+            default: [0, 0] //long, lat
         },
         type: {
             type: String,
             enum: ['Point'],
-            default: 'Point',
-        },
+            default: 'Point'
+        }
     },
     
     countrySelect: {
@@ -146,12 +146,12 @@ const UserSchema = new mongoose.Schema({
     
     garage: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Announce',
+        ref: 'Announce'
     }],
     
     favorites: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Announce',
+        ref: 'Announce'
     }],
     
     followers: [LikeSchema],
@@ -165,7 +165,7 @@ const UserSchema = new mongoose.Schema({
             token: String
         },
         select: false
-    },
+    }
 }, {
     timestamps: true,
     strict: false,
@@ -209,7 +209,8 @@ UserSchema.pre('save', async function (next) {
         }
         
         if (!user.avatarUrl) {
-            const md5 = crypto.createHash('md5').update(this.email).digest('hex')
+            const md5 = crypto.createHash('md5').update(this.email)
+                .digest('hex')
             user.avatarUrl = 'https://gravatar.com/avatar/' + md5 + '?s=64&d=wavatar'
         }
         
@@ -223,7 +224,7 @@ UserSchema.post('save', async function (err, doc, next) {
     if (err) {
         if (err.name === 'MongoError' && err.code === 11000) {
             return next(Errors.DuplicateError('duplicate user'))
-        } else return next(err)
+        } else {return next(err)}
     }
     next()
 })
@@ -233,12 +234,14 @@ UserSchema.statics.hashPassword = (password, salt) => hashPassword(password, sal
 const hashPassword = (password, saltRounds = 10) => bcrypt.hash(password, saltRounds)
 
 UserSchema.statics.findByEmail = async function (email) {
-    return await this.model('User').findOne({ email }).exec()
+    return await this.model('User').findOne({ email })
+        .exec()
 }
 
 UserSchema.statics.confirmUserEmail = async function (email) {
-    const user = await this.model('User').findOne({ email }).exec()
-    if (!user) throw new Error('user not found')
+    const user = await this.model('User').findOne({ email })
+        .exec()
+    if (!user) {throw new Error('user not found')}
     // if (user.activated && user.email_validated) { throw new Error('user already activated') }
     user.activated = true
     user.email_validated = true
@@ -248,7 +251,7 @@ UserSchema.statics.confirmUserEmail = async function (email) {
 UserSchema.statics.resetPassword = async function (email, password) {
     const user = await this.model('User').findByEmail(email)
     const areIdentical = await user.comparePassword(password)
-    if (areIdentical) throw new Error('Password are identical')
+    if (areIdentical) {throw new Error('Password are identical')}
     user.password = await hashPassword(password)
     return await user.save()
 }

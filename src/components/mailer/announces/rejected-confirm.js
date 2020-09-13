@@ -2,9 +2,9 @@ const CONFIG = require('../../../config/config')
 const mailer = require('../../../utils/mailer')
 
 const rejectedConfirmAnnounce = async params => {
-    if (!params.email) throw new Error('missing email')
-    if (!params.firstname) throw new Error('missing firstname')
-    if (!params.announce_link) throw new Error('missing announce link')
+    if (!params.email) {throw new Error('missing email')}
+    if (!params.firstname) {throw new Error('missing firstname')}
+    if (!params.announce_link) {throw new Error('missing announce link')}
     
     const message = {
         Messages: [
@@ -20,20 +20,16 @@ const rejectedConfirmAnnounce = async params => {
                     }
                 ],
                 Variables : {
-                    announce_link : params.announce_link,
+                    announce_link : params.announce_link
                 },
                 TemplateID: 1481839,
                 TemplateLanguage: true,
-                Subject: 'Kargain | Announce rejetée',
+                Subject: 'Kargain | Announce rejetée'
             }
         ]
     }
-    
-    try {
-        return await mailer.sendMailJet(message)
-    } catch (err) {
-        throw err
-    }
+
+    return await mailer.sendMailJet(message)
 }
 
 module.exports = rejectedConfirmAnnounce

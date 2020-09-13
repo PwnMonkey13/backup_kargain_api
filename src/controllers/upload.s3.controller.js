@@ -2,7 +2,6 @@ const utilsS3 = require('../utils/s3-presigner')
 const { uuid } = require('uuidv4')
 const shortid = require('shortid')
 const MediaModel = require('../models').Media
-const Errors = require('../utils/Errors')
 
 function getWithoutExtension (filename) {
     return filename.split('.').slice(0, -1).join('.')
@@ -31,11 +30,11 @@ const postObjects = async (req, res, next) => {
     const allowedFileNames = ['images', 'avatar']
     
     // see https://attacomsian.com/blog/uploading-files-nodejs-express
-    if (!req.files) return next()
+    if (!req.files) {return next()}
     
     const files = Object.keys(req.files)
-    .filter(key => allowedFileNames.includes(key))
-    .reduce((carry, key) => ({ ...carry, [key]: req.files[key] }), {})
+        .filter(key => allowedFileNames.includes(key))
+        .reduce((carry, key) => ({ ...carry, [key]: req.files[key] }), {})
     
     try {
         req.uploadedFiles = await pArray(files, enableHash, dir)
@@ -81,13 +80,13 @@ const generateGetUrl = (req, res, next) => {
     // Key refers to the remote name of the file.
     const { Key } = req.query
     utilsS3.generateGetUrl(Key)
-    .then(getURL => {
-        res.json({ success: true, data: { getURL } })
-    })
-    .catch(err => {
+        .then(getURL => {
+            res.json({ success: true, data: { getURL } })
+        })
+        .catch(err => {
             next(err)
         }
-    )
+        )
 }
 
 // PUT URL
@@ -99,9 +98,9 @@ const generatePutUrl = (req, res, next) => {
     utilsS3.generatePutUrl(Key, ContentType).then(putURL => {
         res.json({ success: true, data: { putURL } })
     })
-    .catch(err => {
-        next(err)
-    })
+        .catch(err => {
+            next(err)
+        })
 }
 
 module.exports = { getS3Config, postObjects, generateGetUrl, generatePutUrl }

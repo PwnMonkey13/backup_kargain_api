@@ -9,7 +9,7 @@ const CommentSchema = new mongoose.Schema({
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User'
         // autopopulate: true
     },
     message: {
@@ -21,7 +21,7 @@ const CommentSchema = new mongoose.Schema({
         default: true
     },
     responses: [AnswerSchema],
-    likes : [LikeSchema],
+    likes : [LikeSchema]
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

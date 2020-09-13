@@ -8,7 +8,7 @@ const uploadController = require('../controllers/upload.s3.controller')
 app.get('/config',
     cors(corsMiddleware.authedCors),
     passportMiddleware.authenticate('cookie', { session: false }),
-   //TODO ADMIN
+    //TODO ADMIN
     uploadController.getS3Config
 )
 

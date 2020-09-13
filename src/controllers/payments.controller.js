@@ -34,13 +34,13 @@ const offers = [
         text: 'Vitrine publique ou vitrine location de 10 annonces, vitrine pro de 10 annonces',
         title: 'announces-100',
         niceTitle: 'Announces 100'
-    },
+    }
 ]
 
 exports.createPaymentIntent = async (req, res, next) => {
     const { product } = req.body
     const offer = offers.find(offer => offer.title === product)
-    if (!offer) return next(Errors.Error(Messages.errors.missing_offer))
+    if (!offer) {return next(Errors.Error(Messages.errors.missing_offer))}
     
     try {
         // Create a PaymentIntent with the order amount and currency
@@ -48,8 +48,8 @@ exports.createPaymentIntent = async (req, res, next) => {
             amount: Number(offer.price || 0) * 10,
             currency: 'eur',
             metadata: {
-                integration_check: 'accept_a_payment',
-            },
+                integration_check: 'accept_a_payment'
+            }
         })
         
         return res.json({
@@ -65,7 +65,7 @@ exports.createPaymentIntent = async (req, res, next) => {
 }
 
 exports.createUserSubscription = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { payload, offerTitle } = req.body
     const offer = offers.find(offer => offer.title === offerTitle)
@@ -76,7 +76,7 @@ exports.createUserSubscription = async (req, res, next) => {
             offer: {
                 name: offer.title,
                 title: offer.niceTitle
-            },
+            }
         })
         
         const docPayment = await payment.save()

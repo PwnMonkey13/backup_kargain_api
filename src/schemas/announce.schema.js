@@ -4,71 +4,71 @@ const LikeSchema = require('./like.schema')
 const utils = require('../utils/functions')
 
 const AnnounceSchema = new mongoose.Schema({
-    
+ 
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User'
         // autopopulate: { maxDepth: 1 }
     },
-    
+ 
     title: {
         type: String,
         trim: true,
         required: true
     },
-    
+ 
     showCellPhone: {
         type: Boolean,
-        default: true,
+        default: true
     },
-    
+ 
     //need admin validation
     activated: {
         type: Boolean,
         default: false
     },
-    
+ 
     //draft mode
     visible: {
         type: Boolean,
-        default: true,
+        default: true
     },
-    
+ 
     status: {
         type: String,
         enum: ['rejected', 'deleted', 'archived', 'active'],
         default: 'active'
     },
-    
+ 
     description: {
         type: String,
-        trim: true,
+        trim: true
     },
-    
+ 
     expirationDate: {
         type: Date
     },
-    
+ 
     slug: {
         type: String,
         trim: true
     },
-    
+ 
     price: {
         type: Number,
         default: 0,
         min: 0,
         max: 999999
     },
-    
+ 
     vinNumber: String,
-    
+ 
     adType: {
         type: String,
         required: true,
         enum : ['sale', 'sale-pro', 'rent']
     },
-    
+ 
     // car, moto etc ...
     vehicleType: {
         type: String,
@@ -93,35 +93,35 @@ const AnnounceSchema = new mongoose.Schema({
         label: String,
         value: String
     },
-    
+ 
     // neuf, occas
     vehicleGeneralState: {
         label: String,
         value: String
     },
-    
+ 
     // personal, taxi, driving-school ...
     vehicleFunctionUse: {
         label: String,
         value: String
     },
-    
+ 
     // taxi, personal
     vehicleFunction: {
         label: String,
         value: String
     },
-    
+ 
     vehicleEngineType: {
         label: String,
         value: String
     },
-    
+ 
     vehicleEngineGas: {
         label: String,
         value: String
     },
-    
+ 
     vehicleEngineCylinder: {
         value: String,
         label: Number
@@ -147,44 +147,44 @@ const AnnounceSchema = new mongoose.Schema({
             value: String
         }
     },
-    
+ 
     mileage: {
         type: Number,
         default: 0,
         min: 0,
         max: 999999
     },
-    
+ 
     powerKm: {
         type: Number,
         default: 0
     },
-    
+ 
     powerCh: {
         type: Number,
         default: 0
     },
-    
+ 
     consumptionMixt: {
         type: Number,
         default: 0
     },
-    
+ 
     consumptionCity: {
         type: Number,
         default: 0
     },
-    
+ 
     consumptionRoad: {
         type: Number,
         default: 0
     },
-    
+ 
     consumptionGkm: {
         type: Number,
         default: 0
     },
-    
+ 
     equipments: [
         {
             _id: false,
@@ -192,12 +192,12 @@ const AnnounceSchema = new mongoose.Schema({
             value: String
         }
     ],
-    
+ 
     ownersCount: {
         label: String,
-        value: String,
+        value: String
     },
-    
+ 
     damages: [
         {
             _id: false,
@@ -211,12 +211,12 @@ const AnnounceSchema = new mongoose.Schema({
             }
         }
     ],
-    
+ 
     doors: {
         label: String,
         value: String
     },
-    
+ 
     seats: {
         label: String,
         value: String
@@ -226,45 +226,45 @@ const AnnounceSchema = new mongoose.Schema({
         label: String,
         value: String
     },
-    
+ 
     bunks: {
         label: String,
         value: String
     },
-    
+ 
     beds: {
         label: String,
         value: String
     },
-    
+ 
     bedType: {
         label: String,
         value: String
     },
-    
+ 
     paint: {},
     materials: {},
     externalColor: {},
     internalColor: {},
     emission: {},
-    
+ 
     location: {
         coordinates: {
             type: [Number],
-            default: [0, 0], //long, lat
+            default: [0, 0] //long, lat
         },
         type: {
             type: String,
             enum: ['Point'],
-            default: 'Point',
-        },
+            default: 'Point'
+        }
     },
-    
+ 
     countrySelect: {
         label: String,
         value: String
     },
-    
+ 
     address: {
         housenumber: Number,
         street: {
@@ -284,33 +284,33 @@ const AnnounceSchema = new mongoose.Schema({
             trim: true
         }
     },
-    
+ 
     images: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Media',
         autopopulate: true
     }],
-    
+ 
     tags: [{
         index: true,
         _id: false,
         type: String
     }],
-    
+ 
     comments: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Comment',
+            ref: 'Comment'
         }
     ],
-    
-    likes: [LikeSchema],
-    
+ 
+    likes: [LikeSchema]
+ 
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: {
-        virtuals: true,
+        virtuals: true
     },
     strict: false
 })
@@ -320,10 +320,6 @@ AnnounceSchema.path('tags').validate((arr) => {
 }, 'too much tags provided')
 
 AnnounceSchema.index({
-    // title: 'text',
-    // description: 'text',
-    // content: 'text',
-    // tags : 'text'
     '$**': 'text'
 })
 
@@ -351,12 +347,13 @@ AnnounceSchema.pre('save', function (next) {
     next()
 })
 
-AnnounceSchema.post('update', function (doc) {
+AnnounceSchema.post('update', function () {
     console.log('Update finished.')
 })
 
 AnnounceSchema.statics.findByUser = async function (uid) {
-    return await this.model('Announce').find({ user: uid }).exec()
+    return await this.model('Announce').find({ user: uid })
+        .exec()
 }
 
 AnnounceSchema.virtual('id').get(function () {
@@ -366,7 +363,9 @@ AnnounceSchema.virtual('id').get(function () {
 
 AnnounceSchema.virtual('priceHT').get(function () {
     const announce = this
-    return Number(announce.price * 0.8).toFixed(0)
+    if(announce.price){
+        return Number(announce.price * 0.8).toFixed(0)
+    }
 })
 
 module.exports = AnnounceSchema

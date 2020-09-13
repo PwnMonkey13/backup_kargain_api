@@ -25,22 +25,22 @@ exports.getUsersAdminAction = async (req, res, next) => {
     try {
         const total = await UserModel.estimatedDocumentCount().exec()
         const rows = await UserModel
-        .find({
-            $or: [
-                { removed: false },
-                { removed: { $exists: false } }
-            ]
-        }, '-location -favorites')
-        .skip(skip)
-        .sort(sorters)
-        .limit(size)
+            .find({
+                $or: [
+                    { removed: false },
+                    { removed: { $exists: false } }
+                ]
+            }, '-location -favorites')
+            .skip(skip)
+            .sort(sorters)
+            .limit(size)
         
         const data = {
             page: page,
             pages: Math.ceil(total / size),
             total,
             size: size,
-            rows,
+            rows
         }
         return res.json({ success: true, data })
     } catch (err) {
@@ -68,35 +68,35 @@ exports.getUserByUsername = async (req, res, next) => {
                 { removed: { $exists: false } }
             ]}
         )
-        .populate({
-            path: 'favorites',
-            populate: 'comments',
-            match: garageFilters
-        })
-        .populate({
-            path: 'followers.user',
-            model: 'User',
-            select: 'avatarUrl firstname username lastname email'
-        })
-        .populate({
-            path: 'followings.user',
-            model: 'User',
-            select: 'avatarUrl firstname username lastname email'
-        })
-        .populate({
-            path: 'garage',
-            populate: 'user comments',
-            match: garageFilters
-        })
+            .populate({
+                path: 'favorites',
+                populate: 'comments',
+                match: garageFilters
+            })
+            .populate({
+                path: 'followers.user',
+                model: 'User',
+                select: 'avatarUrl firstname username lastname email'
+            })
+            .populate({
+                path: 'followings.user',
+                model: 'User',
+                select: 'avatarUrl firstname username lastname email'
+            })
+            .populate({
+                path: 'garage',
+                populate: 'user comments',
+                match: garageFilters
+            })
         
-        if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+        if (!user) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
         
         return res.json({
             success: true,
             data: {
                 isAdmin,
                 isSelf,
-                user,
+                user
             }
         })
     } catch (err) {
@@ -105,7 +105,7 @@ exports.getUserByUsername = async (req, res, next) => {
 }
 
 exports.saveAuthedUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     try {
         const doc = await req.user.save()
         return res.status(200).json({ success: true, data: doc })
@@ -117,7 +117,7 @@ exports.saveAuthedUser = async (req, res, next) => {
 exports.saveUserByUsername = async (req, res, next) => {
     try {
         const user = await UserModel.findOne({ username: req.params.username })
-        if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+        if (!user) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
         const doc = await user.save()
         return res.status(200).json({ success: true, data: doc })
     } catch (err) {
@@ -126,7 +126,7 @@ exports.saveUserByUsername = async (req, res, next) => {
 }
 
 exports.updateUser = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const allowedFieldsUpdatesSet = [
         'firstname',
@@ -144,13 +144,13 @@ exports.updateUser = async (req, res, next) => {
         'address.postCode',
         'address.city',
         'address.fullAddress',
-        'address.country',
+        'address.country'
     ]
     
     const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {
         const value = functions.resolveObjectKey(req.body, key)
-        if (value) return { ...carry, [key]: value }
-        else return carry
+        if (value) {return { ...carry, [key]: value }}
+        else {return carry}
     }, {})
     
     try {
@@ -159,7 +159,7 @@ exports.updateUser = async (req, res, next) => {
                 _id: req.user.id
             },
             {
-                $set: updatesSet,
+                $set: updatesSet
             },
             {
                 returnNewDocument: true,
@@ -174,7 +174,7 @@ exports.updateUser = async (req, res, next) => {
 
 exports.updateAdminUser = async (req, res, next) => {
     const { username } = req.params
-    if (!username) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+    if (!username) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
     
     //TODO email notifications
     try {
@@ -197,7 +197,7 @@ exports.updateAdminUser = async (req, res, next) => {
 }
 
 exports.uploadAvatar = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     req.user.avatar = req.uploadedFiles?.avatar?.[0]
     
     try {
@@ -221,12 +221,12 @@ exports.deleteUser = async (req, res, next) => {
 }
 
 exports.addFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
     
-    if (!announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
-    if (req.user.id.toString() === announce.user.toString()) return next(Errors.Error(Messages.errors.not_allowed))
+    if (!announce) {return next(Errors.NotFoundError(Messages.errors.announce_not_found))}
+    if (req.user.id.toString() === announce.user.toString()) {return next(Errors.Error(Messages.errors.not_allowed))}
     
     try {
         const insertion = await UserModel.updateOne(
@@ -253,11 +253,11 @@ exports.addFavoriteAnnounceAction = async (req, res, next) => {
 }
 
 exports.rmFavoriteAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { announce_id: announceId } = req.params
     const announce = await AnnounceModel.findById(announceId)
-    if (!announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
+    if (!announce) {return next(Errors.NotFoundError(Messages.errors.announce_not_found))}
     
     try {
         const suppression = await UserModel.updateOne(
@@ -283,8 +283,8 @@ exports.rmFavoriteAnnounceAction = async (req, res, next) => {
 
 exports.followUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    if (req.user.id.toString() === userId) return next(Errors.Error(Messages.errors.not_allowed))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    if (req.user.id.toString() === userId) {return next(Errors.Error(Messages.errors.not_allowed))}
     
     try {
         const insertion = await UserModel.updateOne(
@@ -301,7 +301,7 @@ exports.followUserAction = async (req, res, next) => {
             }
         )
         
-        if (!insertion) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+        if (!insertion) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
         const doc = await UserModel.updateOne(
             { _id: req.user.id },
             {
@@ -326,8 +326,8 @@ exports.followUserAction = async (req, res, next) => {
 
 exports.unFollowUserAction = async (req, res, next) => {
     const { user_id: userId } = req.params
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    if (req.user.id.toString() === userId) return next(Errors.Error(Messages.errors.not_allowed))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    if (req.user.id.toString() === userId) {return next(Errors.Error(Messages.errors.not_allowed))}
     
     try {
         const suppression = await UserModel.updateOne(
@@ -344,7 +344,7 @@ exports.unFollowUserAction = async (req, res, next) => {
             }
         )
         
-        if (!suppression) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+        if (!suppression) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
         const doc = await UserModel.updateOne(
             { _id: req.user.id },
             {
@@ -370,7 +370,7 @@ exports.unFollowUserAction = async (req, res, next) => {
 
 exports.subscribeNewsletter = async (req, res, next) => {
     const email = req.body.email
-    if (!email) return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))
+    if (!email) {return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))}
     
     try {
         const doc = await NewsletterSubscriber.updateOne({ email }, {
@@ -385,7 +385,7 @@ exports.subscribeNewsletter = async (req, res, next) => {
 
 exports.contact = async (req, res, next) => {
     const { email, subject, message } = req.body
-    if (!email) return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))
+    if (!email) {return next(Errors.NotFoundError(Messages.errors.missing_or_invalid_email))}
     
     try {
         const post = new ContactMessage({

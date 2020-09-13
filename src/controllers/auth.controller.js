@@ -12,7 +12,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 const PASSWORD_REGEX = /^(?=.*\d).{4,16}$/ //min 4, max 8
 
 exports.findUserByEmailMiddleware = async (req, res, next) => {
-    if (!req.body.email) return next(Errors.NotFoundError())
+    if (!req.body.email) {return next(Errors.NotFoundError())}
     try {
         req.user = await User.findByEmail(req.body.email)
         next()
@@ -23,10 +23,10 @@ exports.findUserByEmailMiddleware = async (req, res, next) => {
 
 exports.loginValidation = (req, res, next) => {
     const { email, password } = req.body
-    if (!password) return next(Errors.Error(Messages.errors.missing_password))
-    if (!email || !EMAIL_REGEX.test(email)) return next(Errors.Error(Messages.errors.missing_or_invalid_email))
-    if (!PASSWORD_REGEX.test(password)) return next(Errors.Error(Messages.errors.password_not_valid))
-    else next()
+    if (!password) {return next(Errors.Error(Messages.errors.missing_password))}
+    if (!email || !EMAIL_REGEX.test(email)) {return next(Errors.Error(Messages.errors.missing_or_invalid_email))}
+    if (!PASSWORD_REGEX.test(password)) {return next(Errors.Error(Messages.errors.password_not_valid))}
+    else {next()}
 }
 
 exports.ssoRegister = async (req, res, next) => {
@@ -40,7 +40,7 @@ exports.ssoRegister = async (req, res, next) => {
                 ...data,
                 sso: true,
                 password: pwd,
-                clear_password: pwd,
+                clear_password: pwd
             })
             req.user = await newUser.save()
         } else {
@@ -53,15 +53,15 @@ exports.ssoRegister = async (req, res, next) => {
 }
 
 exports.loginAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const user = req.user
     const expirationTimeSeconds = Date.now() + 1000 * 60 * 60 * 24 * 10
     const token = jwt.sign({
-            exp: Math.floor(expirationTimeSeconds / 1000), // 10days (seconds)
-            uid: user._id
-        },
-        config.jwt.encryption
+        exp: Math.floor(expirationTimeSeconds / 1000), // 10days (seconds)
+        uid: user._id
+    },
+    config.jwt.encryption
     )
     
     // Adds a new cookie to the response
@@ -70,33 +70,33 @@ exports.loginAction = async (req, res, next) => {
             expires: new Date(expirationTimeSeconds), // 10days (milliseconds)
             httpOnly: true,
             // secure: !!config.isProd,
-            sameSite: false,
+            sameSite: false
         }
     ).json({
         success: true,
-        data: user,
+        data: user
     })
 }
 
 exports.logoutAction = async (req, res, next) => {
     req.logout()
     return res
-    .cookie('token',
-        null, {
-            maxAge: 0,
-            httpOnly: true
-        }
-    ).json({
-        success: true,
-        data : "logged out"
-    })
+        .cookie('token',
+            null, {
+                maxAge: 0,
+                httpOnly: true
+            }
+        ).json({
+            success: true,
+            data : 'logged out'
+        })
 }
 
 exports.registerAction = async (req, res, next) => {
     const { email, password } = req.body
-    if (!password) return next(Errors.Error(Messages.errors.missing_password))
-    if (!email || !EMAIL_REGEX.test(email)) return next(Errors.Error(Messages.errors.missing_or_invalid_email))
-    if (!PASSWORD_REGEX.test(password)) return next(Errors.Error(Messages.errors.password_not_valid))
+    if (!password) {return next(Errors.Error(Messages.errors.missing_password))}
+    if (!email || !EMAIL_REGEX.test(email)) {return next(Errors.Error(Messages.errors.missing_or_invalid_email))}
+    if (!PASSWORD_REGEX.test(password)) {return next(Errors.Error(Messages.errors.password_not_valid))}
     
     const user = new User(req.body)
     
@@ -110,9 +110,9 @@ exports.registerAction = async (req, res, next) => {
 
 exports.registerProAction = async (req, res, next) => {
     const { email, password } = req.body
-    if (!password) return next(Errors.Error(Messages.errors.missing_password))
-    if (!email || !EMAIL_REGEX.test(email)) return next(Errors.Error(Messages.errors.missing_or_invalid_email))
-    if (!PASSWORD_REGEX.test(password)) return next(Errors.Error(Messages.errors.password_not_valid))
+    if (!password) {return next(Errors.Error(Messages.errors.missing_password))}
+    if (!email || !EMAIL_REGEX.test(email)) {return next(Errors.Error(Messages.errors.missing_or_invalid_email))}
+    if (!PASSWORD_REGEX.test(password)) {return next(Errors.Error(Messages.errors.password_not_valid))}
     
     const user = new User({
         ...req.body,
@@ -132,7 +132,7 @@ exports.confirmEmailTokenAction = async (req, res, next) => {
     const { token } = req.params
     try {
         const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded.email) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+        if (!decoded.email) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
         const updated = await User.confirmUserEmail(decoded.email)
         return res.json({
             success: true,
@@ -144,7 +144,7 @@ exports.confirmEmailTokenAction = async (req, res, next) => {
 }
 
 exports.sendEmailActivation = async (req, res, next) => {
-    if (!req.user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
     
     const token = jwt.sign({ email: req.user.email },
         config.jwt.encryption,
@@ -178,8 +178,8 @@ exports.forgotPasswordAction = async (req, res, next) => {
     try {
         const user = await User.findByEmail(email)
         const token = jwt.sign({
-                email: user.email
-            }, config.jwt.encryption, { expiresIn: '1h' }
+            email: user.email
+        }, config.jwt.encryption, { expiresIn: '1h' }
         )
         
         user.pass_reset = uuid()
@@ -206,7 +206,7 @@ exports.resetPasswordAction = async (req, res, next) => {
     const { token, password } = req.body
     try {
         const decoded = await jwt.verify(token, config.jwt.encryption)
-        if (!decoded) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+        if (!decoded) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
         const { email } = decoded
         const updated = await User.resetPassword(email, password)
         return res.json({

@@ -3,12 +3,12 @@ const app = require('./app')
 const config = require('./config/config')
 
 mongoose.Promise = global.Promise // set mongo up to use promises
-mongoose.set('debug', true);
+mongoose.set('debug', true)
 
 mongoose.connect(config.db.mongo_location, { useCreateIndex: true, useNewUrlParser: true })
-.catch(() => {
-    throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location)
-})
+    .catch(() => {
+        throw new Error('*** Can Not Connect to Mongo Server:' + config.db.mongo_location)
+    })
 
 const db = mongoose.connection
 

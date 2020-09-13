@@ -7,10 +7,10 @@ const contactMessage = new mongoose.Schema({
         required: true
     },
     subject: String,
-    message: String,
+    message: String
     
 }, {
-    timestamps: true,
+    timestamps: true
 })
 
 // Export mongoose model

@@ -11,10 +11,10 @@ const mediaS3Schema = new mongoose.Schema({
 }, {
     timestamps: true,
     toObject: {
-        virtuals: true,
+        virtuals: true
     },
     toJSON: {
-        virtuals: true,
+        virtuals: true
     }
 })
 

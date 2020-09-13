@@ -35,14 +35,10 @@ redisClient.on('error', function (err) {
 const getCacheKey = (key) => {
     return new Promise((resolve, reject) => {
         redisClient.get(key, (err, entry) => {
-            if (err) throw err
+            if (err) {throw err}
             if (entry) {
-                try {
-                    resolve(JSON.parse(entry))
-                } catch (e) {
-                    throw e
-                }
-            } else resolve(null)
+                resolve(JSON.parse(entry))
+            } else {resolve(null)}
         })
     })
 }

@@ -15,7 +15,7 @@ const AnswerSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    likes : [LikeSchema],
+    likes : [LikeSchema]
 }, {
     _id : false,
     timestamps: true,

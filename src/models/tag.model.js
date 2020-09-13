@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const TagSchema = new mongoose.Schema({
-  name: String
+    name: String
 })
 
 // Export mongoose model

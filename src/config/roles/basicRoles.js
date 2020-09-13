@@ -13,7 +13,7 @@ const basicPermissions = [
     { role: 'basic', resource: 'comments', action: 'create:own', attributes: '*, !rating' },
     { role: 'basic', resource: 'comments', action: 'read:any', attributes: '*' },
     { role: 'basic', resource: 'comments', action: 'update:own', attributes: '*,' },
-    { role: 'basic', resource: 'comments', action: 'delete:own', attributes: '*' },
+    { role: 'basic', resource: 'comments', action: 'delete:own', attributes: '*' }
 ]
 
 module.exports = basicPermissions

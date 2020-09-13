@@ -10,16 +10,16 @@ const ContactMessage = require('./contact.message.model')
 const Conversation = require('./conversations.model')
 
 module.exports = {
-  User,
-  Media,
-  Comment,
-  Announce,
-  Payment,
-  Conversation,
-  NewsletterSubscriber,
-  ContactMessage,
-  Vehicles: {
-    Makes: { ...VehiclesMakesModels },
-    Models: { ...VehiclesModelModels },
-  }
+    User,
+    Media,
+    Comment,
+    Announce,
+    Payment,
+    Conversation,
+    NewsletterSubscriber,
+    ContactMessage,
+    Vehicles: {
+        Makes: { ...VehiclesMakesModels },
+        Models: { ...VehiclesModelModels }
+    }
 }
