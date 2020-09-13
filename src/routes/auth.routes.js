@@ -7,7 +7,7 @@ const authController = require('../controllers/auth.controller')
 
 router.get('/authorize',
     cors(corsMiddleware.authedCors),
-    authMiddleware.byPassAuth(),
+    authMiddleware.byPassAuth(['garage', 'favorites']),
     authController.authorizeAction
 )
 
