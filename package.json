@@ -8,6 +8,7 @@
 	"main": "src",
 	"license": "GNU",
 	"scripts": {
+		"vercel-build": "yarn run build",
 		"start": "cross-env NODE_ENV=development nodemon src",
 		"start:prod": "nodemon src",
 		"build": "rimraf dist && babel src -d dist",
