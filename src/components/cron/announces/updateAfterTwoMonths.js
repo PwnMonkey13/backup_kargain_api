@@ -1,12 +1,13 @@
 const cron = require('node-cron')
 const moment = require('moment')
+const config = require('../../../config/config')
 const logger = require('../../../config/logger')
 const AnnounceMailer = require('../../../components/mailer').announces
 const AnnounceModel = require('../../../models').Announce
 
 cron.schedule('* * * * *', async () => {
     const twoMonthsAgo = moment().subtract(2, 'months')
-    
+
     try {
         const docs = await AnnounceModel.find({
             visible: true,
@@ -14,13 +15,13 @@ cron.schedule('* * * * *', async () => {
                 $lt: twoMonthsAgo.toDate()
             }
         }).populate('user')
-    
+
         await Promise.all(docs.map(async (doc) => {
             doc.visible = false
             await doc.save()
             return doc
         }))
-    
+
         const emailsResults = await Promise.all(docs.map(async (doc) => {
             return await AnnounceMailer.informDisabledAnnounce({
                 email: doc?.user?.email,
@@ -29,13 +30,16 @@ cron.schedule('* * * * *', async () => {
                 announce_creation_date: moment(doc.createdAt).format('dddd, MMMM Do YYYY, h:mm:ss a')
             })
         }))
-        
-        logger.info("cron job hide announce after 2 months", {
+
+        logger.info('cron job hide announce after 2 months', {
             meta : {
-                emailsResults,
+                emailsResults
             }
         })
     }
-     catch (err) {
-        return next(err)
-}})
+    catch (err) {
+        console.log(err)
+        logger.warn(err)
+        throw err
+    }}
+)

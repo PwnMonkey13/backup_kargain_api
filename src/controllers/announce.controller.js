@@ -5,6 +5,7 @@ const UserModel = require('../models').User
 const Errors = require('../utils/Errors')
 const Messages = require('../config/messages')
 const functions = require('../utils/functions')
+const allowedFieldsUpdatesSet = require('../utils/allowedFieldsUpdatesSet')
 const prepareFilters = require('../components/filters/prepareFilters')
 const announcesSorterMapper = require('../components/filters/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
@@ -26,18 +27,24 @@ exports.getAnnouncesAdminAction = async (req, res, next) => {
     
     try {
         const rows = await AnnounceModel
-        .find({}, '-damages')
-        .skip(skip)
-        .sort(sorters)
-        .limit(size)
-        .populate({
-            path: 'user',
-            select: '-followings -followers -favorites -garage'
-        })
+            .find({}, '-damages')
+            .skip(skip)
+            .sort(sorters)
+            .limit(size)
+            .populate({
+                path: 'manufacturer.make'
+            })
+            .populate({
+                path: 'manufacturer.model'
+            })
+            .populate({
+                path: 'user',
+                select: '-followings -followers -favorites -garage'
+            })
         
         const total = await AnnounceModel
-        .find()
-        .estimatedDocumentCount()
+            .find()
+            .estimatedDocumentCount()
         
         const data = {
             pages: Math.ceil(total / size),
@@ -84,18 +91,18 @@ exports.filterAnnouncesAction = (fetchProfile = false, fetchFeed = false, return
     let defaultQuery = {}
     
     //fetching single profile
-    const user = req.query?.user?.toString() ?? req?.user?.id?.toString();
+    const user = req.query?.user?.toString() ?? req?.user?.id?.toString()
     const isSelf =  user && req?.user?.id?.toString() === user
-    const isPro = Boolean(req.user.isPro || false)
+    const isPro = Boolean(req.user?.isPro || false)
     
-    if(!isPro) defaultQuery.adType = {
-        $ne : "sale-pro"
-    }
+    if(!isPro) {defaultQuery.adType = {
+        $ne : 'sale-pro'
+    }}
     
     if(fetchProfile && user){
         defaultQuery = {
             ...defaultQuery,
-            user,
+            user
         }
         
         //restrict to published announces
@@ -117,7 +124,7 @@ exports.filterAnnouncesAction = (fetchProfile = false, fetchFeed = false, return
             if(followingIds.length !== 0) {
                 defaultQuery = {
                     ...defaultQuery,
-                    user: { $in: followingIds },
+                    user: { $in: followingIds }
                 }
             }
         }
@@ -134,50 +141,47 @@ exports.filterAnnouncesAction = (fetchProfile = false, fetchFeed = false, return
     
     let query = prepareFilters(req.query, defaultQuery)
     
-    const { MAKE, MODEL } = req.query;
-    let makesFilter = !Array.isArray(MAKE) ? [MAKE] : MAKE;
-    let modelsFilter = !Array.isArray(MODEL) ? [MODEL] : MODEL;
+    const { MAKE, MODEL } = req.query
+    let makesFilter = !Array.isArray(MAKE) ? [MAKE] : MAKE
+    let modelsFilter = !Array.isArray(MODEL) ? [MODEL] : MODEL
     
     makesFilter = makesFilter
-        .filter(make => typeof make === "string")
+        .filter(make => typeof make === 'string')
         .map(make => make.toLowerCase())
     
     modelsFilter = modelsFilter
-        .filter(model => typeof model === "string")
+        .filter(model => typeof model === 'string')
         .map(model => model.toLowerCase())
     
     try {
         const rows = await AnnounceModel
-        .find(query, '-damages')
-        .skip(skip)
-        .sort(sorters)
-        .limit(size)
-        .populate('images')
-        .populate({
-            path: 'manufacturer.make',
-            // match: {
-            //     make_slug : makesFilter
-            // }
-        })
-        .populate({
-            path: 'manufacturer.model',
-        })
-        .populate({
-            path: 'user',
-            select: '-followings -followers -favorites -garage'
-        })
-        .populate({
-            path: 'comments',
-            select: '-announce -responses -likes',
-            populate: {
+            .find(query, '-damages')
+            .skip(skip)
+            .sort(sorters)
+            .limit(size)
+            .populate('images')
+            .populate({
+                path: 'manufacturer.make'
+            })
+            .populate({
+                path: 'manufacturer.model'
+            })
+            .populate({
                 path: 'user',
                 select: '-followings -followers -favorites -garage'
-            }
-        })
+            })
+            .populate({
+                path: 'comments',
+                select: '-announce -responses -likes',
+                populate: {
+                    path: 'user',
+                    select: '-followings -followers -favorites -garage'
+                }
+            })
     
         const filtered = rows
-        .filter(row => makesFilter.length ? makesFilter.includes(row.manufacturer?.make?.make_slug) : true)
-        .filter(row => modelsFilter.length ? modelsFilter.includes(row.manufacturer?.model?.model) : true)
+            .filter(row => makesFilter.length ? makesFilter.includes(row.manufacturer?.make?.make_slug) : true)
+            .filter(row => modelsFilter.length ? modelsFilter.includes(row.manufacturer?.model?.model) : true)
         
         const total = await AnnounceModel.find(query).count()
     
@@ -199,7 +203,7 @@ exports.filterAnnouncesAction = (fetchProfile = false, fetchFeed = false, return
 exports.getAnnouncesByUserAction = async (req, res, next) => {
     const uid = req.params.uid
     const user = await UserModel.findById(uid)
-    if (!user) return next(Errors.NotFoundError(Messages.errors.user_not_found))
+    if (!user) {return next(Errors.NotFoundError(Messages.errors.user_not_found))}
     const announces = await AnnounceModel.findByUser(uid)
     return res.json({ success: true, data: announces })
 }
@@ -207,43 +211,53 @@ exports.getAnnouncesByUserAction = async (req, res, next) => {
 exports.getAnnounceBySlugAction = async (req, res, next) => {
     try {
         const announce = await AnnounceModel
-        .findOne({ slug: req.params.slug })
-        .populate('user')
-        .populate({
-            path: 'comments',
-            match: {
-                enabled: true
-            },
-            populate: {
-                path : 'user',
+            .findOne({ slug: req.params.slug })
+            .populate('user')
+            .populate({
+                path : 'likes.user',
                 select: 'avatarUrl firstname username lastname email'
-            },
-        })
+            })
+            .populate({
+                path: 'manufacturer.make'
+            })
+            .populate({
+                path: 'manufacturer.model'
+            })
+            .populate({
+                path: 'comments',
+                match: {
+                    enabled: true
+                },
+                populate: {
+                    path : 'user',
+                    select: 'avatarUrl firstname username lastname email'
+                }
+            })
         
         if (announce) {
             const isSelf = req.user ? req?.user.id.toString() === announce.user.id.toString() : false
             const isAdmin = req.user ? req.user.isAdmin : false
             
-            if (isAdmin || isSelf) return res.json({
+            if (isAdmin || isSelf) {return res.json({
                 success: true,
                 data: {
                     announce,
                     isSelf,
                     isAdmin
                 }
-            })
+            })}
             
             const displayAd =
                 announce.activated &&
                 announce.visible &&
                 announce.status === 'active'
             
-            if (displayAd) return res.json({
+            if (displayAd) {return res.json({
                 success: true,
                 data: {
-                    announce,
+                    announce
                 }
-            })
+            })}
         }
         return next(Errors.NotFoundError(Messages.errors.announce_not_found))
     } catch (err) {
@@ -253,7 +267,15 @@ exports.getAnnounceBySlugAction = async (req, res, next) => {
 
 exports.getBySlugAndNextAction = async (req, res, next) => {
     try {
-        const announce = await AnnounceModel.findOne({ slug: req.params.slug })
+        const announce = await AnnounceModel
+            .findOne({ slug: req.params.slug })
+            .populate({
+                path: 'manufacturer.make'
+            })
+            .populate({
+                path: 'manufacturer.model'
+            })
+        
         if (announce) {
             req.announce = announce
             return next()
@@ -265,20 +287,18 @@ exports.getBySlugAndNextAction = async (req, res, next) => {
 }
 
 exports.createAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const { vehicleType, manufacturer } = req.body
     
     //automatically disable announce
     const disable = req.user.garage.length >= req.user.config.garageLengthAllowed
-    
     const modelMake = require('../models').Vehicles.Makes[`${vehicleType}s`]
     const modelModel = require('../models').Vehicles.Models[`${vehicleType}s`]
     let matchMake = null
     let matchModel = null
     
     try {
-    
         if (modelMake && manufacturer?.make?.value){
             matchMake = await modelMake.findOne({
                 _id : mongoose.Types.ObjectId(manufacturer?.make?.value)
@@ -291,9 +311,16 @@ exports.createAnnounceAction = async (req, res, next) => {
             }
         }
         
+        const manufacturerTitle = [
+            manufacturer?.make?.label,
+            manufacturer?.model?.label,
+            manufacturer?.year?.label
+        ].filter(part => part).join(' - ')
+    
         let data = {
             ...req.body,
             user: req.user,
+            title : manufacturerTitle,
             activated: false,
             visible: disable,
             makeRef : `${vehicleType}s_makes`,
@@ -309,13 +336,12 @@ exports.createAnnounceAction = async (req, res, next) => {
         }
         
         const announce = new AnnounceModel(data)
-        
-        const document = await announce.save()
+        const doc = await announce.save()
         await UserModel.updateOne(
             { _id: req.user.id },
             {
                 $addToSet: {
-                    garage: document._id
+                    garage: doc._id
                 }
             }
         )
@@ -324,18 +350,18 @@ exports.createAnnounceAction = async (req, res, next) => {
             email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
-            announce_link: `${config.frontend}/announces/${document.slug}`,
-            featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
+            announce_link: `${config.frontend}/announces/${doc.slug}`,
+            featured_img_link: doc?.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
             manufacturer: {
-                make: document?.manufacturer?.make?.label,
-                model: document?.manufacturer?.model?.label,
-                generation: document?.manufacturer?.generation?.label,
+                make: doc?.manufacturer?.make?.label,
+                model: doc?.manufacturer?.model?.label,
+                generation: doc?.manufacturer?.generation?.label
             }
         })
         
         return res.json({
             success: true,
-            data: document
+            data: doc
         })
     } catch (err) {
         next(err)
@@ -343,55 +369,12 @@ exports.createAnnounceAction = async (req, res, next) => {
 }
 
 exports.updateAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    
-    const allowedFieldsUpdatesSet = [
-        'title',
-        'showCellPhone',
-        'visible',
-        'description',
-        'price',
-        'vehicleFunctionType',
-        'vehicleFunctionUse',
-        'vehicleGeneralState',
-        'vehicleFunction',
-        'vehicleEngineType',
-        'vehicleEngineGas',
-        'vehicleEngineCylinder',
-        'powerKm',
-        'powerCh',
-        'consumptionMixt',
-        'consumptionCity',
-        'consumptionRoad',
-        'consumptionGkm',
-        'mileage',
-        'equipments',
-        'damages',
-        'doors',
-        'seats',
-        'driverCabins',
-        'bunks',
-        'beds',
-        'bedType',
-        'paint',
-        'materials',
-        'externalColor',
-        'internalColor',
-        'emission',
-        'images',
-        'tags',
-        'address.fullAddress',
-        'address.housenumber',
-        'address.street',
-        'address.postCode',
-        'address.country',
-        'address.city'
-    ]
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     const updatesSet = allowedFieldsUpdatesSet.reduce((carry, key) => {
         const value = functions.resolveObjectKey(req.body, key)
-        if (value) return { ...carry, [key]: value }
-        else return carry
+        if (value) {return { ...carry, [key]: value }}
+        else {return carry}
     }, {})
     
     try {
@@ -404,14 +387,14 @@ exports.updateAnnounceAction = async (req, res, next) => {
                 context: 'query'
             }
         )
-        return res.status(200).json({ success: true, data: doc })
+        return res.json({ success: true, data: doc })
     } catch (err) {
         return next(err)
     }
 }
 
 exports.removeAnnounceAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     try {
         const doc = await AnnounceModel.updateOne(
             { slug: req.params.slug },
@@ -422,7 +405,7 @@ exports.removeAnnounceAction = async (req, res, next) => {
                 context: 'query'
             }
         )
-        return res.status(200).json({ success: true, data: doc })
+        return res.json({ success: true, data: doc })
     } catch (err) {
         return next(err)
     }
@@ -431,48 +414,48 @@ exports.removeAnnounceAction = async (req, res, next) => {
 exports.updateAdminAnnounceAction = async (req, res, next) => {
     const { slug } = req.params
     const activated = Boolean(req.body?.activated)
-    if (!slug) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
+    if (!slug) {return next(Errors.NotFoundError(Messages.errors.announce_not_found))}
     
     try {
-        const document = await AnnounceModel.findOneAndUpdate(
+        const doc = await AnnounceModel.findOneAndUpdate(
             { slug },
             { $set: req.body },
             {
                 returnNewDocument: true,
-                runValidators: true,
+                runValidators: true
             })
-        .populate('user')
-        
+            .populate({
+                path: 'manufacturer.make'
+            })
+            .populate({
+                path: 'manufacturer.model'
+            })
+            .populate('user')
+    
         let emailResult = null
         if (activated) {
             //send activation success mail to announce owner
             emailResult = await AnnounceMailer.successConfirmAnnounce({
-                title: document.title,
-                email: document.user.email,
-                firstname: document.user.firstname,
-                lastname: document.user.lastname,
-                announce_link: `${config.frontend}/announces/${document.slug}`,
-                featured_img_link: document.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
+                title: doc.title,
+                email: doc.user.email,
+                firstname: doc.user.firstname,
+                lastname: doc.user.lastname,
+                announce_link: `${config.frontend}/announces/${doc.slug}`,
+                featured_img_link: doc?.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG'
             })
         } else {
             //send rejected activation mail to announce owner
             emailResult = await AnnounceMailer.rejectedConfirmAnnounce({
-                email: document.user.email,
-                firstname: document.user.firstname,
-                lastname: document.user.lastname,
-                announce_link: `${config.frontend}/announces/${document.slug}`,
+                email: doc.user.email,
+                firstname: doc.user.firstname,
+                lastname: doc.user.lastname,
+                announce_link: `${config.frontend}/announces/${doc.slug}`
             })
         }
         
         return res.json({
             success: true,
-            data: {
-                document,
-                emailResult,
-                // emailResult: emailResult ? {
-                //     to: document.user.email
-                // } : null
-            },
+            data: doc
         })
         
     } catch (err) {
@@ -481,31 +464,31 @@ exports.updateAdminAnnounceAction = async (req, res, next) => {
 }
 
 exports.uploadImagesAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    if (!req.announce) return next(Errors.NotFoundError(Messages.errors.announce_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    if (!req.announce) {return next(Errors.NotFoundError(Messages.errors.announce_not_found))}
     
     const announce = req.announce
     
-    if (req.uploadedFiles && req.uploadedFiles.images && req.uploadedFiles.images.length !== 0) {
-        if (!announce.images) announce.images = []
+    if (req?.uploadedFiles?.images?.length !== 0) {
+        if (!announce.images) {announce.images = []}
         announce.images = [...announce.images, ...req.uploadedFiles.images]
     }
     
     try {
-        const document = await announce.save()
-        return res.json({ success: true, data: document })
+        const doc = await announce.save()
+        return res.json({ success: true, data: doc })
     } catch (err) {
         next(err)
     }
 }
 
 exports.addUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { announce_id } = req.params
     try {
         const insertionLike = await AnnounceModel.updateOne(
             { _id: announce_id },
-            { $addToSet: { likes: { user: req.user.id } } },
+            { $addToSet: { likes: { user: mongoose.Types.ObjectId(req.user.id) } } },
             { runValidators: true }
         )
         const insertionFavorite = await UserModel.updateOne(
@@ -526,12 +509,12 @@ exports.addUserLikeActionAction = async (req, res, next) => {
 }
 
 exports.removeUserLikeActionAction = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { announce_id } = req.params
     try {
         const suppressionLike = await AnnounceModel.updateOne(
             { _id: announce_id },
-            { $pull: { likes: req.user.id } },
+            { $pull: { likes: { user : mongoose.Types.ObjectId(req.user.id) } } },
             { runValidators: true }
         )
         const suppressionFavorite = await UserModel.updateOne(
@@ -539,6 +522,7 @@ exports.removeUserLikeActionAction = async (req, res, next) => {
             { $pull: { favorites: announce_id } },
             { runValidators: true }
         )
+        
         return res.json({
             success: true,
             data: {
@@ -547,6 +531,28 @@ exports.removeUserLikeActionAction = async (req, res, next) => {
             }
         })
     } catch (err) {
+        return next(err)
+    }
+}
+
+exports.mailToShareAnnounce = async (req, res, next) => {
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    if(!req.body.email) {return Errors.Error(Messages.errors.missing_or_invalid_email)}
+    
+    try {
+        const announce = await AnnounceModel.findOne({ slug: req.params.slug })
+        if(!announce) {return Errors.NotFoundError(Messages.errors.announce_not_found)}
+    
+        await AnnounceMailer.shareAnnounceLink({
+            fromFullName: req.user.fullname,
+            emailTo: req.body.email,
+            announce_link: `${config.frontend}/announces/${announce.slug}`,
+            featured_img_link: announce?.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG'
+        })
+    
+        return res.json({ success: true, data: { msg : 'sent' }})
+    
+    } catch (err){
         return next(err)
     }
 }

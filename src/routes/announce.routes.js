@@ -118,4 +118,11 @@ router.put('/update-admin/:slug',
     announceController.updateAdminAnnounceAction
 )
 
+router.options('/mailto/:slug', cors(corsMiddleware.authedCors)) // enable pre-flights
+router.post('/mailto/:slug',
+    cors(corsMiddleware.authedCors),
+    passportMiddleware.authenticate('cookie', { session: false }),
+    announceController.mailToShareAnnounce
+)
+
 module.exports = router

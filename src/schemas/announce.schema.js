@@ -75,19 +75,7 @@ const AnnounceSchema = new mongoose.Schema({
         required: true,
         enum : ['car', 'moto', 'bus', 'camper', 'utility']
     },
-    
-    makeRef: {
-        type: String,
-        required: true,
-        enum: ['buses_makes', 'campers_makes', 'cars_makes', 'motorcycles_makes', 'trucks_makes']
-    },
-    
-    modelRef: {
-        type: String,
-        required: true,
-        enum: ['buses_models', 'campers_models', 'cars_models', 'motorcycles_models', 'trucks_models']
-    },
-    
+ 
     // e:g moto => quad, scooter ...
     vehicleFunctionType: {
         label: String,
@@ -127,11 +115,23 @@ const AnnounceSchema = new mongoose.Schema({
         label: Number
     },
     
+    makeRef: {
+        type: String,
+        required: true,
+        enum: ['buses_makes', 'campers_makes', 'cars_makes', 'motorcycles_makes', 'trucks_makes']
+    },
+    
+    modelRef: {
+        type: String,
+        required: true,
+        enum: ['buses_models', 'campers_models', 'cars_models', 'motorcycles_models', 'trucks_models']
+    },
+    
     manufacturer: {
         make: {
             type: mongoose.Schema.Types.ObjectId,
             refPath: 'makeRef',
-            // autopopulate: true
+            autopopulate: true
         },
         model: {
             type: mongoose.Schema.Types.ObjectId,
@@ -218,6 +218,12 @@ const AnnounceSchema = new mongoose.Schema({
     },
  
     seats: {
+        label: String,
+        value: String
+    },
+    
+    //essieux (utility)
+    axles : {
         label: String,
         value: String
     },
