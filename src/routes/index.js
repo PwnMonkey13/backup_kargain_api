@@ -10,6 +10,7 @@ const uploadS3Routes = require('./upload.s3.routes')
 const commentsRoutes = require('./comments.routes')
 const paymentsRoutes = require('./payments.routes')
 const conversationsRoutes = require('./conversations.routes')
+const searchRoutes = require('./search.routes')
 
 router.use('/auth', authRoutes)
 router.use('/users', usersRoutes)
@@ -20,6 +21,7 @@ router.use('/uploads', uploadS3Routes)
 router.use('/comments', commentsRoutes)
 router.use('/payments', paymentsRoutes)
 router.use('/conversations', conversationsRoutes)
+router.use('/search', searchRoutes)
 
 router.get('/origin', function (req, res, next) {
     return res.json({
