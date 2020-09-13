@@ -2,10 +2,10 @@ const CONFIG = require('../../../config/config')
 const mailer = require('../../../utils/mailer')
 
 const confirmCreateAnnounce = async params => {
-    if (!params.email) throw new Error('missing email')
-    if(!params.announce_link) throw new Error('missing announce link')
-    if (!params.announce_title) throw new Error('missing announce title')
-    if (!params.announce_creation_date) throw new Error('missing creation date')
+    if (!params.email) {throw new Error('missing email')}
+    if(!params.announce_link) {throw new Error('missing announce link')}
+    if (!params.announce_title) {throw new Error('missing announce title')}
+    if (!params.announce_creation_date) {throw new Error('missing creation date')}
     
     const message = {
         Messages: [
