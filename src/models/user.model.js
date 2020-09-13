@@ -201,7 +201,6 @@ UserSchema.post('remove', function (doc) {
 UserSchema.pre('save', async function (next) {
     const user = this
     try {
-        console.log(this.isNew)
         if (this.isNew) {
             const fullname = utils.stringToSlug(`${user.firstname} ${user.lastname}`)
             user.username = `${fullname}-${uuid().substr(0, 6)}`

@@ -4,7 +4,7 @@ const Messages = require('../config/messages')
 const config = require('../config/config')
 const User = require('../models').User
 
-const byPassAuth = (options) => async (req, res, next) => {
+const byPassAuth = (populates = []) => async (req, res, next) => {
     try {
         const token = req?.signedCookies?.['token'] ?? req?.cookies?.['token'] ?? null
         if (!token) {
@@ -24,6 +24,7 @@ const byPassAuth = (options) => async (req, res, next) => {
         return next(err)
     }
 }
+
 module.exports = {
     byPassAuth
 }

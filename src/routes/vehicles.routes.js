@@ -4,7 +4,7 @@ const cors = require('cors')
 const rolesMiddleware = require('../middlewares/roles.middleware')
 const corsMiddleware = require('../middlewares/cors.middleware')
 const passportMiddleware = require('../middlewares/passport')
-const vehicleController = require('../controllers/vehicles/vehicles.controller')
+const vehicleController = require('../controllers/vehicles.controller')
 
 //admin only
 router.options('/:vehicleType/makes', cors(corsMiddleware.authedCors)) // enable pre-flights

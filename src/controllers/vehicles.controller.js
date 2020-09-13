@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 const slugify = require('@sindresorhus/slugify')
-const Errors = require('../../utils/Errors')
-const Messages = require('../../config/messages')
-const redisConfig = require('../../config/redis')
+const Errors = require('../utils/Errors')
+const Messages = require('../config/messages')
+const redisConfig = require('../config/redis')
 const redisClient = redisConfig.redisClient
 
 // const fs = require('fs')
@@ -161,8 +161,8 @@ exports.updateMakes = async (req, res, next) => {
 
 exports.createModels = async (req, res, next) => {
     const vehicleType = req.params.type
-    const modelModel = require('../../models').Vehicles.Models[vehicleType]
-    const makeModel = require('../../models').Vehicles.Makes[vehicleType]
+    const modelModel = require('../models').Vehicles.Models[vehicleType]
+    const makeModel = require('../models').Vehicles.Makes[vehicleType]
     
     if (!modelModel) {return next('missing model')}
     if (!makeModel) {return next('missing model')}
@@ -245,8 +245,8 @@ exports.getVehicleTypeMakeModels = async (req, res, next) => {
             })
         }
     
-        const vehicleMakeModel = require('../../models').Vehicles.Makes[vehicleType]
-        const vehicleModelsModel = require('../../models').Vehicles.Models[vehicleType]
+        const vehicleMakeModel = require('../models').Vehicles.Makes[vehicleType]
+        const vehicleModelsModel = require('../models').Vehicles.Models[vehicleType]
         
         if (!vehicleMakeModel || !vehicleModelsModel) {
             return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))
@@ -367,9 +367,9 @@ exports.getCarsMakeModelTrimYears = async (req, res, next) => {
     if (!make) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_make))}
     if (!model) {return next(Errors.NotFoundError(Messages.errors.missing_vehicle_model))}
     
-    const carsMakesModel = require('../../models').Vehicles.Makes['cars']
-    const carsModelsModel = require('../../models').Vehicles.Models['cars']
-    const forceRewriteCache = Boolean(req.query.forceRewriteCache);
+    const carsMakesModel = require('../models').Vehicles.Makes['cars']
+    const carsModelsModel = require('../models').Vehicles.Models['cars']
+    const forceRewriteCache = Boolean(req.query.forceRewriteCache)
     
     try {
         const cacheKey = trim ? `cars_${make}_${model}_${trim}_years` : `cars_${make}_${model}_years`
