@@ -23,20 +23,16 @@ const confirmCreateAnnounce = async params => {
                 Variables : {
                     announce_link : params.announce_link,
                     announce_title : params.announce_title,
-                    announce_creation_date : params.announce_creation_date,
+                    announce_creation_date : params.announce_creation_date
                 },
                 TemplateID: 1537849,
                 TemplateLanguage: true,
-                Subject: 'Kargain | Announce disabled',
+                Subject: 'Kargain | Announce disabled'
             }
         ]
     }
     
-    try {
-        return await mailer.sendMailJet(message)
-    } catch (err) {
-        throw err
-    }
+    return await mailer.sendMailJet(message)
 }
 
 module.exports = confirmCreateAnnounce

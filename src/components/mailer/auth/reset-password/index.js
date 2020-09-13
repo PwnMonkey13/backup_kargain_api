@@ -32,11 +32,7 @@ const sendConfirmEmail = async params => {
         ]
     }
     
-    try {
-        return await mailer.sendMailJet(message)
-    } catch (err) {
-        throw err
-    }
+    return await mailer.sendMailJet(message)
 }
 
 module.exports = sendConfirmEmail

@@ -11,7 +11,7 @@ const sendContactMessageToAdmin = async params => {
         Messages: [
             {
                 From: {
-                    Email: CONFIG.mailer.from.email,
+                    Email: CONFIG.mailer.from.email
                 },
                 To: [
                     {
@@ -35,12 +35,7 @@ const sendContactMessageToAdmin = async params => {
         ]
     }
     
-    try {
-        return await mailer.sendMailJet(message)
-    } catch (err) {
-        console.log(err)
-        throw err
-    }
+    return await mailer.sendMailJet(message)
 }
 
 module.exports = sendContactMessageToAdmin

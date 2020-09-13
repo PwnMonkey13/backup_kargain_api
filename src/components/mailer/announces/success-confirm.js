@@ -27,16 +27,12 @@ const successConfirmAnnounce = async params => {
                 },
                 TemplateID: 1481702,
                 TemplateLanguage: true,
-                Subject: 'Kargain | Announce activated',
+                Subject: 'Kargain | Announce activated'
             }
         ]
     }
-    
-    try {
-        return await mailer.sendMailJet(message)
-    } catch (err) {
-        throw err
-    }
+
+    return await mailer.sendMailJet(message)
 }
 
 module.exports = successConfirmAnnounce
