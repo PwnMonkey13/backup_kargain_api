@@ -3,7 +3,7 @@ const Messages = require('../config/messages')
 const ConversationModel = require('../models').Conversation
 
 exports.getCurrentUserConversations = async (req, res, next) => {
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     
     try {
         const conversations = await ConversationModel.find(
@@ -35,13 +35,24 @@ exports.getConversationsWithProfile = async (req, res, next) => {
     const { profileId } = req.params
     
     try {
-        const conversation = await ConversationModel.findOne({
-            from: req.user.id,
-            to: profileId
-        }).populate({
-            path: 'to',
-            select: 'firstname lastname email'
-        })
+        const conversation = await ConversationModel.findOne(
+            { $or: [
+                {
+                    from: req.user.id,
+                    to: profileId },
+                {
+                    from: profileId,
+                    to: req.user.id
+                }
+            ]})
+            .populate({
+                path: 'from',
+                select: 'avatarUrl firstname username lastname email'
+            })
+            .populate({
+                path: 'to',
+                select: 'avatarUrl firstname username lastname email'
+            })
         
         return res.json({
             success: true,
@@ -53,11 +64,10 @@ exports.getConversationsWithProfile = async (req, res, next) => {
 }
 
 exports.postConversationMessage = async (req, res, next) => {
+    if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    if (!recipientId) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
+    
     const { message, recipientId } = req.body
-    
-    if (!req.user) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    if (!recipientId) return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))
-    
     try {
         const conversation = await ConversationModel.findOneAndUpdate(
             { $or: [
