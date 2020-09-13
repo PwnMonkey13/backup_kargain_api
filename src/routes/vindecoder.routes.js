@@ -1,6 +1,6 @@
 const express = require('express')
 const routes = express.Router()
-const vinDecoderController = require('../controllers/vehicles/vindecoder.controller')
+const vinDecoderController = require('../controllers/vindecoder.controller')
 
 routes.get('/decodefree/:vin', vinDecoderController.decodeFree)
 
