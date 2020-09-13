@@ -12,6 +12,7 @@ app.use(helmet())
 app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true }))
+// eslint-disable-next-line no-undef
 app.use(express.static(path.join(__dirname, '../', 'public')))
 app.set('trust proxy', 1) // trust first proxy
 
@@ -48,9 +49,9 @@ app.use(function (err, req, res, next) {
     const error = {
         code,
         name: err.name || 'Error',
-        message: isError ? err.message : err
+        message: isError ? err?.message : err
     }
-    return res.json({ success: false, error })
+    return res.json({ success: false, error, isError })
 })
 
 module.exports = app
