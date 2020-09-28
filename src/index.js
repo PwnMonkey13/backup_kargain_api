@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
-const app = require('./app')
 const config = require('./config/config')
+const app = require('./app')
 
 mongoose.Promise = global.Promise // set mongo up to use promises
 mongoose.set('debug', true)

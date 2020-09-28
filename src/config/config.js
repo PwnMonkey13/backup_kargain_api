@@ -95,38 +95,16 @@ module.exports = {
         },
         mailjet: {
             API_KEY: '1228806536f8584e9449c86d3675d821',
-            password: '471a6894957996fff615aea4634a5f89'
-        },
-        stmp: {
-            ethereal: {
-                host: 'smtp.ethereal.email',
-                port: 587,
-                auth: {
-                    user: 'josiane8@ethereal.email',
-                    pass: 'zndYbvvQ4faW8w1WQd'
-                }
-            },
-            mailjet: {
+            password: '471a6894957996fff615aea4634a5f89',
+            smtp: {
                 host: 'in-v3.mailjet.com',
                 port: 587,
                 auth: {
                     user: '1228806536f8584e9449c86d3675d821',
                     pass: '471a6894957996fff615aea4634a5f89'
                 }
-            },
-            gmail: {
-                host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: 'giraudo.nicolas',
-                    pass: 'tX29P4QNadD7kAG7x5'
-                }
             }
         }
-    },
-    mailChimp: {
-        API_KEY: '991e70c5ec85e1e1432e3486242cdc5d-us19'
     },
     redis: {
         host: 'redis-10042.c55.eu-central-1-1.ec2.cloud.redislabs.com',
@@ -137,5 +115,8 @@ module.exports = {
     jwt: {
         encryption: process.env.JWT_ENCRYPTION || 'MyS3cr3tK3Y',
         expiration: process.env.JWT_EXPIRATION || 60 * 60 * 24 * 30
+    },
+    firebase : {
+    
     }
 }
