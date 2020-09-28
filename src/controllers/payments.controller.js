@@ -1,5 +1,5 @@
 const PaymentModel = require('../models').Payment
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const config = require('../config/config')
 const stripe = require('stripe')(config.stripe.test.secret_key)

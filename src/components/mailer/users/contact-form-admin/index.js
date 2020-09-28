@@ -1,12 +1,12 @@
 const CONFIG = require('../../../../config/config')
-const mailer = require('../../../../utils/mailer')
+const mailer = require('../../../../services/mailer')
 
 const sendContactMessageToAdmin = async params => {
     if (!params.email) {throw new Error('missing email')}
     if (!params.subject) {throw new Error('missing object')}
     if (!params.message) {throw new Error('missing message')}
     if (!params.date) {throw new Error('missing date')}
-    
+
     const message = {
         Messages: [
             {
@@ -34,7 +34,7 @@ const sendContactMessageToAdmin = async params => {
             }
         ]
     }
-    
+
     return await mailer.sendMailJet(message)
 }
 

@@ -1,5 +1,5 @@
 const CONFIG = require('../../../config/config')
-const mailer = require('../../../utils/mailer')
+const mailer = require('../../../services/mailer')
 
 const rejectedConfirmAnnounce = async params => {
     if (!params.email) {throw new Error('missing email')}

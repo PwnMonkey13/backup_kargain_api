@@ -1,6 +1,6 @@
 const CONFIG = require('../../../config/config')
-const mailer = require('../../../utils/mailer')
-const Errors = require('../../../utils/Errors')
+const mailer = require('../../../services/mailer')
+const Errors = require('../../../utils/errors')
 const Messages = require('../../../config/messages')
 
 const confirmCreateAnnounce = async params => {

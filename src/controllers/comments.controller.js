@@ -1,6 +1,6 @@
 const AnnounceModel = require('../models').Announce
 const CommentModel = require('../models').Comment
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 
 exports.getCommentsByAnnounce = async (req, res, next) => {

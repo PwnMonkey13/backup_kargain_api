@@ -6,7 +6,7 @@ const CookieStrategy = require('passport-cookie').Strategy
 const jwt = require('jsonwebtoken')
 const config = require('../config/config')
 const User = require('../models').User
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 
 passport.serializeUser((user, done) => done(null, user.id))
 passport.deserializeUser(async (id, done) => {

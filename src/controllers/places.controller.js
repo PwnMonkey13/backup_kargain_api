@@ -1,4 +1,4 @@
-const utils = require('../utils/functions')
+const utils = require('../utils/helpers')
 const CONFIG = require('../config/config')
 
 const fetchGouvAdressesAPI = (req, res, next) => {

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const shortid = require('shortid')
 const LikeSchema = require('./like.schema')
-const utils = require('../utils/functions')
+const utils = require('../utils/helpers')
 
 const AnnounceSchema = new mongoose.Schema({
  

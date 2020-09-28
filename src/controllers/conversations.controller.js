@@ -1,10 +1,10 @@
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const ConversationModel = require('../models').Conversation
 
 exports.getCurrentUserConversations = async (req, res, next) => {
     if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
-    
+
     try {
         const conversations = await ConversationModel.find(
             { $or: [
@@ -19,7 +19,7 @@ exports.getCurrentUserConversations = async (req, res, next) => {
                 path: 'to',
                 select: 'avatarUrl firstname username lastname email'
             })
-        
+
         return res.json({
             success: true,
             data: conversations
@@ -31,9 +31,9 @@ exports.getCurrentUserConversations = async (req, res, next) => {
 
 exports.getConversationsWithProfile = async (req, res, next) => {
     if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
-    
+
     const { profileId } = req.params
-    
+
     try {
         const conversation = await ConversationModel.findOne(
             { $or: [
@@ -53,7 +53,7 @@ exports.getConversationsWithProfile = async (req, res, next) => {
                 path: 'to',
                 select: 'avatarUrl firstname username lastname email'
             })
-        
+
         return res.json({
             success: true,
             data: conversation
@@ -66,7 +66,7 @@ exports.getConversationsWithProfile = async (req, res, next) => {
 exports.postConversationMessage = async (req, res, next) => {
     if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     if (!recipientId) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
-    
+
     const { message, recipientId } = req.body
     try {
         const conversation = await ConversationModel.findOneAndUpdate(
@@ -104,7 +104,7 @@ exports.postConversationMessage = async (req, res, next) => {
                 path: 'to',
                 select: 'avatarUrl firstname username lastname email'
             })
-        
+
         return res.json({
             success: true,
             data: conversation

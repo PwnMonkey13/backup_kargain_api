@@ -2,33 +2,17 @@ const fetch = require('node-fetch')
 const querystring = require('querystring')
 
 function stringToSlug (str) {
-    str = str.replace(/^\s+|\s+$/g, '') // trim
-    str = str.toLowerCase()
+    const v = str.replace(/^\s+|\s+$/g, '').toLowerCase()
     
     // remove accents, swap ñ for n, etc
     const from = 'àáãäâèéëêìíïîòóöôùúüûñç·/_,:;'
     const to = 'aaaaaeeeeiiiioooouuuunc------'
     
-    for (let i = 0, l = from.length; i < l; i++) {
-        str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i))
-    }
-    
-    str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+    return from.split('').reduce((carry,c, i) =>
+        carry.replace(new RegExp(c, 'g'), to.charAt(i)),v)
+        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
         .replace(/\s+/g, '-') // collapse whitespace and replace by -
         .replace(/-+/g, '-') // collapse dashes
-    
-    return str
-}
-
-function convertToDotNotation (obj, newObj = {}, prefix = '') {
-    for (const key in obj) {
-        if (typeof obj[key] === 'object') {
-            convertToDotNotation(obj[key], newObj, prefix + key + '.')
-        } else {
-            newObj[prefix + key] = obj[key]
-        }
-    }
-    return newObj
 }
 
 const resolveObjectKey = (obj, str) => {
@@ -51,9 +35,7 @@ const resolveObjectKey = (obj, str) => {
 }
 
 const fetchExternalApi = (url, headers = {}) => {
-    return fetch(url, {
-        headers
-    })
+    return fetch(url, { headers })
         .then(response => response.json())
         .catch(err => {
             throw err
@@ -73,7 +55,6 @@ const buildUrl = (baseUrl, params) => {
 
 module.exports = {
     stringToSlug,
-    convertToDotNotation,
     resolveObjectKey,
     fetchExternalApi,
     buildUrl,

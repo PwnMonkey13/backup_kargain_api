@@ -1,6 +1,6 @@
 const redisConfig = require('../config/redis')
 const redisClient = redisConfig.redisClient
-const utils = require('../utils/functions')
+const utils = require('../utils/helpers')
 const CONFIG = require('../config/config')
 
 const decodeFree = (req, res, next) => {

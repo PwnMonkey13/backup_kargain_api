@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const slugify = require('@sindresorhus/slugify')
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const redisConfig = require('../config/redis')
 const redisClient = redisConfig.redisClient

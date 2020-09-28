@@ -10,8 +10,8 @@ class CustomError extends Error {
 
 module.exports = {
     Error : (message) => new CustomError(message, 'Error', 400),
-    // AnonymousError: (message, name, code) => new CustomError(message, name, code),
-    // AlreadyActivated: (message) => new CustomError(message, 'AlreadyActivatedError', 201),
+    AnonymousError: (message, name, code) => new CustomError(message, name, code),
+    AlreadyActivated: (message) => new CustomError(message, 'AlreadyActivatedError', 201),
     DuplicateError: (message) => new CustomError(message, 'DuplicateError', 205),
     ExpiredTokenError: (message) => new CustomError(message, 'ExpiredTokenError', 401),
     UnAuthorizedError: (message) => new CustomError(message, 'UnAuthorizedError', 403),

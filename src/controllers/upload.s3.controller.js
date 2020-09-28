@@ -1,4 +1,4 @@
-const utilsS3 = require('../utils/s3-presigner')
+const utilsS3 = require('../services/s3')
 const { uuid } = require('uuidv4')
 const shortid = require('shortid')
 const MediaModel = require('../models').Media

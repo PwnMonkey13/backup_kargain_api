@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const config = require('../config/config')
 const User = require('../models').User
@@ -17,7 +17,7 @@ const byPassAuth = (populates = []) => async (req, res, next) => {
         let request = User.findById(decoded.uid)
         populates.forEach(populate => { request = request.populate(populate)})
         const user = await request.exec()
-        
+
         if (user && !user?.removed === true) {req.user = user}
         next()
     } catch (err) {

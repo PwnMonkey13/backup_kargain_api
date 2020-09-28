@@ -1,5 +1,5 @@
 const CONFIG = require('../../../../config/config')
-const mailer = require('../../../../utils/mailer')
+const mailer = require('../../../../services/mailer')
 
 const sendConfirmEmail = async params => {
     if (!params.email) {throw new Error('missing email')}
@@ -7,7 +7,7 @@ const sendConfirmEmail = async params => {
     if (!params.firstname) {throw new Error('missing firstname')}
     if (!params.reset_link) {throw new Error('missing reset link')}
     if (!params.report_link) {throw new Error('missing report link')}
-    
+
     const message = {
         Messages: [
             {
@@ -31,7 +31,7 @@ const sendConfirmEmail = async params => {
             }
         ]
     }
-    
+
     return await mailer.sendMailJet(message)
 }
 

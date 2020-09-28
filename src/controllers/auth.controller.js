@@ -3,7 +3,7 @@ const { uuid } = require('uuidv4')
 const pwdGenerator = require('generate-password')
 const config = require('../config/config')
 const authMailer = require('../components/mailer').auth
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const User = require('../models').User
 

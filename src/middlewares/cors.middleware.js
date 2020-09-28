@@ -1,5 +1,5 @@
 const CONFIG = require('../config/config')
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 
 function corsOptions (allowCredentials = false, enableAllOrigin = false) {
     return {

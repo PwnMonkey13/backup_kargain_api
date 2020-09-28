@@ -1,6 +1,6 @@
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
-const Errors = require('../utils/Errors')
+const Errors = require('../utils/errors')
 const Messages = require('../config/messages')
 const unionBy = require('lodash').unionBy
 

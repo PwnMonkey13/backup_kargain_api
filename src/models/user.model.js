@@ -2,8 +2,8 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const { uuid } = require('uuidv4')
-const utils = require('../utils/functions')
-const Errors = require('../utils/Errors')
+const utils = require('../utils/helpers')
+const Errors = require('../utils/errors')
 const LikeSchema = require('../schemas/like.schema')
 const UserSchema = new mongoose.Schema({
     
