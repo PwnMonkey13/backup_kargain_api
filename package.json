@@ -1,10 +1,10 @@
 {
 	"name": "kargain_api",
 	"version": "1.0.0",
+	"license": "MIT",
 	"description": "kargain API",
 	"repository": "https://github.com/kargainworld/kargain_api",
 	"main": "src",
-	"license": "GNU",
 	"scripts": {
 		"vercel-build": "yarn run build",
 		"start": "cross-env NODE_ENV=development nodemon src",
