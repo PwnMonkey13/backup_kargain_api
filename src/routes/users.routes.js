@@ -9,21 +9,21 @@ const uploadController = require('../controllers/upload.s3.controller')
 
 //admin
 router.get('/all',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('readAny', 'profile'),
     usersController.getUsersAdminAction
 )
 
 router.get('/username/:username',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authMiddleware.byPassAuth(),
     usersController.getUserByUsername
 )
 
 router.options('/save', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/save',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateOwn', 'profile'),
     usersController.saveAuthedUser
@@ -31,7 +31,7 @@ router.put('/save',
 
 router.options('/save/username/:username', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/save/username/:username',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     //TODO restrict admin privilege
     rolesMiddleware.grantAccess('updateOwn', 'profile'),
@@ -40,7 +40,7 @@ router.put('/save/username/:username',
 
 router.options('/update', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/update',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateOwn', 'profile'),
     usersController.updateUser
@@ -48,7 +48,7 @@ router.put('/update',
 
 router.options('/update-admin/:username', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/update-admin/:username',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'profile'),
     usersController.updateAdminUser
@@ -56,7 +56,7 @@ router.put('/update-admin/:username',
 
 router.options('/upload/avatar', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/upload/avatar',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     uploadController.postObjects,
     usersController.uploadAvatar
@@ -64,14 +64,14 @@ router.post('/upload/avatar',
 
 router.options('/follow/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/follow/:user_id',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     usersController.followUserAction
 )
 
 router.options('/unfollow/:user_id', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/unfollow/:user_id',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     usersController.unFollowUserAction
 )
@@ -89,7 +89,7 @@ router.post('/contact',
 )
 
 router.delete('/:username',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('deleteAny', 'profile'),
     usersController.deleteUser

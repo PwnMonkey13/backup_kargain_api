@@ -6,21 +6,21 @@ const passportMiddleware = require('../middlewares/passport')
 const authController = require('../controllers/auth.controller')
 
 router.get('/authorize',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authMiddleware.byPassAuth(['garage', 'favorites']),
     authController.authorizeAction
 )
 
 router.options('/sso-register', cors(corsMiddleware.authedCors))
 router.post('/sso-register',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authController.ssoRegister,
     authController.loginAction
 )
 
 router.options('/login', cors(corsMiddleware.authedCors))
 router.post('/login',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authController.loginValidation,
     passportMiddleware.authenticate('local', { session: false }),
     authController.loginAction
@@ -55,7 +55,7 @@ router.put('/confirm-account/:token',
 
 router.options('/logout', cors(corsMiddleware.authedCors))
 router.post('/logout',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authController.logoutAction
 )
 

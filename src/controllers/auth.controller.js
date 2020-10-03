@@ -14,6 +14,7 @@ const PASSWORD_REGEX = /^(?=.*\d).{4,16}$/ //min 4, max 8
 exports.findUserByEmailMiddleware = async (req, res, next) => {
     if (!req.body.email) {return next(Errors.NotFoundError())}
     try {
+        /*eslint require-atomic-updates:0*/
         req.user = await User.findByEmail(req.body.email)
         next()
     } catch (err) {

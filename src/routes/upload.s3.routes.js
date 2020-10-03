@@ -6,7 +6,7 @@ const corsMiddleware = require('../middlewares/cors.middleware')
 const uploadController = require('../controllers/upload.s3.controller')
 
 app.get('/config',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     //TODO ADMIN
     uploadController.getS3Config

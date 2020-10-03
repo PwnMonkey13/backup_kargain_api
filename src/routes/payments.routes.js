@@ -6,7 +6,7 @@ const paymentController = require('../controllers/payments.controller')
 const corsMiddleware = require('../middlewares/cors.middleware')
 
 routes.get('/secret/:intent_id',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     paymentController.getIntent
 )
@@ -20,7 +20,7 @@ routes.post('/create-payment-intent',
 
 routes.options('/create-user-subscription', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.post('/create-user-subscription',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     paymentController.createUserSubscription
 )

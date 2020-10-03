@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/auth.middleware')
 const searchController = require('../controllers/search.controller')
 
 router.get('/',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     authMiddleware.byPassAuth(),
     searchController.filterSearchAction()
 )

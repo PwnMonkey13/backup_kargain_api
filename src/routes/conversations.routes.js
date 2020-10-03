@@ -6,20 +6,20 @@ const conversationController = require('../controllers/conversations.controller'
 const corsMiddleware = require('../middlewares/cors.middleware')
 
 routes.get('/',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     conversationController.getCurrentUserConversations
 )
 
 routes.get('/profile/:profileId',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     conversationController.getConversationsWithProfile
 )
 
 routes.options('/', cors(corsMiddleware.authedCors)) // enable pre-flights
 routes.post('/',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     conversationController.postConversationMessage
 )

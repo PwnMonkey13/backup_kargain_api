@@ -30,16 +30,8 @@ router.get('/', function (req, res, next) {
     return res.end('api routes home')
 })
 
-router.get('/origin', function (req, res, next) {
-    return res.json({
-        success: true,
-        data: {
-            origin: req.headers.origin
-        }})
-})
+if (!config.isProd) {
 
-if (!CONFIG.isProd) {
-    
     router.get('/db', function (req, res, next) {
         return res.end(config.db.mongo_location)
     })

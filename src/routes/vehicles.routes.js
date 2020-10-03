@@ -9,7 +9,7 @@ const vehicleController = require('../controllers/vehicles.controller')
 //admin only
 router.options('/:vehicleType/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/:vehicleType/makes',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.createMakes
@@ -18,7 +18,7 @@ router.post('/:vehicleType/makes',
 //admin only
 router.options('/:type/makes', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.put('/:type/makes',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.updateMakes
@@ -27,7 +27,7 @@ router.put('/:type/makes',
 //admin only
 router.options('/dyn/:vehicleType/models', cors(corsMiddleware.authedCors)) // enable pre-flights
 router.post('/dyn/:vehicleType/models',
-    cors(corsMiddleware.authedCors),
+    corsMiddleware.manualCors,
     passportMiddleware.authenticate('cookie', { session: false }),
     rolesMiddleware.grantAccess('updateAny', 'make'),
     vehicleController.createModels
