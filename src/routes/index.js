@@ -12,6 +12,7 @@ const commentsRoutes = require('./comments.routes')
 const paymentsRoutes = require('./payments.routes')
 const conversationsRoutes = require('./conversations.routes')
 const searchRoutes = require('./search.routes')
+const notificationsRoutes = require('./notifications.routes')
 
 router.use('/auth', authRoutes)
 router.use('/users', usersRoutes)
@@ -23,6 +24,11 @@ router.use('/comments', commentsRoutes)
 router.use('/payments', paymentsRoutes)
 router.use('/conversations', conversationsRoutes)
 router.use('/search', searchRoutes)
+router.use('/notifications', notificationsRoutes)
+
+router.get('/', function (req, res, next) {
+    return res.end('api routes home')
+})
 
 router.get('/origin', function (req, res, next) {
     return res.json({

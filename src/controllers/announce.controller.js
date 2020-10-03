@@ -9,6 +9,8 @@ const allowedFieldsUpdatesSet = require('../utils/allowedFields')
 const prepareFilters = require('../components/filters/prepareFilters')
 const announcesSorterMapper = require('../components/filters/announcesSorterMapper')
 const AnnounceMailer = require('../components/mailer').announces
+const notifier = require('../components/notifications/notifier')
+
 const DEFAULT_RESULTS_PER_PAGE = 10
 
 exports.getAnnouncesAdminAction = async (req, res, next) => {
@@ -356,6 +358,8 @@ exports.createAnnounceAction = async (req, res, next) => {
                 model : matchModel?._id
             }
         }
+    
+        console.log(data)
         
         const announce = new AnnounceModel(data)
         const doc = await announce.save()
@@ -368,17 +372,25 @@ exports.createAnnounceAction = async (req, res, next) => {
             }
         )
         
+        const announce_link = `${config.frontend}/announces/${doc.slug}`
+        
         await AnnounceMailer.confirmCreateAnnounce({
             email: req.user.email,
             firstname: req.user.firstname,
             lastname: req.user.lastname,
-            announce_link: `${config.frontend}/announces/${doc.slug}`,
+            announce_link: announce_link,
             featured_img_link: doc?.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG',
             manufacturer: {
                 make: doc?.manufacturer?.make?.label,
                 model: doc?.manufacturer?.model?.label,
                 generation: doc?.manufacturer?.generation?.label
             }
+        })
+        
+        await notifier.postNotification({
+            uid : req.user.id,
+            message : 'Announce created',
+            action : announce_link
         })
         
         return res.json({
@@ -409,6 +421,14 @@ exports.updateAnnounceAction = async (req, res, next) => {
                 context: 'query'
             }
         )
+      
+        const announce_link = `${config.frontend}/announces/${doc.slug}`
+        await notifier.postNotification({
+            uid : req.user.id,
+            message : 'Announce updated',
+            action : announce_link
+        })
+        
         return res.json({ success: true, data: doc })
     } catch (err) {
         return next(err)
@@ -427,6 +447,12 @@ exports.removeAnnounceAction = async (req, res, next) => {
                 context: 'query'
             }
         )
+    
+        await notifier.postNotification({
+            uid : req.user.id,
+            message : 'An announce had been removed'
+        })
+        
         return res.json({ success: true, data: doc })
     } catch (err) {
         return next(err)
@@ -454,24 +480,38 @@ exports.updateAdminAnnounceAction = async (req, res, next) => {
             })
             .populate('user')
     
-        let emailResult = null
+        const announce_link = `${config.frontend}/announces/${doc.slug}`
         if (activated) {
+            
             //send activation success mail to announce owner
-            emailResult = await AnnounceMailer.successConfirmAnnounce({
+            await AnnounceMailer.successConfirmAnnounce({
                 title: doc.title,
                 email: doc.user.email,
                 firstname: doc.user.firstname,
                 lastname: doc.user.lastname,
-                announce_link: `${config.frontend}/announces/${doc.slug}`,
+                announce_link: announce_link,
                 featured_img_link: doc?.images?.[0]?.location ?? 'https://kargain.s3.eu-west-3.amazonaws.com/uploads/2020/05/30670681-d44d-468e-bf82-533733bb507e.JPG'
             })
+    
+            await notifier.postNotification({
+                uid : req.user.id,
+                message : 'Announce activated',
+                action : announce_link
+            })
+            
         } else {
             //send rejected activation mail to announce owner
-            emailResult = await AnnounceMailer.rejectedConfirmAnnounce({
+            await AnnounceMailer.rejectedConfirmAnnounce({
                 email: doc.user.email,
                 firstname: doc.user.firstname,
                 lastname: doc.user.lastname,
-                announce_link: `${config.frontend}/announces/${doc.slug}`
+                announce_link: announce_link
+            })
+    
+            await notifier.postNotification({
+                uid : req.user.id,
+                message : 'Announce rejected',
+                action : announce_link
             })
         }
         
@@ -508,22 +548,31 @@ exports.addUserLikeActionAction = async (req, res, next) => {
     if (!req.user) {return next(Errors.UnAuthorizedError(Messages.errors.user_not_found))}
     const { announce_id } = req.params
     try {
-        const insertionLike = await AnnounceModel.updateOne(
+        const updatedAnnounce = await AnnounceModel.updateOne(
             { _id: announce_id },
             { $addToSet: { likes: { user: mongoose.Types.ObjectId(req.user.id) } } },
-            { runValidators: true }
+            {
+                new : true,
+                runValidators: true
+            }
         )
-        const insertionFavorite = await UserModel.updateOne(
+        
+        await UserModel.updateOne(
             { _id: req.user.id },
             { $addToSet: { favorites: announce_id } },
             { runValidators: true }
         )
+    
+        const announce_link = `${config.frontend}/announces/${updatedAnnounce.slug}`
+        await notifier.postNotification({
+            uid : updatedAnnounce.user,
+            message : 'Announce updated',
+            action : announce_link
+        })
+        
         return res.json({
             success: true,
-            data: {
-                insertionLike,
-                insertionFavorite
-            }
+            data: {}
         })
     } catch (err) {
         return next(err)

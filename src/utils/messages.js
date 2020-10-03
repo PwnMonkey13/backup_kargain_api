@@ -13,7 +13,6 @@ const messages = {
     'missing_vehicle_make' : 'missing_make',
     'not_allowed' : 'not_allowed',
     'query_is_empty' : 'query_is_empty'
-    
 }
 
 const success = {
