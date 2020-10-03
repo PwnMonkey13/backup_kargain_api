@@ -29,16 +29,9 @@ cron.schedule('* * * * *', async () => {
                 announce_creation_date: moment(doc.createdAt).format('dddd, MMMM Do YYYY, h:mm:ss a')
             })
         }))
-
-        logger.info('cron job hide announce after 2 months', {
-            meta : {
-                emailsResults
-            }
-        })
     }
     catch (err) {
         console.log(err)
-        logger.warn(err)
         throw err
     }}
 )

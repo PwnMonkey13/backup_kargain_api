@@ -21,6 +21,11 @@ app.use(fileUpload({
     createParentPath: true
 }))
 
+//CRON JOBS
+if(config.isProd){
+    require('./components/cron/announces/updateAfterTwoMonths')
+}
+
 app.use((req, res, next) => {
     if (!req.headers.origin) {
         req.headers.origin = req.protocol + '://' + req.get('host')
@@ -28,22 +33,19 @@ app.use((req, res, next) => {
     next()
 })
 
-//CRON JOBS
-// require('./components/cron/announces/updateAfterTwoMonths')
-
-app.get('/', function (req, res, next) {
+app.get('/', (req, res) => {
     return res.end('api live')
 })
 
 app.use(config.api_path, routes)
 
-app.get('*', function (req, res, next) {
+app.get('*', (req, res, next) => {
     const err = new Error('Page Not Found')
     err.statusCode = 404
     next(err)
 })
 
-app.use(function (err, req, res, next) {
+app.use((err, req, res, next) => {
     const isError = err instanceof Error
     const code = err.code || err.statusCode || 200
     const error = {
