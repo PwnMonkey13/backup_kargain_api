@@ -1,5 +1,5 @@
 const redis = require('redis')
-const CONFIG = require('../config/config')
+const CONFIG = require('../config')
 
 const redisClient = redis.createClient({
     port: CONFIG.redis.port,

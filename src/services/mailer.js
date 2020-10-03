@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer')
 const mailjet = require('node-mailjet')
-const CONFIG = require('../config/config')
+const CONFIG = require('../config')
 const mailConfig = CONFIG.mailer.mailjet.smtp
 const transporter = nodemailer.createTransport(mailConfig)
 

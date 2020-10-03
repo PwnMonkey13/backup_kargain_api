@@ -1,7 +1,7 @@
-const CONFIG = require('../../../config/config')
+const CONFIG = require('../../../config')
 const mailer = require('../../../services/mailer')
 const Errors = require('../../../utils/errors')
-const Messages = require('../../../config/messages')
+const Messages = require('../../../utils/messages')
 
 const confirmCreateAnnounce = async params => {
     if (!params.emailTo) {throw Errors.NotFoundError(Messages.missing_or_invalid_email)}

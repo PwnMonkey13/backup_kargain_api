@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken')
 const { uuid } = require('uuidv4')
 const pwdGenerator = require('generate-password')
-const config = require('../config/config')
+const config = require('../config')
 const authMailer = require('../components/mailer').auth
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
+const Messages = require('../utils/messages')
 const User = require('../models').User
 
 // Constants

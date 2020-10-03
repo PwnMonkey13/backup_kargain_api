@@ -1,8 +1,8 @@
 const PaymentModel = require('../models').Payment
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
-const config = require('../config/config')
-const stripe = require('stripe')(config.stripe.test.secret_key)
+const Messages = require('../utils/messages')
+const config = require('../config')
+const stripe = require('stripe')(config.isProd ? config.stripe.secret_key : config.stripe.secret_key)
 
 exports.getIntent = async (req, res, next) => {
     try {

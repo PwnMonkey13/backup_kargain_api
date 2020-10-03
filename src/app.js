@@ -4,7 +4,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
-const config = require('./config/config')
+const config = require('./config')
 const routes = require('./routes')
 const app = express()
 

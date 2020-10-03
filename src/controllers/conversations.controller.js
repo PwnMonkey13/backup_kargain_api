@@ -1,5 +1,5 @@
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
+const Messages = require('../utils/messages')
 const ConversationModel = require('../models').Conversation
 
 exports.getCurrentUserConversations = async (req, res, next) => {

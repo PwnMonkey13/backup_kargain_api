@@ -4,7 +4,7 @@ const JwtStrategy = require('passport-jwt').Strategy
 const ExtractJwt = require('passport-jwt').ExtractJwt
 const CookieStrategy = require('passport-cookie').Strategy
 const jwt = require('jsonwebtoken')
-const config = require('../config/config')
+const config = require('../config')
 const User = require('../models').User
 const Errors = require('../utils/errors')
 

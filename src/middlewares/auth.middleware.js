@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
-const config = require('../config/config')
+const Messages = require('../utils/messages')
+const config = require('../config')
 const User = require('../models').User
 
 const byPassAuth = (populates = []) => async (req, res, next) => {

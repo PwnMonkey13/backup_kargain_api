@@ -1,5 +1,5 @@
 require('dotenv').config() // Loading dotenv to have access to env variables
-const config = require('../config/config')
+const config = require('../config')
 const AWS = require('aws-sdk') // Requiring AWS SDK.
 
 const AWSConfig = {

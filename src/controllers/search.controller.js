@@ -1,7 +1,7 @@
 const AnnounceModel = require('../models').Announce
 const UserModel = require('../models').User
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
+const Messages = require('../utils/messages')
 const unionBy = require('lodash').unionBy
 
 const fetchAnnounces = async (req) => {

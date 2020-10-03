@@ -1,6 +1,6 @@
 const moment = require('moment')
 const Errors = require('../utils/errors')
-const Messages = require('../config/messages')
+const Messages = require('../utils/messages')
 const functions = require('../utils/helpers')
 const UserModel = require('../models').User
 const AnnounceModel = require('../models').Announce

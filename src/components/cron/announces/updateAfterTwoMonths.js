@@ -1,7 +1,6 @@
 const cron = require('node-cron')
 const moment = require('moment')
-const config = require('../../../config/config')
-const logger = require('../../../config/logger')
+const config = require('../../../config')
 const AnnounceMailer = require('../../../components/mailer').announces
 const AnnounceModel = require('../../../models').Announce
 

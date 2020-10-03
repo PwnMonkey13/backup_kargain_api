@@ -1,4 +1,4 @@
-const CONFIG = require('../../../config/config')
+const CONFIG = require('../../../config')
 const mailer = require('../../../services/mailer')
 
 const rejectedConfirmAnnounce = async params => {

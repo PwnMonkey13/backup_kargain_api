@@ -1,4 +1,4 @@
-const { roles: rolesMiddleware } = require('../config/roles')
+const { roles: rolesMiddleware } = require('../roles')
 
 exports.grantAccess = function (action, resource) {
     return async (req, res, next) => {

@@ -1,5 +1,5 @@
 const utils = require('../utils/helpers')
-const CONFIG = require('../config/config')
+const CONFIG = require('../config')
 
 const fetchGouvAdressesAPI = (req, res, next) => {
     const ADRESSE_API_URL = CONFIG.externalsAPI.geoGouv.adresse_API_URL

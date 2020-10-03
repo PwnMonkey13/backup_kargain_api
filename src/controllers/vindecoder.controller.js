@@ -1,7 +1,7 @@
-const redisConfig = require('../config/redis')
+const redisConfig = require('../services/redis')
 const redisClient = redisConfig.redisClient
 const utils = require('../utils/helpers')
-const CONFIG = require('../config/config')
+const CONFIG = require('../config')
 
 const decodeFree = (req, res, next) => {
     const BASE_API_URL = CONFIG.externalsAPI.vindecoderFree.API_URL
