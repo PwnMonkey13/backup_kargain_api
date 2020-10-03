@@ -1,5 +1,6 @@
-const CONFIG = require('../config/config')
+const config = require('../config')
 const Errors = require('../utils/errors')
+const logger = require('../services/logger')
 
 function corsOptions (allowCredentials = false) {
     return {
@@ -30,10 +31,11 @@ const manualCors = (req, res, next) => {
     next()
 }
 
-const clientCors = corsOptions(false, true)
+const clientCors = corsOptions(false)
+const authedCors = corsOptions(true)
 
-const authedCors = corsOptions(true, true)
-
-const authedWideCors = corsOptions(true, true)
-
-module.exports = { corsOptions, clientCors, authedCors, authedWideCors }
+module.exports = {
+    clientCors,
+    authedCors,
+    manualCors
+}

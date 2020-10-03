@@ -13,8 +13,7 @@ const AnnounceSchema = new mongoose.Schema({
  
     title: {
         type: String,
-        trim: true,
-        required: true
+        trim: true
     },
  
     showCellPhone: {
